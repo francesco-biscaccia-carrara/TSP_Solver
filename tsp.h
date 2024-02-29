@@ -2,13 +2,7 @@
 
 #define __TSP_H
 
-#include <stdio.h>
-#include <math.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>  
-#include <float.h> 
-#include <time.h>
 
 #define VERBOSE				  10
 // Printing level  (=0 min output, =1 little output, =5 good output, =7 verbose, >=10 complete log)

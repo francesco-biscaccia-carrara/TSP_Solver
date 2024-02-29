@@ -4,6 +4,13 @@
 
 #include "tsp.h"
 
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>  
+#include <float.h> 
+#include <time.h>
+
 void free_instance(instance * inst);
 
 void print_error(const char *err);
