@@ -2,8 +2,8 @@
 
 void free_instance(instance* inst){
     if(VERBOSE >= 10) printf("Deallocating instance's inputs\n");
-    free(inst->x_coord);
-    free(inst->y_coord);
+    free(inst->points);
+    free(inst);
 }
 
 void print_error(const char *err){
@@ -22,10 +22,9 @@ void parse_cli(int argc, char** argv, instance *inst){
     if ( VERBOSE >= 10 ) printf("CLI has %d pars \n", argc-1);
 
     //Default init of an instance
-    inst->nodes=0;
+    inst->nnodes=0;
     inst->random_seed=0;
-    inst->x_coord=NULL;
-    inst->y_coord=NULL;
+    inst->points=NULL;
     inst->time_limit = MAX_TIME;
     inst->best_cost = DBL_MAX;
     inst->best_time = MAX_TIME;
@@ -45,14 +44,14 @@ void parse_cli(int argc, char** argv, instance *inst){
 
 		if (!strcmp(argv[i],"-tl") ||!strcmp(argv[i],"-max_time")) inst->time_limit = atof(argv[++i]);
 
-        if (!strcmp(argv[i],"-n") || !strcmp(argv[i],"-n_nodes")) inst->nodes = abs(atoi(argv[++i]));
+        if (!strcmp(argv[i],"-n") || !strcmp(argv[i],"-n_nodes")) inst->nnodes = abs(atoi(argv[++i]));
         
 		if (!strcmp(argv[i],"-seed") || !strcmp(argv[i],"-rnd_seed")) inst->random_seed = abs(atoi(argv[++i]));			
 
 		if (!strcmp(argv[i],"-help") || !strcmp(argv[i],"--help") || !strcmp(argv[i],"-h"))   help = 1;				
     }     
 
-    if(inst->nodes && inst->random_seed) strcpy(inst->file_name,"NONE");
+    if(inst->nnodes && inst->random_seed) strcpy(inst->file_name,"NONE");
 
     if(help){
             printf("To set the parameters properly you have to execute tsp and add:");
@@ -66,10 +65,19 @@ void parse_cli(int argc, char** argv, instance *inst){
    
     if(VERBOSE >=5){
         printf("------Instance data------");
-        printf("\n - nodes : %d",inst->nodes);
+        printf("\n - nodes : %d",inst->nnodes);
         printf("\n - random_seed : %u",inst->random_seed);
         printf("\n - time_limit : %llu",inst->time_limit);
         printf("\n - file_name : %s",inst->file_name);
         printf("\n-------------------------\n");
     }    
+}
+
+double euclidian_distance(point a, point b, short squared) {
+
+    double dx = b.x - a.x;
+    double dy = b.y - a.y; 
+
+    if(squared) return sqrt((dx * dx) + (dy * dy));
+    return ((dx * dx) + (dy * dy));
 }
