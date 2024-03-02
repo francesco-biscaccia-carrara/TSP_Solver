@@ -1,6 +1,6 @@
 #include "utils.h"
 
-const char *WEIGHT_TYPE[] = {12,"EXPLICIT", "EUC_2D", "EUC_3D", "MAX_2D", "MAX_3D", "MAN_2D", "MAN_3D","CEIL_2D", "GEO", "ATT", "XRAY1", "XRAY2"};
+const char *WEIGHT_TYPE[] = {"12","EXPLICIT", "EUC_2D", "EUC_3D", "MAX_2D", "MAX_3D", "MAN_2D", "MAN_3D","CEIL_2D", "GEO", "ATT", "XRAY1", "XRAY2"};
 
 void free_instance(instance* inst){
     if(VERBOSE >= 10) printf("__log: deallocating instance's inputs\n");
@@ -60,14 +60,14 @@ void read_tsp_file(instance * inst){
             int i;
             token = strtok(NULL, " :");
             token[strlen(token)-1]=0;
-            for(i=1;i <= WEIGHT_TYPE[0];i++){
+            for(i=1;i <= atoi(WEIGHT_TYPE[0]);i++){
                 if(!strncmp(token, WEIGHT_TYPE[i],strlen(token))){
                     strcpy(inst->weight_type,WEIGHT_TYPE[i]);
                     break;
                 }
                 
             }
-            if(i == WEIGHT_TYPE[0]){
+            if(i == atoi(WEIGHT_TYPE[0])){
                 free_instance(inst);
                 print_error(" format error:  this format is not valid for TSP problem!");
             }
@@ -75,6 +75,7 @@ void read_tsp_file(instance * inst){
         }
 
         if (!strncmp(par_name, "NODE_COORD_SECTION", 18)) node_section=1;
+
         if (!strncmp(par_name, "EOF", 3)) node_section=0;
 
         if(node_section){
@@ -151,30 +152,32 @@ double euclidian_distance(point a, point b, short squared) {
     return ((dx * dx) + (dy * dy));
 }
 
+void solution_file(instance *inst){
+    FILE* file = fopen(".solution.dat","w");
+    int sol[]={0,2,1,4,5,0}; //--> inst->best_sol
+    for(int i=0;i < (sizeof(sol)/sizeof(int))-1;i++){ //(sizeof(sol)/sizeof(int))-1 --> inst->nnodes -1
+        fprintf(file,"%lf %lf\n",inst->points[sol[i]].x,inst->points[sol[i]].y);
+        fprintf(file,"%lf %lf\n",inst->points[sol[i+1]].x,inst->points[sol[i+1]].y);
+        fprintf(file,"\n");
+    }
+    fclose(file);
+}
+
 void plot(instance *inst){
     solution_file(inst);
     FILE* gnuplot_pipe = popen("gnuplot -persistent","w");
     const char *COMMANDS[] ={
-        5,
+        "5",
         "set title 'TSP Solution'",
         "set xrange [0:10000]",
         "set yrange [0:10000]",
         "unset key",
-        "plot 'solution.dat' with linespoints linetype 7 linecolor 5",
+        "plot '.solution.dat' with linespoints linetype 7 linecolor 6",
     };
 
-    for (int i=1;i<=COMMANDS[0];i++){
-        printf("%s",COMMANDS[i]);
+    for (int i=1;i<=atoi(COMMANDS[0]);i++){
        fprintf(gnuplot_pipe,"%s \n",COMMANDS[i]); 
     }
     pclose(gnuplot_pipe);
 }
 
-void solution_file(instance *inst){
-    FILE* file = fopen("solution.dat","w");
-    int sol[]={0,2,1,4,3,0};
-    for(int i=0;i < (sizeof(sol)/sizeof(int));i++){
-        fprintf(file,"%lf %lf\n",inst->points[sol[i]].x,inst->points[sol[i]].y);
-    }
-    fclose(file);
-}
