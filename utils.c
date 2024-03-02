@@ -1,14 +1,6 @@
 #include "utils.h"
 
-const char *WEIGHT_TYPE[] = {"13",
-    "EXPLICIT", 
-    "EUC_2D", "EUC_3D", 
-    "MAX_2D", "MAX_3D", 
-    "MAN_2D", "MAN_3D",
-    "CEIL_2D", 
-    "GEO", 
-    "ATT", 
-    "XRAY1", "XRAY2"};
+const char *WEIGHT_TYPE[] = {12,"EXPLICIT", "EUC_2D", "EUC_3D", "MAX_2D", "MAX_3D", "MAN_2D", "MAN_3D","CEIL_2D", "GEO", "ATT", "XRAY1", "XRAY2"};
 
 void free_instance(instance* inst){
     if(VERBOSE >= 10) printf("__log: deallocating instance's inputs\n");
@@ -16,7 +8,7 @@ void free_instance(instance* inst){
 }
 
 void print_error(const char *err){
-    printf("\n\nERROR: %s\n\n", err); 
+    printf("\n\n__ERROR: %s\n\n", err); 
     fflush(NULL); 
     exit(1);
 } 
@@ -26,8 +18,11 @@ uint64_t get_time(){
 }
 
 void read_tsp_file(instance * inst){
-    FILE *fin = fopen(inst->file_name, "r");
-    if ( fin == NULL ) print_error(" input file not found!");
+    FILE *f = fopen(inst->file_name, "r");
+    if ( f == NULL ){
+        free_instance(inst);
+        print_error(" input file not found!");
+    }
  
     inst->nnodes = 0;
 
@@ -37,7 +32,7 @@ void read_tsp_file(instance * inst){
     char *par_name;   
     char *token;
 
-    while(fgets(line, sizeof(line), fin) != NULL){
+    while(fgets(line, sizeof(line), f) != NULL){
         if (VERBOSE >= 10) { printf("__log: line: %s",line); fflush(NULL); }
         if (strlen(line) <= 1) continue; 
         strcpy(line_cp, line);
@@ -45,11 +40,17 @@ void read_tsp_file(instance * inst){
         if ( VERBOSE >= 10 ) {printf("__log: parameter \"%s\" \n",par_name); fflush(NULL); }
 
         if (!strncmp(par_name, "TYPE", 4)) {
-            if (strncmp(strtok(NULL, " :"), "TSP",3)) print_error(" format error:  only TYPE == TSP implemented!"); 
+            if (strncmp(strtok(NULL, " :"), "TSP",3)){
+                free_instance(inst);
+                print_error(" format error:  only TYPE == TSP implemented!"); 
+            }
         }
         
         if (!strncmp(par_name, "DIMENSION", 9)){
-            if (inst->nnodes > 0) print_error(" repeated DIMENSION section in input file");
+            if (inst->nnodes > 0){
+                free_instance(inst);
+                print_error(" repeated DIMENSION section in input file!");
+            }
             inst->nnodes = atoi(strtok(NULL, " :"));
             if (VERBOSE>=10) printf("__log: nnodes %d\n", inst->nnodes); 
             inst->points = (point *) calloc(inst->nnodes, sizeof(point));
@@ -59,19 +60,22 @@ void read_tsp_file(instance * inst){
             int i;
             token = strtok(NULL, " :");
             token[strlen(token)-1]=0;
-            for(i=1;i < atoi(WEIGHT_TYPE[0]);i++){
+            for(i=1;i <= WEIGHT_TYPE[0];i++){
                 if(!strncmp(token, WEIGHT_TYPE[i],strlen(token))){
                     strcpy(inst->weight_type,WEIGHT_TYPE[i]);
                     break;
                 }
                 
             }
-            if(i == atoi(WEIGHT_TYPE[0])) print_error(" format error:  this format is not valid for TSP problem!"); 
+            if(i == WEIGHT_TYPE[0]){
+                free_instance(inst);
+                print_error(" format error:  this format is not valid for TSP problem!");
+            }
             if (VERBOSE>=10) printf("__log: weight type %s\n", inst->weight_type); 
         }
 
         if (!strncmp(par_name, "NODE_COORD_SECTION", 18)) node_section=1;
-        if (!strncmp(par_name, "EOD", 3)) node_section=0;
+        if (!strncmp(par_name, "EOF", 3)) node_section=0;
 
         if(node_section){
             int i = atoi(strtok(line_cp, " "))-1;
@@ -145,4 +149,32 @@ double euclidian_distance(point a, point b, short squared) {
 
     if(squared) return sqrt((dx * dx) + (dy * dy));
     return ((dx * dx) + (dy * dy));
+}
+
+void plot(instance *inst){
+    solution_file(inst);
+    FILE* gnuplot_pipe = popen("gnuplot -persistent","w");
+    const char *COMMANDS[] ={
+        5,
+        "set title 'TSP Solution'",
+        "set xrange [0:10000]",
+        "set yrange [0:10000]",
+        "unset key",
+        "plot 'solution.dat' with linespoints linetype 7 linecolor 5",
+    };
+
+    for (int i=1;i<=COMMANDS[0];i++){
+        printf("%s",COMMANDS[i]);
+       fprintf(gnuplot_pipe,"%s \n",COMMANDS[i]); 
+    }
+    pclose(gnuplot_pipe);
+}
+
+void solution_file(instance *inst){
+    FILE* file = fopen("solution.dat","w");
+    int sol[]={0,2,1,4,3,0};
+    for(int i=0;i < (sizeof(sol)/sizeof(int));i++){
+        fprintf(file,"%lf %lf\n",inst->points[sol[i]].x,inst->points[sol[i]].y);
+    }
+    fclose(file);
 }

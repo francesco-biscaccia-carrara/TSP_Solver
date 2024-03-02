@@ -9,7 +9,8 @@ int main(int argc, char **argv){
 
 	parse_cli(argc,argv, &inst);
 	
-	read_tsp_file(&inst);  
+	read_tsp_file(&inst);
+	plot(&inst);  
 	//if (VRPopt(&inst)) print_error(" error within VRPopt()");
 	uint64_t t2 = get_time(); 
     
