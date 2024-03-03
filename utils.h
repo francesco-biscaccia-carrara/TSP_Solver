@@ -21,7 +21,5 @@ void read_tsp_file(instance * inst);
 
 void parse_cli(int argc, char** argv, instance *inst);
 
-double euclidian_distance(point a, point b, short squared);
-
 void plot(instance *inst);
 #endif

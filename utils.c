@@ -143,15 +143,6 @@ void parse_cli(int argc, char** argv, instance *inst){
     }    
 }
 
-double euclidian_distance(point a, point b, short squared) {
-
-    double dx = b.x - a.x;
-    double dy = b.y - a.y; 
-
-    if(squared) return sqrt((dx * dx) + (dy * dy));
-    return ((dx * dx) + (dy * dy));
-}
-
 void solution_file(instance *inst){
     FILE* file = fopen(".solution.dat","w");
     int sol[]={0,2,1,4,5,0}; //--> inst->best_sol
