@@ -29,10 +29,9 @@ typedef struct{
     double * best_sol;
     double best_cost;
     char file_name[120];
-    char weight_type[16];
 
 } instance;
 
-//This is a 48+120+16 Bytes aligned structure. Be careful when you modify it.
+//This is a 48+120 Bytes aligned structure. Be careful when you modify it.
 
 #endif

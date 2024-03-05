@@ -2,8 +2,7 @@
 
 #define MAX_DIST 10000
 
-void generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) 
-{
+void generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
     inst->points = malloc(nnodes * sizeof(point));
     inst->nnodes = nnodes;
     srand(seed);

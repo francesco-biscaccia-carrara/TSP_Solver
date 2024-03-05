@@ -1,8 +1,6 @@
 #include "utils.h"
 
-const char *WEIGHT_TYPE[] = {"12","EXPLICIT", "EUC_2D", "EUC_3D", "MAX_2D", "MAX_3D", "MAN_2D", "MAN_3D","CEIL_2D", "GEO", "ATT", "XRAY1", "XRAY2"};
-
-void free_instance(instance* inst){
+void tsp_free_instance(instance* inst){
     if(VERBOSE >= 10) printf("__log: deallocating instance's inputs\n");
     free(inst->points);
 }
@@ -17,7 +15,7 @@ uint64_t get_time(){
     return (uint64_t) time(NULL);
 }
 
-void read_tsp_file(instance * inst){
+void tsp_read_file(instance * inst){
     FILE *f = fopen(inst->file_name, "r");
     if ( f == NULL ){
         free_instance(inst);
@@ -42,7 +40,7 @@ void read_tsp_file(instance * inst){
         if (!strncmp(par_name, "TYPE", 4)) {
             if (strncmp(strtok(NULL, " :"), "TSP",3)){
                 free_instance(inst);
-                print_error(" format error:  only TYPE == TSP implemented!"); 
+                print_error(" format error:  only TYPE: TSP implemented!"); 
             }
         }
         
@@ -60,18 +58,10 @@ void read_tsp_file(instance * inst){
             int i;
             token = strtok(NULL, " :");
             token[strlen(token)-1]=0;
-            for(i=1;i <= atoi(WEIGHT_TYPE[0]);i++){
-                if(!strncmp(token, WEIGHT_TYPE[i],strlen(token))){
-                    strcpy(inst->weight_type,WEIGHT_TYPE[i]);
-                    break;
-                }
-                
-            }
-            if(i == atoi(WEIGHT_TYPE[0])){
+            if (strncmp(strtok(NULL, " :"), "ATT",3)){
                 free_instance(inst);
-                print_error(" format error:  this format is not valid for TSP problem!");
+                print_error(" format erro: only EDGE_WEIGHT_TYPE: ATT implemented!"); 
             }
-            if (VERBOSE>=10) printf("__log: weight type %s\n", inst->weight_type); 
         }
 
         if (!strncmp(par_name, "NODE_COORD_SECTION", 18)) node_section=1;
@@ -91,7 +81,7 @@ void read_tsp_file(instance * inst){
     }
 }
 
-void parse_cli(int argc, char** argv, instance *inst){
+void tsp_parse_cli(int argc, char** argv, instance *inst){
     if ( VERBOSE >= 10 ) printf("__log: CLI has %d pars \n", argc-1);
 
     //Default init of an instance
@@ -103,7 +93,6 @@ void parse_cli(int argc, char** argv, instance *inst){
     inst->best_time = MAX_TIME;
     inst->best_sol = NULL;
     strcpy(inst->file_name,"NONE");
-    strcpy(inst->weight_type,"NONE");
 
     int help = 0;
 
@@ -154,19 +143,18 @@ void solution_file(instance *inst){
     fclose(file);
 }
 
-void plot(instance *inst){
+void tsp_plot(instance *inst){
     solution_file(inst);
     FILE* gnuplot_pipe = popen("gnuplot -persistent","w");
     const char *COMMANDS[] ={
-        "5",
         "set title 'TSP Solution'",
         "set xrange [0:10000]",
         "set yrange [0:10000]",
         "unset key",
         "plot '.solution.dat' with linespoints linetype 7 linecolor 6",
-    };
+        0};
 
-    for (int i=1;i<=atoi(COMMANDS[0]);i++){
+    for (int i=1;COMMANDS[i];i++){
        fprintf(gnuplot_pipe,"%s \n",COMMANDS[i]); 
     }
     pclose(gnuplot_pipe);
