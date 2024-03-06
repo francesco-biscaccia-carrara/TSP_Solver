@@ -7,15 +7,16 @@ int main(int argc, char **argv){
 	uint64_t t1 = get_time(); 
 	instance inst;
 
-	parse_cli(argc,argv, &inst);
+	tsp_parse_cli(argc,argv, &inst);
 	
-	read_tsp_file(&inst);
-	plot(&inst);  
+	tsp_read_file(&inst);
+	tsp_plot(&inst);  
+	
 	//if (VRPopt(&inst)) print_error(" error within VRPopt()");
 	uint64_t t2 = get_time(); 
     
 	if(VERBOSE >= 10) printf("__log: TSP problem solved in %lu sec.s\n", t2-t1);  
     
-	free_instance(&inst);
+	tsp_free_instance(&inst);
 	return 0; 
 }

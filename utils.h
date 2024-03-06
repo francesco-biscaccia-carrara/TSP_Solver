@@ -22,4 +22,5 @@ void tsp_read_file(instance * inst);
 void tsp_parse_cli(int argc, char** argv, instance *inst);
 
 void tsp_plot(instance *inst);
+
 #endif
