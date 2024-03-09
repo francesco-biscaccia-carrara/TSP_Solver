@@ -91,13 +91,6 @@ void tsp_read_file(instance * inst){
     }
 }
 
-double euc_2d(point a, point b) {
-    double dx = b.x - a.x;
-    double dy = b.y - a.y; 
-
-    return sqrt((dx * dx) + (dy * dy));
-}
-
 void tsp_compute_weights(instance * inst){
     uint32_t n = inst->nnodes;
     inst->edge_weights = (double *) calloc((n*n)/2-n/2, sizeof(double));
@@ -107,14 +100,14 @@ void tsp_compute_weights(instance * inst){
     int index = 0;
     for (int i = 0; i < n; i++) {
         for (int j = i + 1; j < n; j++){
-            inst->edge_weights[index++] = euc_2d(inst->points[i], inst->points[j]);
+            inst->edge_weights[index++] = euc_2d(&(inst->points[i]), &(inst->points[j]));
             if (index<400) printf("__log: edge (%d,%d) -> %lf\n",i,j,inst->edge_weights[index-1]);
         }
     }
 }
 
 int tsp_convert_coord_edge(uint32_t n,int i,int j){
-    return i<j ? (n * i - i * (i + 1) / 2) + (j - i - 1) : (n * i - i * (i + 1) / 2) + (j - i - 1) ;
+    return i<j ? (n * i - i * (i + 1) / 2) + (j - i - 1) : (n * i - i * (i + 1) / 2) + (j - i - 1);
 }
 
 

@@ -6,33 +6,51 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
-#define VERBOSE				  0 // Printing level  (=0 min output, =1 little output, =5 good output, =7 verbose, >=10 complete log)
+#define VERBOSE				  6 // Printing level  (=0 min output, =1 little output, =5 good output, =7 verbose, >=10 complete log)
 #define INT_TOL		  		  1e-5 		
 #define EPSILON		  		  1e-10	
 #define MAX_TIME              8.64e+7	//A day
 
+#define SQUARE(x)   (x*x)
+#define NINT(x)     ((int) x + 0.5)
+
 typedef struct {
-    double x;
-    double y;
+    int result;
+    int* combination;
+} solution;
+
+typedef struct {
+    uint32_t dist, index;
+} point_n_dist;
+
+typedef struct {
+    uint32_t x;
+    uint32_t y;
 } point;
 
 typedef struct{
 
-    uint32_t nnodes;
+    size_t nnodes;
     uint32_t random_seed;
 
-    point * points;  
-    double * edge_weights;
+    point * points;
+    int * edge_weights;
+    uint32_t * best_sol;
+
+    #if VERBOSE > 5
     uint64_t time_limit;
     uint64_t best_time;
-
-    int * best_sol;
-    double best_cost;
     char file_name[120];
+    #endif
+
+    int best_cost;
 
 } instance;
 
-//This is a 56+120 Bytes aligned structure. Be careful when you modify it.
+int euc_2d(point* a, point* b);
+point_n_dist get_min_distance_point(point* p0, instance *problem, uint32_t* res);
+void tsp_greedy(point* p0, int index, instance* problem);
 
 #endif

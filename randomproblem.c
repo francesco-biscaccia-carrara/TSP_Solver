@@ -8,10 +8,11 @@ void generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
     srand(seed);
 
     int i = 0; for(; i < nnodes; i++) {
-        point p;
-        p.x = rand() % MAX_DIST;
-        p.y = rand() % MAX_DIST;
+        point p = {rand() % MAX_DIST, rand() % MAX_DIST};
         inst->points[i] = p;
+        
+        if(VERBOSE > 5)
+            printf("(%i, %i)", p.x, p.y);
     }
 }
 
