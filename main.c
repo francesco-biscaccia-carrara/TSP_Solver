@@ -1,4 +1,5 @@
-#include "utils.h"
+#include "include/utils.h"
+#include "include/tsp.h"
 
 
 int main(int argc, char **argv){

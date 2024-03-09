@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "../include/utils.h"
 #include "randomproblem.c"
 
 void tsp_free_instance(instance* inst){
@@ -12,13 +12,13 @@ void tsp_initialize_instance(instance * inst){
     inst->random_seed = 0;
     inst->points = NULL;
     inst->edge_weights = NULL;
-    solution def = {1e+8,NULL};
-    inst->best_sol = &def;
+    inst->combination = NULL;
+    inst->result = 1e+8;
     inst->time_limit = MAX_TIME;
     
     #if VERBOSE > 5
     strcpy(inst->file_name,"NONE");
-    printf("\nBSSTART: %d\n",inst->best_sol->result);
+    printf("\nBSSTART: %d\n",inst->result);
     #endif 
 }
 
@@ -156,7 +156,7 @@ void tsp_create_plot_data(instance *inst){
     int j=0;
     printf("\n\n\n");
     for(int j = 0; j < inst->nnodes; j++) {
-            printf("%i,", inst->best_sol->combination[j]);
+            printf("%i,", inst->combination[j]);
             //printf("%i->",result[p]);
             //p = result[p];
         }
@@ -164,8 +164,8 @@ void tsp_create_plot_data(instance *inst){
     for(int i=0;i < inst->nnodes; i++){ 
         printf("__log: node %d (%d,%d)\n",j,inst->points[j].x,inst->points[j].y);
         fprintf(file,"%d %d\n",inst->points[j].x,inst->points[j].y);
-        fprintf(file,"%d %d\n\n",inst->points[inst->best_sol->combination[j]].x,inst->points[inst->best_sol->combination[j]].y);
-        j=inst->best_sol->combination[j]-1;
+        fprintf(file,"%d %d\n\n",inst->points[inst->combination[j]].x,inst->points[inst->combination[j]].y);
+        j=inst->combination[j];
     }
     fclose(file);
 }

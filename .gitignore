@@ -2,3 +2,4 @@ main
 *.out
 test.c
 .*.*
+.vscode
