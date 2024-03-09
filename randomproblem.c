@@ -2,9 +2,11 @@
 
 #define MAX_DIST 10000
 
-void generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
+void tsp_generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
     inst->points = malloc(nnodes * sizeof(point));
     inst->nnodes = nnodes;
+    inst->points = (point *) calloc(inst->nnodes, sizeof(point));
+    inst->edge_weights = (int *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(int));
     srand(seed);
 
     int i = 0; for(; i < nnodes; i++) {
@@ -12,7 +14,7 @@ void generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
         inst->points[i] = p;
         
         if(VERBOSE > 5)
-            printf("(%i, %i)", p.x, p.y);
+            printf("(%i, %i)\n", p.x, p.y);
     }
 }
 

@@ -10,13 +10,13 @@ int euc_2d(point* a, point* b) {
 
 point_n_dist get_min_distance_point(int index, instance *problem, uint32_t* res) {
 
-    uint32_t min = INFINITY, dist = 0;
+    uint32_t min = UINT32_MAX, dist = 0;
     point_n_dist out;
 
     for(int i = 0; i < problem->nnodes; i++) {
         
-        if(res[i] != -1) continue;                      //if not assigned
-        dist = euc_2d(&(problem->points[index]), &(problem->points[i]));
+        if(res[i] != -1) continue; //if not assigned
+        dist = tsp_save_weight(problem,index,i);
 
         if (dist < min && dist != 0) {
             out.dist = dist;
@@ -34,9 +34,8 @@ void tsp_greedy(int index, instance* problem) {
     point_n_dist new_point;
 
     //intialize solution
-    uint32_t* result = malloc(5 * problem->nnodes);
+    int* result = malloc(sizeof(int)* problem->nnodes);
     for(int i = 0; i < problem->nnodes; i++) result[i] = -1;
-
 
     for (int i = 0; i < problem->nnodes; i++) {  
         new_point = get_min_distance_point(current_index, problem, result);
@@ -56,9 +55,11 @@ void tsp_greedy(int index, instance* problem) {
         printf("\ncost: %i\n", cost);
     }
 
-    if(cost < problem->best_cost){
-        problem->best_cost = cost;
-        problem->best_sol = result;
+    printf("\nBSRESULT: %d\n",problem->best_sol->result);
+    if(cost < problem->best_sol->result){
+        printf("\nCULO\n");
+        problem->best_sol->result = cost;
+        problem->best_sol->combination = result;
     }
 }
 
@@ -103,3 +104,17 @@ void tsp_greedy(int index, instance* problem) {
         inst->best_sol = output;
     }
 }*/
+
+int tsp_convert_coord_edge(uint32_t n,int i,int j){
+    return i<j ? ((i*n-(i-1)*(i)/2) + (j-i-1)-i) : ((j*n-(j-1)*(j)/2) + (i-j-1)-j);
+}
+
+uint32_t tsp_save_weight(instance * inst, int i, int j){
+    if (i == j) return 0;
+    printf("\n\n__SGRODI: %d %d\n\n",i,j);
+
+    if(!inst->edge_weights[tsp_convert_coord_edge(inst->nnodes,i,j)])
+        inst->edge_weights[tsp_convert_coord_edge(inst->nnodes,i,j)] = euc_2d(&(inst->points[i]), &(inst->points[j]));
+      
+    return inst->edge_weights[tsp_convert_coord_edge(inst->nnodes,i,j)];
+}

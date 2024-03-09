@@ -1,21 +1,25 @@
 #include "utils.h"
+#include "randomproblem.c"
 
 void tsp_free_instance(instance* inst){
     if(VERBOSE >= 10) printf("__log: deallocating instance's inputs\n");
-    free(inst->points);
-    free(inst->edge_weights);
+    if(inst->points != NULL) free(inst->points);
+    if(inst->edge_weights != NULL) free(inst->edge_weights);
 }
 
 void tsp_initialize_instance(instance * inst){
-    inst->nnodes=0;
-    inst->random_seed=0;
-    inst->points=NULL;
-    inst->edge_weights=NULL;
+    inst->nnodes = 0;
+    inst->random_seed = 0;
+    inst->points = NULL;
+    inst->edge_weights = NULL;
+    solution def = {1e+8,NULL};
+    inst->best_sol = &def;
     inst->time_limit = MAX_TIME;
-    inst->best_cost = DBL_MAX;
-    inst->best_time = MAX_TIME;
-    inst->best_sol = NULL;
+    
+    #if VERBOSE > 5
     strcpy(inst->file_name,"NONE");
+    printf("\nBSSTART: %d\n",inst->best_sol->result);
+    #endif 
 }
 
 void print_error(const char *err){
@@ -28,8 +32,8 @@ uint64_t get_time(){
     return (uint64_t) time(NULL);
 }
 
-void tsp_read_file(instance * inst){
-    FILE *f = fopen(inst->file_name, "r");
+void tsp_read_file(instance * inst, const char* file){
+    FILE *f = fopen(file, "r");
     if ( f == NULL ){
         tsp_free_instance(inst);
         print_error(" input file not found!");
@@ -53,7 +57,7 @@ void tsp_read_file(instance * inst){
         if (!strncmp(par_name, "TYPE", 4)) {
             if (strncmp(strtok(NULL, " :"), "TSP",3)){
                 tsp_free_instance(inst);
-                print_error(" format error:  only TYPE: TSP implemented!"); 
+                print_error(" format error: only TYPE: TSP implemented!"); 
             }
         }
         
@@ -64,8 +68,11 @@ void tsp_read_file(instance * inst){
             }
             inst->nnodes = atoi(strtok(NULL, " :"));
             inst->points = (point *) calloc(inst->nnodes, sizeof(point));
+            inst->edge_weights = (int *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(int));
+            
             if (inst->points == NULL) print_error(" failed to allocate memory for points vector!");
-            if (VERBOSE>=10) printf("__log: nnodes %d\n", inst->nnodes); 
+            if (inst->edge_weights == NULL) print_error(" failed to allocate memory for edge_weights vector!");
+            if (VERBOSE>=10) printf("__log: nnodes %ld\n", inst->nnodes); 
         }
 
         if (!strncmp(par_name, "EDGE_WEIGHT_TYPE", 16)){
@@ -84,34 +91,14 @@ void tsp_read_file(instance * inst){
             if ( i >= 0 && i < inst->nnodes ){
                 inst->points[i].x = atof(strtok(NULL, " "));
                 inst->points[i].y = atof(strtok(NULL, " "));
-                if (VERBOSE>=10) printf("__log: node %d at coordinates (%15.7lf, %15.7lf)\n", i+1, inst->points[i].x,inst->points[i].y);
+                if (VERBOSE>=10) printf("__log: node %d at coordinates (%d, %d)\n", i+1, inst->points[i].x,inst->points[i].y);
             }
         }
 
     }
 }
 
-void tsp_compute_weights(instance * inst){
-    uint32_t n = inst->nnodes;
-    inst->edge_weights = (double *) calloc((n*n)/2-n/2, sizeof(double));
-    
-    if (inst->edge_weights == NULL) print_error(" failed to allocate memory for edge_weights vector!");
-
-    int index = 0;
-    for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++){
-            inst->edge_weights[index++] = euc_2d(&(inst->points[i]), &(inst->points[j]));
-            if (index<400) printf("__log: edge (%d,%d) -> %lf\n",i,j,inst->edge_weights[index-1]);
-        }
-    }
-}
-
-int tsp_convert_coord_edge(uint32_t n,int i,int j){
-    return i<j ? (n * i - i * (i + 1) / 2) + (j - i - 1) : (n * i - i * (i + 1) / 2) + (j - i - 1);
-}
-
-
-void tsp_parse_cli(int argc, char** argv, instance *inst){
+void tsp_instance_from_cli(int argc, char** argv, instance *inst){
     if ( VERBOSE >= 10 ) printf("__log: CLI has %d pars \n", argc-1);
     tsp_initialize_instance(inst);
 
@@ -120,18 +107,29 @@ void tsp_parse_cli(int argc, char** argv, instance *inst){
     if (argc < 1) help = 1;
     for (int i = 1; i < argc; i++) { 
 
-		if (!strcmp(argv[i],"-in") || !strcmp(argv[i],"-f") || !strcmp(argv[i],"-file")) strcpy(inst->file_name,argv[++i]);
-
+		if (!strcmp(argv[i],"-in") || !strcmp(argv[i],"-f") || !strcmp(argv[i],"-file")){
+            #if VERBOSE > 5
+            strcpy(inst->file_name, argv[++i]);
+            tsp_read_file(inst,inst->file_name);
+            #endif
+            tsp_read_file(inst,argv[++i]);
+        }
+        
 		if (!strcmp(argv[i],"-tl") ||!strcmp(argv[i],"-max_time")) inst->time_limit = atof(argv[++i]);
 
-        if (!strcmp(argv[i],"-n") || !strcmp(argv[i],"-n_nodes")) inst->nnodes = abs(atoi(argv[++i]));
+        if (!strcmp(argv[i],"-n") || !strcmp(argv[i],"-n_nodes") && !inst->nnodes) inst->nnodes = abs(atoi(argv[++i]));
         
-		if (!strcmp(argv[i],"-seed") || !strcmp(argv[i],"-rnd_seed")) inst->random_seed = abs(atoi(argv[++i]));			
+		if (!strcmp(argv[i],"-seed") || !strcmp(argv[i],"-rnd_seed") && !inst->random_seed) inst->random_seed = abs(atoi(argv[++i]));			
 
 		if (!strcmp(argv[i],"-help") || !strcmp(argv[i],"--help") || !strcmp(argv[i],"-h"))   help = 1;				
     }     
 
-    if(inst->nnodes && inst->random_seed) strcpy(inst->file_name,"NONE");
+    if(inst->nnodes && inst->random_seed) {
+        #if VERBOSE >5 
+        strcpy(inst->file_name,"RANDOM_INSTANCE");
+        #endif
+        tsp_generate_random_point(inst->nnodes,inst->random_seed,inst);
+    }
 
     if(help){
             printf("To set the parameters properly you have to execute tsp and add:");
@@ -143,23 +141,31 @@ void tsp_parse_cli(int argc, char** argv, instance *inst){
             printf("\n\nNOTICE: you can insert only .tsp file or random seed and number of nodes, NOT BOTH!\n");
     }
    
-    if(VERBOSE >=5){
+    #if VERBOSE >5
         printf("------Instance data------");
-        printf("\n - nodes : %d",inst->nnodes);
+        printf("\n - nodes : %ld",inst->nnodes);
         printf("\n - random_seed : %u",inst->random_seed);
         printf("\n - time_limit : %lu",inst->time_limit);
         printf("\n - file_name : %s",inst->file_name);
         printf("\n-------------------------\n");
-    }    
+    #endif 
 }
 
 void tsp_create_plot_data(instance *inst){
     FILE* file = fopen(".solution.dat","w");
-    int sol[]={0,2,1,4,5,0}; //--> inst->best_sol
-    for(int i=0;i < (sizeof(sol)/sizeof(int))-1; i++){ //(sizeof(sol)/sizeof(int))-1 --> inst->nnodes -1
-        fprintf(file,"%lf %lf\n",inst->points[sol[i]].x,inst->points[sol[i]].y);
-        fprintf(file,"%lf %lf\n",inst->points[sol[i+1]].x,inst->points[sol[i+1]].y);
-        fprintf(file,"\n");
+    int j=0;
+    printf("\n\n\n");
+    for(int j = 0; j < inst->nnodes; j++) {
+            printf("%i,", inst->best_sol->combination[j]);
+            //printf("%i->",result[p]);
+            //p = result[p];
+        }
+    printf("\n\n\n");
+    for(int i=0;i < inst->nnodes; i++){ 
+        printf("__log: node %d (%d,%d)\n",j,inst->points[j].x,inst->points[j].y);
+        fprintf(file,"%d %d\n",inst->points[j].x,inst->points[j].y);
+        fprintf(file,"%d %d\n\n",inst->points[inst->best_sol->combination[j]].x,inst->points[inst->best_sol->combination[j]].y);
+        j=inst->best_sol->combination[j]-1;
     }
     fclose(file);
 }
@@ -172,12 +178,8 @@ void tsp_plot(instance *inst){
         "set xrange [0:10000]",
         "set yrange [0:10000]",
         "unset key",
-        "plot '.solution.dat' with linespoints linetype 7 linecolor 6",
-        0};
-
-    for (int i=1;COMMANDS[i];i++){
-       fprintf(gnuplot_pipe,"%s \n",COMMANDS[i]); 
-    }
+        "plot '.solution.dat' with linespoints linetype 7 linecolor 6",0};
+    for (int i=1;COMMANDS[i];i++) fprintf(gnuplot_pipe,"%s \n",COMMANDS[i]); 
     pclose(gnuplot_pipe);
 }
 
