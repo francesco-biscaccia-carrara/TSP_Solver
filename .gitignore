@@ -1,5 +1,6 @@
 main
 *.out
+*.o
 test.c
 .*.*
 .vscode

@@ -11,10 +11,9 @@
 #include <float.h> 
 #include <time.h>
 
-void tsp_free_instance(instance * inst);
-void print_error(const char *err);
-uint64_t get_time();
-void tsp_instance_from_cli(int argc, char** argv, instance *inst);
-void tsp_plot(instance *inst);
-
+extern void print_error(const char *err);
+extern uint64_t get_time();
+extern void help_info();
+extern int coords_to_index(uint32_t n,int i,int j);
+extern int euc_2d(point* a, point* b);
 #endif

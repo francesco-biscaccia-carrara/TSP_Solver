@@ -1,5 +1,5 @@
 output : main.o tsp.o utils.o
-	gcc .main.o .tsp.o .utils.o -lm -o main
+	gcc main.o tsp.o utils.o -lm -o main
 
 test : test.o tsp.o utils.o
 	gcc test.o tsp.o utils.o -lm -o test
