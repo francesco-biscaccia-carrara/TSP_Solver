@@ -206,7 +206,7 @@ void tsp_instance_from_cli(int argc, char** argv, instance *problem){
         
 		if (!strcmp(argv[i],"-seed") || !strcmp(argv[i],"-rnd_seed") && !problem->random_seed) problem->random_seed = abs(atoi(argv[++i]));			
 
-		if (!strcmp(argv[i],"-help") || !strcmp(argv[i],"--help") || !strcmp(argv[i],"-h"))   help_info();				
+		if (!strcmp(argv[i],"-help") || !strcmp(argv[i],"--help") || !strcmp(argv[i],"-h"))   {help_info(); exit(1);}				
     }     
 
     if(problem->nnodes && problem->random_seed) {
