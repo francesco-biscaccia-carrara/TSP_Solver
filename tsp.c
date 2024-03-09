@@ -8,7 +8,7 @@ int euc_2d(point* a, point* b) {
     return NINT(sqrt(SQUARE(dx) + SQUARE(dy)));
 }
 
-point_n_dist get_min_distance_point(point* p0, instance *problem, uint32_t* res) {
+point_n_dist get_min_distance_point(int index, instance *problem, uint32_t* res) {
 
     uint32_t min = INFINITY, dist = 0;
     point_n_dist out;
@@ -16,7 +16,7 @@ point_n_dist get_min_distance_point(point* p0, instance *problem, uint32_t* res)
     for(int i = 0; i < problem->nnodes; i++) {
         
         if(res[i] != -1) continue;                      //if not assigned
-        dist = euc_2d(p0, &(problem->points[i]));
+        dist = euc_2d(&(problem->points[index]), &(problem->points[i]));
 
         if (dist < min && dist != 0) {
             out.dist = dist;
@@ -28,10 +28,9 @@ point_n_dist get_min_distance_point(point* p0, instance *problem, uint32_t* res)
     return out;
 }
 
-void tsp_greedy(point* p0, int index, instance* problem) {
+void tsp_greedy(int index, instance* problem) {
 
     uint32_t cost = 0, current_index = index;
-    point* curr_point = p0;
     point_n_dist new_point;
 
     //intialize solution
@@ -40,12 +39,10 @@ void tsp_greedy(point* p0, int index, instance* problem) {
 
 
     for (int i = 0; i < problem->nnodes; i++) {  
-        new_point = get_min_distance_point(curr_point, problem, result);
+        new_point = get_min_distance_point(current_index, problem, result);
 
         cost += new_point.dist;
         result[current_index] = (current_index == new_point.index) ? index : new_point.index;
-        
-        curr_point = &(problem->points[new_point.index]);
         current_index = new_point.index;
     }
 

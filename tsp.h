@@ -50,7 +50,7 @@ typedef struct{
 } instance;
 
 int euc_2d(point* a, point* b);
-point_n_dist get_min_distance_point(point* p0, instance *problem, uint32_t* res);
-void tsp_greedy(point* p0, int index, instance* problem);
+point_n_dist get_min_distance_point(int index, instance *problem, uint32_t* res);
+void tsp_greedy(int index, instance* problem);
 
 #endif
