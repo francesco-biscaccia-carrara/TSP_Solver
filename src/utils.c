@@ -1,27 +1,6 @@
 #include "../include/utils.h"
 #include "randomproblem.c"
 
-void tsp_free_instance(instance* inst){
-    if(VERBOSE >= 10) printf("__log: deallocating instance's inputs\n");
-    if(inst->points != NULL) free(inst->points);
-    if(inst->edge_weights != NULL) free(inst->edge_weights);
-}
-
-void tsp_initialize_instance(instance * inst){
-    inst->nnodes = 0;
-    inst->random_seed = 0;
-    inst->points = NULL;
-    inst->edge_weights = NULL;
-    inst->combination = NULL;
-    inst->result = 1e+8;
-    inst->time_limit = MAX_TIME;
-    
-    #if VERBOSE > 5
-    strcpy(inst->file_name,"NONE");
-    printf("\nBSSTART: %d\n",inst->result);
-    #endif 
-}
-
 void print_error(const char *err){
     printf("\n\n__ERROR: %s\n\n", err); 
     fflush(NULL); 

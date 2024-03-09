@@ -43,7 +43,8 @@ typedef struct{
 
 } instance;
 
-extern instance new_instance();
+instance* instance_new();
+void instance_delete(instance * inst);
 
 extern int euc_2d(point* a, point* b);
 extern point_n_dist get_min_distance_point(int index, instance *problem, uint32_t* res);

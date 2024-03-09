@@ -1,6 +1,32 @@
 #include "../include/tsp.h"
 #include <math.h>
 
+instance* instance_new(){
+    instance *inst = malloc(sizeof(instance));
+
+    inst->nnodes = 0;
+    inst->random_seed = 0;
+    inst->points = NULL;
+    inst->edge_weights = NULL;
+    inst->combination = NULL;
+    inst->result = UINT32_MAX;
+    inst->time_limit = MAX_TIME;
+    
+    #if VERBOSE > 5
+    strcpy(inst->file_name,"NONE");
+    #endif 
+
+    return inst;
+}
+
+void instance_delete(instance* inst){
+    if(VERBOSE >= 10) printf("__log: deallocating instance's inputs\n");
+    
+    if(inst->points != NULL) free(inst->points);
+    if(inst->edge_weights != NULL) free(inst->edge_weights);
+}
+
+
 int euc_2d(point* a, point* b) {
     int dx = b->x - a->x;
     int dy = b->y - a->y; 
