@@ -25,8 +25,9 @@ typedef struct{
     int* combination;
 } instance;
 
-instance* instance_new();
-void instance_delete(instance * inst);
+extern instance* instance_new();
+extern void instance_delete(instance * inst);
+
 extern void tsp_instance_from_cli(instance *problem, cli_info* cli);
 
 #endif

@@ -12,7 +12,7 @@ double tsp_save_weight(instance * problem, int i, int j){
 point_n_dist get_min_distance_point(int index, instance *problem, int* res) {
 
     double min = DBL_MAX, dist = 0;
-    point_n_dist out;
+    point_n_dist out = { .dist = 0.0, .index = 0};
 
     for(int i = 0; i < problem->nnodes; i++) {
         
@@ -59,6 +59,8 @@ void tsp_greedy(int index, instance* problem) {
     #endif
 
     if(cost < problem->result){
+        free(problem->combination);
+
         problem->result = cost;
         problem->combination = result;
     }else{

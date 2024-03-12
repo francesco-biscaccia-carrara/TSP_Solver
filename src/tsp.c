@@ -9,6 +9,9 @@ instance* instance_new(){
     problem->edge_weights = NULL;
     problem->combination = NULL;
     problem->result = DBL_MAX;
+
+    
+
     return problem;
 }
 
@@ -20,6 +23,7 @@ void instance_delete(instance* problem){
     if(problem->points != NULL) free(problem->points);
     if(problem->edge_weights != NULL) free(problem->edge_weights);
     if(problem->combination!=NULL) free(problem->combination);
+    if(problem != NULL) free(problem);
 }
 
 void tsp_generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
