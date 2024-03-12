@@ -1,14 +1,14 @@
 #include "../include/tsp.h"
 
 instance* instance_new(){
-    instance *problem = malloc(sizeof(instance));
+    instance *problem = (instance*) calloc(1,sizeof(instance));
 
     problem->nnodes = 0;
     problem->random_seed = 0;
     problem->points = NULL;
     problem->edge_weights = NULL;
     problem->combination = NULL;
-    problem->result = UINT32_MAX;
+    problem->result = DBL_MAX;
     return problem;
 }
 
@@ -23,7 +23,6 @@ void instance_delete(instance* problem){
 }
 
 void tsp_generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
-    inst->points = malloc(nnodes * sizeof(point));
     inst->nnodes = nnodes;
     inst->random_seed=seed;
     inst->points = (point *) calloc(inst->nnodes, sizeof(point));

@@ -61,5 +61,7 @@ void tsp_greedy(int index, instance* problem) {
     if(cost < problem->result){
         problem->result = cost;
         problem->combination = result;
+    }else{
+        free(result);
     }
 }
