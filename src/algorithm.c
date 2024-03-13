@@ -1,8 +1,14 @@
 #include "../include/algorithm.h"
 #include "../include/tsp.h"
 
+/// @brief check if the distance was computed before, if is not the case, compute and save the result
+/// @param problem istance of the problem
+/// @param i starting arc node
+/// @param j ending arc node
+/// @return the distance from i to j
 double tsp_save_weight(instance * problem, int i, int j){
     if (i == j) return 0;
+
     if(!problem->edge_weights[coords_to_index(problem->nnodes,i,j)])
         problem->edge_weights[coords_to_index(problem->nnodes,i,j)] = euc_2d(&(problem->points[i]), &(problem->points[j]));
       
@@ -11,14 +17,14 @@ double tsp_save_weight(instance * problem, int i, int j){
 
 point_n_dist get_min_distance_point(int index, instance *problem, int* res) {
 
-    double min = DBL_MAX, dist = 0;
+    double min = DBL_MAX;
     point_n_dist out = { .dist = 0.0, .index = 0};
 
     for(int i = 0; i < problem->nnodes; i++) {
         
-        if(res[i] != -1) continue; //if not assigned
-        dist = tsp_save_weight(problem,index,i);
+        if(res[i] != 0) continue;               //if not assigned
 
+        double dist = tsp_save_weight(problem,index,i);
         if (dist < min && dist != 0) {
             out.dist = dist;
             out.index = i;
@@ -35,28 +41,27 @@ void tsp_greedy(int index, instance* problem) {
     int current_index = index;
     point_n_dist new_point;
 
-    //printf("BSOL IN GREEDY: %u\n", problem->result);
+    int* mem_check = calloc(problem->nnodes, sizeof(int));
+    int* result = malloc(problem->nnodes * sizeof(int));
 
-    //intialize solution
-    int* result = malloc(sizeof(int)* problem->nnodes);
-    for(int i = 0; i < problem->nnodes; i++) result[i] = -1;
+    result[0] = current_index;
+    mem_check[index] = 1;
 
-    for (int i = 0; i < problem->nnodes; i++) {  
-        new_point = get_min_distance_point(current_index, problem, result);
-
+    for (int i = 1; i < problem->nnodes; i++) {  
+        new_point = get_min_distance_point(result[i-1], problem, mem_check);
+        
         cost += new_point.dist;
-        result[current_index] = (current_index == new_point.index) ? index : new_point.index;
-        current_index = new_point.index;
+        mem_check[new_point.index] = 1;
+        result[i] = new_point.index;
     }
 
-    #if VERBOSE > 8
-    printf("__log: BS Combination: ");
-    for(int j = 0; j < problem->nnodes; j++) {
-        printf("| %d", result[j]);
-    }
-        printf("|\n");
-        printf("__log:BS Cost: %10.4f\n", cost);
+    cost +=tsp_save_weight(problem, new_point.index, index);    
+    free(mem_check);
+
+    #if VERBOSE > 1
+    printf("Partial \e[1mGREEDY\e[m solution starting from [%i]: \t%10.4f\n", index, cost);
     #endif
+
 
     if(cost < problem->result){
         free(problem->combination);

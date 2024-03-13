@@ -10,44 +10,57 @@ instance* instance_new(){
     problem->combination = NULL;
     problem->result = DBL_MAX;
 
-    
+    #if VERBOSE > 1
+    printf("\e[1mGENERATE NEW ISTANCE\e[m\n");
+    #endif
 
     return problem;
 }
 
 void instance_delete(instance* problem){
-    #if VERBOSE > 10 
-    printf("__log: deallocating instance's inputs\n");
+
+    free(problem->points);
+    free(problem->edge_weights);
+    free(problem->combination);
+    free(problem);
+
+    #if VERBOSE > 1
+    printf("\e[1mDELETE AN ISTANCE\e[m\n");
     #endif
- 
-    if(problem->points != NULL) free(problem->points);
-    if(problem->edge_weights != NULL) free(problem->edge_weights);
-    if(problem->combination!=NULL) free(problem->combination);
-    if(problem != NULL) free(problem);
 }
 
 void tsp_generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
+    
     inst->nnodes = nnodes;
     inst->random_seed=seed;
     inst->points = (point *) calloc(inst->nnodes, sizeof(point));
     inst->edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
+    
     srand(seed);
 
-    int i = 0; for(; i < nnodes; i++) {
-        point p = {rand() % MAX_DIST, rand() % MAX_DIST};
+    #if VERBOSE > 0
+    printf("\e[1mGENERATE RANDOM POINT...\e[m\n");
+    #endif
+
+    for(int i = 0; i < nnodes; i++) {
+        point p = {.x = rand() % MAX_DIST, .y = rand() % MAX_DIST};
         inst->points[i] = p;
         
-    #if VERBOSE > 5 
-    printf("(%10.4f, %10.4f) \n", p.x, p.y); 
-    #endif
+        #if VERBOSE > 1 
+        printf("x_%i = (%10.4f, %10.4f) \n",i, p.x, p.y); 
+        #endif
     }
+    #if VERBOSE > 1 
+        printf("\n"); 
+        #endif
 }
 
 void tsp_read_file(instance * problem, const char* file){
     FILE *f = fopen(file, "r");
+
     if ( f == NULL ){
         instance_delete(problem);
-        print_error(" input file not found!");
+        print_error("input file not found!");
     }
 
     char line[251];
@@ -55,20 +68,11 @@ void tsp_read_file(instance * problem, const char* file){
     char *par_name;   
 
     while(fgets(line, sizeof(line), f) != NULL){
-        #if VERBOSE > 9
-        printf("__log: line: %s",line); 
-        fflush(NULL); 
-        #endif 
     
         if (strlen(line) <= 1) continue; 
 
         if(!node_section) par_name = strtok(line, " :");
         else par_name=strtok(line, " ");
-
-        #if VERBOSE > 9 
-        printf("__log: parameter \"%s\" \n",par_name); 
-        fflush(NULL);
-        #endif
 
         if (!strncmp(par_name, "TYPE", 4)) {
             if (strncmp(strtok(NULL, " :"), "TSP",3)){
@@ -90,9 +94,6 @@ void tsp_read_file(instance * problem, const char* file){
             if (problem->points == NULL) print_error(" failed to allocate memory for points vector!");
             if (problem->edge_weights == NULL) print_error(" failed to allocate memory for edge_weights vector!");
 
-            #if VERBOSE > 9
-            printf("__log: nnodes %ld\n", problem->nnodes);
-            #endif
         }
 
         if (!strncmp(par_name, "EDGE_WEIGHT_TYPE", 16)){
@@ -111,9 +112,6 @@ void tsp_read_file(instance * problem, const char* file){
             if ( i >= 0 && i < problem->nnodes ){
                 problem->points[i].x = atof(strtok(NULL, " "));
                 problem->points[i].y = atof(strtok(NULL, " "));
-                #if VERBOSE > 9 
-                printf("__log: node %d at coordinates (%10.4f, %10.4f)\n", i+1, problem->points[i].x,problem->points[i].y);
-                #endif
             }
         }
 
@@ -127,11 +125,10 @@ void tsp_instance_from_cli(instance *problem, cli_info* cli){
         tsp_read_file(problem,cli->file_name);
     }
 
-    #if VERBOSE > 5
-        printf("------Instance data------");
+    #if VERBOSE > 0
+        printf("------\e[1mInstance data\e[m------");
         printf("\n - nodes : %ld",problem->nnodes);
         printf("\n - random_seed : %u",problem->random_seed);
-        printf("\n-------------------------\n");
+        printf("\n-------------------------\n\n");
     #endif 
 }
-

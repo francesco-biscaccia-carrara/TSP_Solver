@@ -1,7 +1,7 @@
 #include "../include/utils.h"
 
 void print_error(const char *err){
-    printf("\n\n__ERROR: %s\n\n", err); 
+    printf("\n\x1b[31mERROR: %s\x1b[0m\n", err); 
     fflush(NULL); 
     exit(1);
 } 
@@ -11,7 +11,7 @@ uint64_t get_time(){
 }
 
 void help_info(){
-    printf("To set the parameters properly you have to execute tsp and add:");
+    printf("\e[1mTo set the parameters properly you have to execute tsp and add:\e[m");
     printf("\n '-in / -f / -file <filename.tsp>' to specity the input file; ");
     printf("\n '-tl / -max_time <time_dbl>' to specity the max execution time (int value);");
     printf("\n '-n / -n_nodes <num_nodes_int>' to specify the number of nodes in the TSP instance (int value);");
@@ -21,7 +21,12 @@ void help_info(){
     printf("\n\nNOTICE: you can insert only .tsp file or random seed and number of nodes, NOT BOTH!\n");
 }
 
-int coords_to_index(uint32_t n,int i,int j){
+/// @brief transform 2d coordinate for a triangular matrix in 1d array
+/// @param n number of rows
+/// @param i row
+/// @param j column
+/// @return index where the desired value is stored
+int coords_to_index(uint32_t n, int i, int j){
     return i<j ? ((i*n-(i-1)*(i)/2) + (j-i-1)-i) : ((j*n-(j-1)*(j)/2) + (i-j-1)-j);
 }
 

@@ -4,7 +4,7 @@
 
 #include "utils.h"
 
-#define VERBOSE	    0
+#define VERBOSE	    2
 #define INT_TOL		1e-5 		
 #define EPSILON     1e-10	
 #define MAX_DIST    10000
@@ -29,5 +29,5 @@ extern instance* instance_new();
 extern void instance_delete(instance * inst);
 
 extern void tsp_instance_from_cli(instance *problem, cli_info* cli);
-
+void tsp_read_file(instance * problem, const char* file);
 #endif

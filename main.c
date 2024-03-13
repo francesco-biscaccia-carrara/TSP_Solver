@@ -18,11 +18,12 @@ int main(int argc, char **argv){
 
 	parse_cli(argc,argv,&cli_data);
 	strcpy(cli_data.method,"GREEDY");//HARDCODED CHANGE IT
+
 	#if VERBOSE > 1
-	printf("__log: Time_limit: %llu ms\n",cli_data.time_limit);
-	printf("__log: CLI: ' ");
+	printf("Time Limit\t: %lu ms\n",cli_data.time_limit);
+	printf("CLI line\t: ' ");
 	for (int a = 0; a < argc; a++) printf("%s ", argv[a]); 
-	printf("'\n");
+	printf("'\n\n");
 	#endif
 
 	tsp_instance_from_cli(problem,&cli_data);
@@ -36,8 +37,8 @@ int main(int argc, char **argv){
 	print_best_solution_info(problem);
 	if(problem->nnodes < 300) tsp_plot(problem,&cli_data);  
     
-	#if VERBOSE > 9 
-	printf("__log: TSP problem solved in %llu sec.s\n", end_time-start_time);  
+	#if VERBOSE > 0
+	printf("TSP problem solved in %lu sec.s\n", end_time-start_time);  
 	#endif
     
 	instance_delete(problem);

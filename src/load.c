@@ -7,10 +7,6 @@ void parse_cli(int argc, char **argv,cli_info* cli_data){
     strcpy(cli_data->method,"");
     strcpy(cli_data->file_name,"");
 
-    #if VERBOSE > 9
-    printf("__log: CLI has %d pars \n", argc-1);
-    #endif
-
     for (int i = 1; i < argc; i++) { 
         if (!strcmp(argv[i],"-tl") ||!strcmp(argv[i],"-max_time")) cli_data->time_limit = abs(atoi(argv[++i])+1);
         if (!strcmp(argv[i],"-in")  || !strcmp(argv[i],"-f")  || !strcmp(argv[i],"-file"))  strcpy(cli_data->file_name,argv[++i]);
