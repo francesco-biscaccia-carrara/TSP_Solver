@@ -50,7 +50,7 @@ void tsp_generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
         printf("x_%i = (%10.4f, %10.4f) \n",i, p.x, p.y); 
         #endif
     }
-    #if VERBOSE > 1 
+    #if VERBOSE > 0 
         printf("\n"); 
         #endif
 }

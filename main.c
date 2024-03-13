@@ -35,7 +35,7 @@ int main(int argc, char **argv){
 	uint64_t end_time = get_time();
 
 	print_best_solution_info(problem);
-	if(problem->nnodes < 300) tsp_plot(problem,&cli_data);  
+	tsp_plot(problem,&cli_data);  
     
 	#if VERBOSE > 0
 	printf("TSP problem solved in %lu sec.s\n", end_time-start_time);  

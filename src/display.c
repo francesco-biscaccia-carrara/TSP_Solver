@@ -4,13 +4,15 @@
 
 void tsp_create_plot_data(instance *problem){
     FILE* file = fopen(".tmp.dat","w");
-    //TODO: different format of solution
-    int j=0;
+
     for(int i=0;i < problem->nnodes; i++){ 
-        fprintf(file,"%10.4f %10.4f\n",problem->points[j].x,problem->points[j].y);
-        fprintf(file,"%10.4f %10.4f\n\n",problem->points[problem->combination[j]].x,problem->points[problem->combination[j]].y);
-        j=problem->combination[j];
+        fprintf(file,"%10.4f %10.4f\n",problem->points[problem->combination[i]].x,problem->points[problem->combination[i]].y);
+        fprintf(file,"%10.4f %10.4f\n\n",problem->points[problem->combination[i+1]].x,problem->points[problem->combination[i+1]].y);
     }
+
+        fprintf(file,"%10.4f %10.4f\n",problem->points[problem->combination[0]].x,problem->points[problem->combination[0]].y);
+        fprintf(file,"%10.4f %10.4f\n\n",problem->points[problem->combination[problem->nnodes]].x,problem->points[problem->nnodes].y);
+    
     fclose(file);
 }
 
@@ -34,7 +36,6 @@ void tsp_plot(instance *problem,cli_info* cli){
 }
 
 void print_best_solution_info(instance* problem){
-    //TODO: different format of solution
     printf("\n\e[1mBest Solution Found\e[m\n");
     printf("starting node:\t%i\n",problem->combination[0]);
 	printf("cost: \t%10.4f\n", problem->result);
