@@ -1,5 +1,7 @@
 #include "../include/utils.h"
 
+#define INDEX(n,i,j) ((i*n-(i-1)*(i)/2) + (j-i-1)-i)
+
 void print_error(const char *err){
     printf("\n\x1b[31mERROR: %s\x1b[0m\n", err); 
     fflush(NULL); 
@@ -27,7 +29,7 @@ void help_info(){
 /// @param j column
 /// @return index where the desired value is stored
 int coords_to_index(uint32_t n, int i, int j){
-    return i<j ? ((i*n-(i-1)*(i)/2) + (j-i-1)-i) : ((j*n-(j-1)*(j)/2) + (i-j-1)-j);
+    return i<j ? INDEX(n,i,j) : INDEX(n,j,i);
 }
 
 double euc_2d(point* a, point* b) {
@@ -35,5 +37,14 @@ double euc_2d(point* a, point* b) {
     double dy = b->y - a->y; 
 
     return sqrt(SQUARE(dx) + SQUARE(dy));
+}
+
+void reverse(int* solution, int i,int j){
+    while(i<j){
+        int tmp = solution[i];
+        solution[i]=solution[j];
+        solution[j]=tmp;
+        i++;j--;
+    }
 }
 

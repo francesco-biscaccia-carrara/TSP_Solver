@@ -3,7 +3,7 @@
 
 #include "tsp.h"
 
-extern void tsp_plot(instance* problem,cli_info* cli);
-extern void print_best_solution_info(instance* problem);
+extern void tsp_plot(const instance* problem,const cli_info* cli);
+extern void print_best_solution_info(const instance* problem,const cli_info* cli);
 
 #endif 

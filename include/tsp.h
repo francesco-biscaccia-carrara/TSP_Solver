@@ -6,7 +6,7 @@
 
 #define VERBOSE	    2
 #define INT_TOL		1e-5 		
-#define EPSILON     1e-10	
+#define EPSILON     1e-7	
 #define MAX_DIST    10000
 
 typedef struct {

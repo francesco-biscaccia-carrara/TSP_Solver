@@ -4,3 +4,4 @@ main
 test.c
 .*.*
 .vscode
+test

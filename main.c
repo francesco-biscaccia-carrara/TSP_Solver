@@ -3,8 +3,6 @@
 #include "include/load.h"
 #include "include/tsp.h"
 
-#define MAX_NODES_PLOT 300
-
 
 int main(int argc, char **argv){
     if (argc < 2) {
@@ -13,11 +11,10 @@ int main(int argc, char **argv){
 	} 
 
 	cli_info cli_data;
-	instance* problem=instance_new();
-	char plot_name[100];
-
 	parse_cli(argc,argv,&cli_data);
 	strcpy(cli_data.method,"GREEDY");//HARDCODED CHANGE IT
+
+	instance* problem=instance_new();
 
 	#if VERBOSE > 1
 	printf("Time Limit\t: %lu ms\n",cli_data.time_limit);
@@ -33,8 +30,9 @@ int main(int argc, char **argv){
 		if(!strcmp(cli_data.method,"GREEDY"))	tsp_greedy(i,problem);
 	}
 	uint64_t end_time = get_time();
+	tsp_g2opt(problem);
 
-	print_best_solution_info(problem);
+	print_best_solution_info(problem,&cli_data);
 	tsp_plot(problem,&cli_data);  
     
 	#if VERBOSE > 0

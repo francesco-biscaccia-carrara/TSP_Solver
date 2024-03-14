@@ -128,7 +128,7 @@ void tsp_instance_from_cli(instance *problem, cli_info* cli){
     #if VERBOSE > 0
         printf("------\e[1mInstance data\e[m------");
         printf("\n - nodes : %ld",problem->nnodes);
-        printf("\n - random_seed : %u",problem->random_seed);
+        if(problem->random_seed) printf("\n - random_seed : %u",problem->random_seed);
         printf("\n-------------------------\n\n");
     #endif 
 }

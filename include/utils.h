@@ -27,9 +27,15 @@ typedef struct {
     uint64_t time_limit;
 } cli_info;
 
+typedef struct{
+    int i,j;
+    double delta_cost;
+} cross;
+
 extern void print_error(const char *err);
 extern uint64_t get_time();
 extern void help_info();
 extern int coords_to_index(uint32_t n,int i,int j);
 extern double euc_2d(point* a, point* b);
+extern void reverse(int* solution, int i, int j);
 #endif
