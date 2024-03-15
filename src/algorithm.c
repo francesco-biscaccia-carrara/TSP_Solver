@@ -36,7 +36,7 @@ point_n_dist get_min_distance_point(int index, instance *problem, int* res) {
     return out;
 }
 
-void tsp_greedy(int index, instance* problem) {
+void tsp_greedy(int index, instance* problem, cli_info* cli) {
 
     double cost = 0;
     int current_index = index;
@@ -63,7 +63,14 @@ void tsp_greedy(int index, instance* problem) {
     printf("Partial \e[1mGREEDY\e[m solution starting from [%i]: \t%10.4f\n", index, cost);
     #endif
 
+    if(!strncmp(cli->method,"G2OPT",5)){
+        tsp_g2opt(result,&cost,problem);
 
+        #if VERBOSE > 1
+        printf("Partial \e[1mG2OPT\e[m solution starting from [%i]: \t%10.4f\n", index, cost);
+        #endif
+    }
+     
     if(cost < problem->result){
         free(problem->combination);
 
@@ -74,30 +81,53 @@ void tsp_greedy(int index, instance* problem) {
     }
 }
 
-double check_cross(instance* problem,int i,int j){
-    int k = (j+1 == problem->nnodes)? 0: j+1;
-    return (tsp_save_weight(problem,i,j)+tsp_save_weight(problem,i+1,k))-(tsp_save_weight(problem,i,i+1)+tsp_save_weight(problem,j,k));
+double check_cross(instance* problem,int* tmp_sol,int i,int j){
+    int k = (j+1 == problem->nnodes) ? 0 : j+1;
+    return (tsp_save_weight(problem,tmp_sol[i],tmp_sol[j])+tsp_save_weight(problem,tmp_sol[i+1],tmp_sol[k]))-(tsp_save_weight(problem,tmp_sol[i],tmp_sol[i+1])+tsp_save_weight(problem,tmp_sol[j],tmp_sol[k]));
 }
 
-cross find_cross(instance* problem){
-    cross best_cross = {-1,-1,DBL_MAX};
+cross find_best_cross(int* tmp_sol,instance* problem){
+    cross best_cross = {-1,-1,INFINITY};
 
-    for(int i=0;i<problem->nnodes;i++){
-        for(int j=i+1;j<problem->nnodes;j++){
-            if(j-i==1) continue;
-            double delta_cost=check_cross(problem,problem->combination[i],problem->combination[j]);
-            if(delta_cost < best_cross.delta_cost){
+    for(int i=0;i<problem->nnodes-2;i++){
+        for(int j=i+2;j<problem->nnodes;j++){
+            if(i==0 && j+1==problem->nnodes) continue;
+            double delta_cost=check_cross(problem,tmp_sol,i,j);
+            if(delta_cost < best_cross.delta_cost+EPSILON){
                 best_cross.i = i;
                 best_cross.j = j;
                 best_cross.delta_cost = delta_cost;
             }
         }
     }
-    //printf("BEST SWAP: %d %d %f\n",best_cross.i,best_cross.j,best_cross.delta_cost);
     return best_cross;
 }
 
+//TEST wheter the incumbent change its cost (just for debug)
+void check_path_cost(int* tmp_sol,double tmp_cost,instance* problem){
+    double cost_saved = tmp_cost;
+    double computed_cost =0;
+    for(int i=0;i< problem->nnodes-1;i++){
+        computed_cost+=tsp_save_weight(problem,tmp_sol[i],tmp_sol[i+1]);
+    }
+    computed_cost+=tsp_save_weight(problem,tmp_sol[problem->nnodes-1],tmp_sol[0]);
+    if (cost_saved - computed_cost > EPSILON){
+        print_error("SOMETHING WRONG HAPPENS");
+    }
+}
 
-void tsp_g2opt(instance* problem){
-  //TO DO
+void tsp_g2opt(int* tmp_sol, double* cost, instance* problem){
+  char improve = 1;
+  while (improve){
+    cross curr_cross = find_best_cross(tmp_sol,problem);
+    if(curr_cross.delta_cost >= EPSILON){
+        improve = 0;
+    }else{
+        reverse(tmp_sol,curr_cross.i+1,curr_cross.j);
+        *cost+=curr_cross.delta_cost;
+        #if VERBOSE > 2
+        check_path_cost(tmp_sol,*cost,problem);
+        #endif
+    }
+  }
 }

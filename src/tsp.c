@@ -24,8 +24,13 @@ void instance_delete(instance* problem){
     free(problem->combination);
     free(problem);
 
+    problem->points=NULL;
+    problem->edge_weights=NULL;
+    problem->combination = NULL;
+    problem=NULL;
+
     #if VERBOSE > 1
-    printf("\e[1mDELETE AN ISTANCE\e[m\n");
+    printf("\e[1mDELETE THE ISTANCE\e[m\n");
     #endif
 }
 
@@ -63,7 +68,7 @@ void tsp_read_file(instance * problem, const char* file){
         print_error("input file not found!");
     }
 
-    char line[251];
+    char line[201];
     char node_section = 0;
     char *par_name;   
 

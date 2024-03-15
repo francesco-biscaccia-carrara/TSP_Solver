@@ -17,7 +17,8 @@ void help_info(){
     printf("\n '-in / -f / -file <filename.tsp>' to specity the input file; ");
     printf("\n '-tl / -max_time <time_dbl>' to specity the max execution time (int value);");
     printf("\n '-n / -n_nodes <num_nodes_int>' to specify the number of nodes in the TSP instance (int value);");
-    printf("\n '-algo / -method/ -alg <method>' to specify the method to solve the TSP instance;");
+    printf("\n '-algo / -method / -alg <method>' to specify the method to solve the TSP instance;");
+    printf("\n\tImplemented method: GREEDY = greedy search, G2OPT = greedy + 2opt");
     printf("\n '-seed / -rnd_seed <seed>' to specity the random seed (int value);");
     printf("\n '-help / --help / -h' to get help.");
     printf("\n\nNOTICE: you can insert only .tsp file or random seed and number of nodes, NOT BOTH!\n");

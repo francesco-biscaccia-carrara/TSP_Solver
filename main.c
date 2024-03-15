@@ -12,7 +12,6 @@ int main(int argc, char **argv){
 
 	cli_info cli_data;
 	parse_cli(argc,argv,&cli_data);
-	strcpy(cli_data.method,"GREEDY");//HARDCODED CHANGE IT
 
 	instance* problem=instance_new();
 
@@ -26,11 +25,9 @@ int main(int argc, char **argv){
 	tsp_instance_from_cli(problem,&cli_data);
 	
 	uint64_t start_time = get_time();
-	for(int i=0;i < problem->nnodes && start_time + cli_data.time_limit > get_time();i++){
-		if(!strcmp(cli_data.method,"GREEDY"))	tsp_greedy(i,problem);
-	}
+	for(int i=0;i < problem->nnodes && start_time + cli_data.time_limit > get_time();i++) tsp_greedy(i,problem,&cli_data);
+	
 	uint64_t end_time = get_time();
-	tsp_g2opt(problem);
 
 	print_best_solution_info(problem,&cli_data);
 	tsp_plot(problem,&cli_data);  
