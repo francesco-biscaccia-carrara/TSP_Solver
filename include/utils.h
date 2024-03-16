@@ -10,6 +10,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #define SQUARE(x)   (x*x)
 //#define NINT(x)     ((int) x + 0.5)

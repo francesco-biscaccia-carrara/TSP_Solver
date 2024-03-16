@@ -17,6 +17,7 @@ void tsp_create_plot_data(const instance *problem){
 void tsp_plot(const instance *problem, const cli_info* cli){
     char file_name[100];
     tsp_create_plot_data(problem);
+    
     if(problem->random_seed) sprintf(file_name,"plot/n_%ld_s_%u_%s_plot.png",problem->nnodes,problem->random_seed,cli->method);
     else sprintf(file_name,"plot/%s_%s_plot.png",cli->file_name,cli->method);
     FILE* gnuplot_pipe = popen("gnuplot -persistent","w");

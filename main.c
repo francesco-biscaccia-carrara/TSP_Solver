@@ -24,17 +24,9 @@ int main(int argc, char **argv){
 
 	tsp_instance_from_cli(problem,&cli_data);
 	
-	uint64_t start_time = get_time();
-	for(int i=0;i < problem->nnodes && start_time + cli_data.time_limit > get_time();i++) tsp_greedy(i,problem,&cli_data);
-	
-	uint64_t end_time = get_time();
-
+	solve_heuristic(&cli_data, problem);
 	print_best_solution_info(problem,&cli_data);
 	tsp_plot(problem,&cli_data);  
-    
-	#if VERBOSE > 0
-	printf("TSP problem solved in %lu sec.s\n", end_time-start_time);  
-	#endif
     
 	instance_delete(problem);
 	return 0; 
