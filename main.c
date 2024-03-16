@@ -13,7 +13,7 @@ int main(int argc, char **argv){
 	cli_info cli_data;
 	parse_cli(argc,argv,&cli_data);
 
-	instance* problem=instance_new();
+	//instance* problem=instance_new();
 
 	#if VERBOSE > 1
 	printf("Time Limit\t: %lu ms\n",cli_data.time_limit);
@@ -22,12 +22,13 @@ int main(int argc, char **argv){
 	printf("'\n\n");
 	#endif
 
-	tsp_instance_from_cli(problem,&cli_data);
+	instance* problem = instance_new_cli(&cli_data);
+	//tsp_instance_from_cli(problem,&cli_data);
 	
 	solve_heuristic(&cli_data, problem);
 	print_best_solution_info(problem,&cli_data);
 	tsp_plot(problem,&cli_data);  
-    
 	instance_delete(problem);
+    
 	return 0; 
 }

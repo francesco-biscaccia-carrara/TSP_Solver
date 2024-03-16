@@ -9,11 +9,6 @@
 #define EPSILON     1e-7	
 #define MAX_DIST    10000
 
-typedef struct {
-    double dist;
-    uint32_t index;
-} point_n_dist;
-
 typedef struct{
     size_t nnodes;
     uint32_t random_seed;
@@ -26,8 +21,7 @@ typedef struct{
 } instance;
 
 extern instance* instance_new();
-extern void instance_delete(instance * inst);
+extern instance* instance_new_cli(cli_info* cli_info);
 
-extern void tsp_instance_from_cli(instance *problem, cli_info* cli);
-void tsp_read_file(instance * problem, const char* file);
+extern void instance_delete(instance * inst);
 #endif

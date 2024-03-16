@@ -1,66 +1,8 @@
 #include "../include/tsp.h"
 
-instance* instance_new(){
-    instance *problem = (instance*) calloc(1,sizeof(instance));
+#pragma region static_functions
 
-    problem->nnodes = 0;
-    problem->random_seed = 0;
-    problem->points = NULL;
-    problem->edge_weights = NULL;
-    problem->combination = NULL;
-    problem->result = DBL_MAX;
-
-    #if VERBOSE > 1
-    printf("\e[1mGENERATE NEW ISTANCE\e[m\n");
-    #endif
-
-    return problem;
-}
-
-void instance_delete(instance* problem){
-
-    free(problem->points);
-    free(problem->edge_weights);
-    free(problem->combination);
-    free(problem);
-
-    problem->points=NULL;
-    problem->edge_weights=NULL;
-    problem->combination = NULL;
-    problem=NULL;
-
-    #if VERBOSE > 1
-    printf("\e[1mDELETE THE ISTANCE\e[m\n");
-    #endif
-}
-
-void tsp_generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
-    
-    inst->nnodes = nnodes;
-    inst->random_seed=seed;
-    inst->points = (point *) calloc(inst->nnodes, sizeof(point));
-    inst->edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
-    
-    srand(seed);
-
-    #if VERBOSE > 0
-    printf("\e[1mGENERATE RANDOM POINT...\e[m\n");
-    #endif
-
-    for(int i = 0; i < nnodes; i++) {
-        point p = {.x = rand() % MAX_DIST, .y = rand() % MAX_DIST};
-        inst->points[i] = p;
-        
-        #if VERBOSE > 1 
-        printf("x_%i = (%10.4f, %10.4f) \n",i, p.x, p.y); 
-        #endif
-    }
-    #if VERBOSE > 0 
-        printf("\n"); 
-        #endif
-}
-
-void tsp_read_file(instance * problem, const char* file){
+static void tsp_read_file(instance * problem, const char* file){
     FILE *f = fopen(file, "r");
 
     if ( f == NULL ){
@@ -123,11 +65,58 @@ void tsp_read_file(instance * problem, const char* file){
     }
 }
 
-void tsp_instance_from_cli(instance *problem, cli_info* cli){
-    if(!strncmp(cli->file_name,"RND",3) || fopen(cli->file_name, "r")==NULL){
-        tsp_generate_random_point(cli->nnodes,cli->random_seed,problem);
+static void tsp_generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
+    
+    inst->nnodes = nnodes;
+    inst->random_seed=seed;
+    inst->points = (point *) calloc(inst->nnodes, sizeof(point));
+    inst->edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
+    
+    srand(seed);
+
+    #if VERBOSE > 0
+    printf("\e[1mGENERATE RANDOM POINT...\e[m\n");
+    #endif
+
+    for(int i = 0; i < nnodes; i++) {
+        point p = {.x = rand() % MAX_DIST, .y = rand() % MAX_DIST};
+        inst->points[i] = p;
+        
+        #if VERBOSE > 1 
+        printf("x_%i = (%10.4f, %10.4f) \n",i, p.x, p.y); 
+        #endif
+    }
+    #if VERBOSE > 0 
+        printf("\n"); 
+    #endif
+}
+
+#pragma endregion
+
+instance* instance_new() {
+    instance *problem = (instance*) calloc(1,sizeof(instance));
+
+    problem->nnodes = 0;
+    problem->random_seed = 0;
+    problem->points = NULL;
+    problem->edge_weights = NULL;
+    problem->combination = NULL;
+    problem->result = DBL_MAX;
+
+    #if VERBOSE > 1
+    printf("\e[1mGENERATE NEW ISTANCE\e[m\n");
+    #endif
+
+    return problem;
+}
+
+instance* instance_new_cli(cli_info* cli_info) {
+    instance *problem = instance_new();
+
+    if(!strncmp(cli_info->file_name,"RND",3) || fopen(cli_info->file_name, "r")==NULL){
+        tsp_generate_random_point(cli_info->nnodes,cli_info->random_seed,problem);
     }else{
-        tsp_read_file(problem,cli->file_name);
+        tsp_read_file(problem,cli_info->file_name);
     }
 
     #if VERBOSE > 0
@@ -136,4 +125,18 @@ void tsp_instance_from_cli(instance *problem, cli_info* cli){
         if(problem->random_seed) printf("\n - random_seed : %u",problem->random_seed);
         printf("\n-------------------------\n\n");
     #endif 
+
+    return problem;
+}
+
+void instance_delete(instance* problem) {
+
+    free(problem->points);
+    free(problem->edge_weights);
+    free(problem->combination);
+    free(problem);
+
+    #if VERBOSE > 1
+    printf("\e[1mDELETE THE ISTANCE\e[m\n");
+    #endif
 }

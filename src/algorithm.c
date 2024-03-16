@@ -2,39 +2,9 @@
 #include "../include/tsp.h"
 #include "../include/utils.h"
 
-void solve_heuristic (cli_info* cli_info, instance* problem) {
+#pragma region static_functions
 
-    //GET OPTIMIZATION FUNCTION FOR GREEDY
-    void *opt_func;
-    if(!strncmp(cli_info->method,"GREEDY",5)) {
-        opt_func = NULL;
-    }
-    else if(!strncmp(cli_info->method,"G2OPT",5)) {
-        opt_func = tsp_g2opt;
-    }
-    else {
-        print_error("No function with alias");
-    }
-    
-    uint64_t start_time = get_time();
-
-    for(int i=0;i < problem->nnodes && (start_time + cli_info->time_limit) > get_time(); i++) {
-         tsp_greedy(i,problem, opt_func, cli_info->method);
-    }
-
-    uint64_t end_time = get_time();
-
-    #if VERBOSE > 0
-	printf("TSP problem solved in %lu sec.s\n", end_time-start_time);
-	#endif
-}
-
-/// @brief check if the distance was computed before, if is not the case, compute and save the result
-/// @param problem istance of the problem
-/// @param i starting arc node
-/// @param j ending arc node
-/// @return the distance from i to j
-double tsp_save_weight(instance * problem, int i, int j){
+static double tsp_save_weight(instance * problem, int i, int j){
     if (i == j) return 0;
 
     if(!problem->edge_weights[coords_to_index(problem->nnodes,i,j)])
@@ -43,7 +13,7 @@ double tsp_save_weight(instance * problem, int i, int j){
     return problem->edge_weights[coords_to_index(problem->nnodes,i,j)];
 }
 
-point_n_dist get_min_distance_point(int index, instance *problem, int* res) {
+static point_n_dist get_min_distance_point(int index, instance *problem, int* res) {
 
     double min = DBL_MAX;
     point_n_dist out = { .dist = 0.0, .index = 0};
@@ -62,6 +32,73 @@ point_n_dist get_min_distance_point(int index, instance *problem, int* res) {
     }
 
     return out;
+}
+
+static void check_path_cost(int* tmp_sol,double tmp_cost,instance* problem){
+
+    double cost_saved = tmp_cost;
+    double computed_cost =0;
+    
+    for(int i=0;i< problem->nnodes-1;i++){
+        computed_cost+=tsp_save_weight(problem,tmp_sol[i],tmp_sol[i+1]);
+    }
+    computed_cost+=tsp_save_weight(problem,tmp_sol[problem->nnodes-1],tmp_sol[0]);
+    if (cost_saved - computed_cost > EPSILON){
+        print_error("SOMETHING WRONG HAPPENS");
+    }
+}
+
+static double check_cross(instance* problem,int* tmp_sol,int i,int j){
+    int k = (j+1 == problem->nnodes) ? 0 : j+1;
+
+    return  (tsp_save_weight(problem,tmp_sol[i],tmp_sol[j]) + tsp_save_weight(problem,tmp_sol[i+1],tmp_sol[k])) - 
+            (tsp_save_weight(problem,tmp_sol[i],tmp_sol[i+1]) + tsp_save_weight(problem,tmp_sol[j],tmp_sol[k]));
+}
+
+static cross find_best_cross(int* tmp_sol,instance* problem){
+    cross best_cross = {-1,-1,INFINITY};
+
+    for(int i=0;i<problem->nnodes-2;i++){
+        for(int j=i+2;j<problem->nnodes;j++){
+            if(i==0 && j+1==problem->nnodes) continue;
+            double delta_cost=check_cross(problem,tmp_sol,i,j);
+            if(delta_cost < best_cross.delta_cost+EPSILON){
+                best_cross.i = i;
+                best_cross.j = j;
+                best_cross.delta_cost = delta_cost;
+            }
+        }
+    }
+    return best_cross;
+}
+
+#pragma endregion
+
+void solve_heuristic (cli_info* cli_info, instance* problem) {
+
+    //GET OPTIMIZATION FUNCTION FOR GREEDY
+    void *opt_func;
+    if(!strncmp(cli_info->method,"GREEDY",5)) {
+        opt_func = NULL;
+    }
+    else if(!strncmp(cli_info->method,"G2OPT",5)) {
+        opt_func = tsp_g2opt;
+    }
+    else {
+        print_error("No function with alias");
+    }
+    
+    uint64_t start_time = get_time();
+
+    for(int i=0;i < problem->nnodes && (start_time + cli_info->time_limit) > get_time(); i++) {
+        tsp_greedy(i,problem, opt_func, cli_info->method);
+    }
+
+    uint64_t end_time = get_time();
+
+    #if VERBOSE > 0
+	printf("TSP problem solved in %lu sec.s\n", end_time-start_time);
+	#endif
 }
 
 void tsp_greedy(int index, instance* problem, void (opt_func)(int*, double*, instance*), char* opt_func_name) {
@@ -107,43 +144,6 @@ void tsp_greedy(int index, instance* problem, void (opt_func)(int*, double*, ins
         problem->combination = result;
     }else{
         free(result);
-    }
-}
-
-double check_cross(instance* problem,int* tmp_sol,int i,int j){
-    int k = (j+1 == problem->nnodes) ? 0 : j+1;
-
-    return  (tsp_save_weight(problem,tmp_sol[i],tmp_sol[j]) + tsp_save_weight(problem,tmp_sol[i+1],tmp_sol[k])) - 
-            (tsp_save_weight(problem,tmp_sol[i],tmp_sol[i+1]) + tsp_save_weight(problem,tmp_sol[j],tmp_sol[k]));
-}
-
-cross find_best_cross(int* tmp_sol,instance* problem){
-    cross best_cross = {-1,-1,INFINITY};
-
-    for(int i=0;i<problem->nnodes-2;i++){
-        for(int j=i+2;j<problem->nnodes;j++){
-            if(i==0 && j+1==problem->nnodes) continue;
-            double delta_cost=check_cross(problem,tmp_sol,i,j);
-            if(delta_cost < best_cross.delta_cost+EPSILON){
-                best_cross.i = i;
-                best_cross.j = j;
-                best_cross.delta_cost = delta_cost;
-            }
-        }
-    }
-    return best_cross;
-}
-
-//TEST wheter the incumbent change its cost (just for debug)
-void check_path_cost(int* tmp_sol,double tmp_cost,instance* problem){
-    double cost_saved = tmp_cost;
-    double computed_cost =0;
-    for(int i=0;i< problem->nnodes-1;i++){
-        computed_cost+=tsp_save_weight(problem,tmp_sol[i],tmp_sol[i+1]);
-    }
-    computed_cost+=tsp_save_weight(problem,tmp_sol[problem->nnodes-1],tmp_sol[0]);
-    if (cost_saved - computed_cost > EPSILON){
-        print_error("SOMETHING WRONG HAPPENS");
     }
 }
 
