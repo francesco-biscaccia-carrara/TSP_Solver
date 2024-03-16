@@ -2,12 +2,14 @@
 
 #define __TSP_H
 
-#include "utils.h"
+#include "load.h"
 
-#define VERBOSE	    2
-#define INT_TOL		1e-5 		
-#define EPSILON     1e-7	
 #define MAX_DIST    10000
+
+typedef struct {
+    double x;
+    double y;
+} point;
 
 typedef struct{
     size_t nnodes;

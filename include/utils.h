@@ -12,26 +12,6 @@
 #include <math.h>
 #include <sys/stat.h>
 
-#define SQUARE(x)   (x*x)
-//#define NINT(x)     ((int) x + 0.5)
-
-typedef struct {
-    double x;
-    double y;
-} point;
-
-typedef struct {
-    size_t nnodes;
-    uint32_t random_seed;
-    char file_name[60];
-    char method[20];
-    uint64_t time_limit;
-} cli_info;
-
 extern void print_error(const char *err);
 extern uint64_t get_time();
-extern void help_info();
-extern int coords_to_index(uint32_t n,int i,int j);
-extern double euc_2d(point* a, point* b);
-extern void reverse(int* solution, int i, int j);
 #endif

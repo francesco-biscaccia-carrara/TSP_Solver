@@ -4,6 +4,31 @@
 
 #pragma region static_functions
 
+/// @brief transform 2d coordinate for a triangular matrix in 1d array
+/// @param n number of rows
+/// @param i row
+/// @param j column
+/// @return index where the desired value is stored
+static int coords_to_index(uint32_t n, int i, int j){
+    return i<j ? INDEX(n,i,j) : INDEX(n,j,i);
+}
+
+static double euc_2d(point* a, point* b) {
+    double dx = b->x - a->x;
+    double dy = b->y - a->y; 
+
+    return sqrt(SQUARE(dx) + SQUARE(dy));
+}
+
+static void reverse(int* solution, int i,int j){
+    while(i<j){
+        int tmp = solution[i];
+        solution[i]=solution[j];
+        solution[j]=tmp;
+        i++;j--;
+    }
+}
+
 static double tsp_save_weight(instance * problem, int i, int j){
     if (i == j) return 0;
 
@@ -55,6 +80,19 @@ static double check_cross(instance* problem,int* tmp_sol,int i,int j){
             (tsp_save_weight(problem,tmp_sol[i],tmp_sol[i+1]) + tsp_save_weight(problem,tmp_sol[j],tmp_sol[k]));
 }
 
+static cross find_first_cross(int* tmp_sol,instance* problem){
+
+    for(int i=0;i<problem->nnodes-2;i++){
+        for(int j=i+2;j<problem->nnodes;j++){
+            if(i==0 && j+1==problem->nnodes) continue;
+            double delta_cost=check_cross(problem,tmp_sol,i,j);
+            if(delta_cost < -EPSILON) return (cross){i,j,delta_cost};
+        }
+    }
+    return (cross){-1,-1,EPSILON};
+}
+
+
 static cross find_best_cross(int* tmp_sol,instance* problem){
     cross best_cross = {-1,-1,INFINITY};
 
@@ -81,8 +119,11 @@ void solve_heuristic (cli_info* cli_info, instance* problem) {
     if(!strncmp(cli_info->method,"GREEDY",5)) {
         opt_func = NULL;
     }
-    else if(!strncmp(cli_info->method,"G2OPT",5)) {
+    else if(!strncmp(cli_info->method,"G2OPT_F",7)) {
         opt_func = tsp_g2opt;
+    }
+    else if(!strncmp(cli_info->method,"G2OPT_B",7)) {
+        opt_func = tsp_g2opt_best;
     }
     else {
         print_error("No function with alias");
@@ -148,10 +189,29 @@ void tsp_greedy(int index, instance* problem, void (opt_func)(int*, double*, ins
 }
 
 void tsp_g2opt(int* tmp_sol, double* cost, instance* problem){
+    char improve = 1;
+    while (improve) {
+    cross curr_cross = find_first_cross(tmp_sol,problem);
+
+    if(curr_cross.delta_cost >= EPSILON) {
+        improve = 0;
+    }
+    else {
+        reverse(tmp_sol,curr_cross.i+1,curr_cross.j);
+        *cost+=curr_cross.delta_cost;
+        #if VERBOSE > 2
+        check_path_cost(tmp_sol,*cost,problem);
+        #endif
+    }
+  }
+}
+
+void tsp_g2opt_best(int* tmp_sol, double* cost, instance* problem){
   char improve = 1;
+  
   while (improve) {
     cross curr_cross = find_best_cross(tmp_sol,problem);
-    
+
     if(curr_cross.delta_cost >= EPSILON) {
         improve = 0;
     }

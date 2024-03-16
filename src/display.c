@@ -2,6 +2,9 @@
 #include "../include/tsp.h"
 #include "../include/utils.h"
 
+
+#pragma region static_functions
+
 void tsp_create_plot_data(const instance *problem){
     FILE* file = fopen(".tmp.dat","w");
 
@@ -13,6 +16,8 @@ void tsp_create_plot_data(const instance *problem){
 
     fclose(file);
 }
+
+#pragma endregion
 
 void tsp_plot(const instance *problem, const cli_info* cli){
     char file_name[100];

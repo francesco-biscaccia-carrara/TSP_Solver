@@ -1,5 +1,23 @@
 #include "../include/load.h"
 
+#define MAX_TIME    3.6e+6	//An hour
+
+#pragma region static_functions
+
+static void help_info(){
+    printf("\e[1mTo set the parameters properly you have to execute tsp and add:\e[m");
+    printf("\n '-in / -f / -file <filename.tsp>' to specity the input file; ");
+    printf("\n '-tl / -max_time <time_dbl>' to specity the max execution time (int value);");
+    printf("\n '-n / -n_nodes <num_nodes_int>' to specify the number of nodes in the TSP instance (int value);");
+    printf("\n '-algo / -method / -alg <method>' to specify the method to solve the TSP instance;");
+    printf("\n\tImplemented method: \n\t\t- GREEDY = greedy search,\n\t\t- G2OPT_F = greedy + 2opt w. first swaps,\n\t\t- G2OPT_B = greedy + 2opt w. best swaps");
+    printf("\n '-seed / -rnd_seed <seed>' to specity the random seed (int value);");
+    printf("\n '-help / --help / -h' to get help.");
+    printf("\n\nNOTICE: you can insert only .tsp file or random seed and number of nodes, NOT BOTH!\n");
+}
+
+#pragma endregion
+
 void parse_cli(int argc, char **argv,cli_info* cli_data){
     cli_data->nnodes=0;
     cli_data->random_seed=0;
