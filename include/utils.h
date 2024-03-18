@@ -7,11 +7,12 @@
 #include <stdlib.h>
 #include <string.h>  
 #include <float.h> 
-#include <time.h>
+#include <sys/time.h>
 #include <stdint.h>
 #include <math.h>
 #include <sys/stat.h>
 
 extern void print_error(const char *err);
-extern uint64_t get_time();
+extern double time_elapsed(double intial_time);
+extern double get_time();
 #endif

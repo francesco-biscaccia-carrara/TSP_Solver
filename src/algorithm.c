@@ -153,33 +153,36 @@ void solve_heuristic (cli_info* cli_info, instance* problem) {
 
     //GET OPTIMIZATION FUNCTION FOR GREEDY
     void *opt_func;
-    if(!strncmp(cli_info->method,"GREEDY",5)) {
+    if (!strncmp(cli_info->method,"GREEDY",5) || 
+        !strncmp(cli_info->method,"TABU_R",6)) {
         opt_func = NULL;
     }
     else if(!strncmp(cli_info->method,"G2OPT_F",7)) {
         opt_func = tsp_g2opt;
     }
-    else if(!strncmp(cli_info->method,"G2OPT_B",7)) {
+    else if(!strncmp(cli_info->method,"G2OPT_B",7) || 
+            !strncmp(cli_info->method,"TABU_B",6)) {
         opt_func = tsp_g2opt_best;
     }
     else {
         print_error("No function with alias");
     }
     
-    uint64_t start_time = get_time();
+    double initial_time = get_time();
 
-    for(int i=0;i < problem->nnodes && (start_time + cli_info->time_limit) > get_time(); i++) {
+    for(int i=0;i < problem->nnodes && time_elapsed(initial_time) <= get_time(); i++) {
         tsp_greedy(i,problem, opt_func, cli_info->method);
     }
 
+    if (!strncmp(cli_info->method,"TABU_B",6) ||
+        !strncmp(cli_info->method,"TABU_R",6)) {
+        tabu_search(problem, initial_time, cli_info);
+        }
 
-    print_best_solution_info(problem,&cli_info);
-    tabu_search(problem, start_time, cli_info);
-
-    uint64_t end_time = get_time();
+    double end_time = get_time();
 
     #if VERBOSE > 0
-	printf("TSP problem solved in %lu sec.s\n", end_time-start_time);
+	printf("TSP problem solved in %10.4f sec.s\n", end_time-initial_time);
 	#endif
 }
 
@@ -219,11 +222,11 @@ void tsp_greedy(int index, instance* problem, void (opt_func)(int*, double*, ins
     }
     
      
-    if(cost < problem->result){
-        free(problem->combination);
+    if(cost < problem->cost){
+        free(problem->solution);
 
-        problem->result = cost;
-        problem->combination = result;
+        problem->cost = cost;
+        problem->solution = result;
     }else{
         free(result);
     }
@@ -267,23 +270,22 @@ void tsp_g2opt_best(int* tmp_sol, double* cost, instance* problem){
   }
 }
 
-void tabu_search(instance* problem, uint64_t initial_time, cli_info* cli_info) {
+void tabu_search(instance* problem, double initial_time, cli_info* cli_info) {
     move *tabu_table = (move*) malloc(TABU_SIZE * sizeof(move));
 
     //reinizialize current solution
     int* tmp_sol = malloc(sizeof(int) * problem->nnodes);
     for(int i = 0; i < problem->nnodes; i++)   
-        tmp_sol[i] = problem->combination[i];
+        tmp_sol[i] = problem->solution[i];
 
-    double cost = problem->result;
+    double cost = problem->cost;
     int tabu_index = 0;
 
-    //TODO: fix until work
-    while ((initial_time + cli_info->time_limit) <= get_time()) {
+    while (time_elapsed(initial_time) <= cli_info->time_limit) {
 
         move m = find_best_cross_tabu(tmp_sol,problem, tabu_table);
         
-        #if VERBOSE > 1
+        #if VERBOSE > 2
         printf("delta cost:\t%10.4f\n",  m.delta_cost);
         #endif
 
@@ -295,12 +297,12 @@ void tabu_search(instance* problem, uint64_t initial_time, cli_info* cli_info) {
             tabu_index++;
         }
         else{
-            if(cost < problem->result) {
-                problem->result = cost;
-                printf("new_cost: %10.4f\n", problem->result);
+            if(cost < problem->cost) {
+                problem->cost = cost;
+                printf("new_cost:\t%10.4f\n", problem->cost);
                 
                 for(int i = 0; i < problem->nnodes; i++)    
-                    problem->combination[i] = tmp_sol[i];
+                    problem->solution[i] = tmp_sol[i];
 
                 #if VERBOSE > 2
                 check_path_cost(tmp_sol,*cost,problem);

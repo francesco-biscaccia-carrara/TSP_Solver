@@ -6,6 +6,17 @@ void print_error(const char *err){
     exit(1);
 } 
 
-uint64_t get_time(){
-    return (uint64_t) time(NULL);
+double get_time(){
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    return ((double)tv.tv_sec)+((double)tv.tv_usec/1e+6);
+}
+
+double time_elapsed(double initial_time) {
+    
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    return ((double)tv.tv_sec)+((double)tv.tv_usec/1e+6) - initial_time;
 }

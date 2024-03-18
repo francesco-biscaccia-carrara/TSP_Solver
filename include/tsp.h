@@ -18,8 +18,8 @@ typedef struct{
     point * points;
     double * edge_weights;
 
-    double result;
-    int* combination;
+    double cost;
+    int* solution;
 } instance;
 
 extern instance* instance_new();

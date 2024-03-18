@@ -9,9 +9,9 @@ void tsp_create_plot_data(const instance *problem){
     FILE* file = fopen(".tmp.dat","w");
 
     for(int i=0;i < problem->nnodes; i++){ 
-        fprintf(file,"%10.4f %10.4f\n",problem->points[problem->combination[i]].x,problem->points[problem->combination[i]].y);
-        if(i!=problem->nnodes-1) fprintf(file,"%10.4f %10.4f\n\n",problem->points[problem->combination[i+1]].x,problem->points[problem->combination[i+1]].y);
-        else fprintf(file,"%10.4f %10.4f\n",problem->points[problem->combination[0]].x,problem->points[problem->combination[0]].y);
+        fprintf(file,"%10.4f %10.4f\n",problem->points[problem->solution[i]].x,problem->points[problem->solution[i]].y);
+        if(i!=problem->nnodes-1) fprintf(file,"%10.4f %10.4f\n\n",problem->points[problem->solution[i+1]].x,problem->points[problem->solution[i+1]].y);
+        else fprintf(file,"%10.4f %10.4f\n",problem->points[problem->solution[0]].x,problem->points[problem->solution[0]].y);
     }
 
     fclose(file);
@@ -41,6 +41,6 @@ void tsp_plot(const instance *problem, const cli_info* cli){
 
 void print_best_solution_info(const instance* problem,const cli_info* cli){
     printf("\n\e[1mBest Solution Found\e[m (by \e[1m%s\e[m)\n",cli->method);
-    printf("Starting node:\t%i\n",problem->combination[0]);
-	printf("Cost: \t%10.4f\n", problem->result);
+    printf("Starting node:\t%i\n",problem->solution[0]);
+	printf("Cost: \t%10.4f\n", problem->cost);
 }

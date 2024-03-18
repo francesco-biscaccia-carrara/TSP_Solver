@@ -100,8 +100,8 @@ instance* instance_new() {
     problem->random_seed = 0;
     problem->points = NULL;
     problem->edge_weights = NULL;
-    problem->combination = NULL;
-    problem->result = DBL_MAX;
+    problem->solution = NULL;
+    problem->cost = DBL_MAX;
 
     #if VERBOSE > 1
     printf("\e[1mGENERATE NEW ISTANCE\e[m\n");
@@ -133,7 +133,7 @@ void instance_delete(instance* problem) {
 
     free(problem->points);
     free(problem->edge_weights);
-    free(problem->combination);
+    free(problem->solution);
     free(problem);
 
     #if VERBOSE > 1
