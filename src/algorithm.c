@@ -2,6 +2,7 @@
 #include "../include/tsp.h"
 #include "../include/utils.h"
 
+#define TABU_SIZE 80
 #pragma region static_functions
 
 /// @brief transform 2d coordinate for a triangular matrix in 1d array
@@ -92,7 +93,6 @@ static cross find_first_cross(int* tmp_sol,instance* problem){
     return (cross){-1,-1,EPSILON};
 }
 
-
 static cross find_best_cross(int* tmp_sol,instance* problem){
     cross best_cross = {-1,-1,INFINITY};
 
@@ -100,7 +100,7 @@ static cross find_best_cross(int* tmp_sol,instance* problem){
         for(int j=i+2;j<problem->nnodes;j++){
             if(i==0 && j+1==problem->nnodes) continue;
             double delta_cost=check_cross(problem,tmp_sol,i,j);
-            if(delta_cost < best_cross.delta_cost+EPSILON){
+            if(delta_cost < best_cross.delta_cost + EPSILON){
                 best_cross.i = i;
                 best_cross.j = j;
                 best_cross.delta_cost = delta_cost;
@@ -108,6 +108,43 @@ static cross find_best_cross(int* tmp_sol,instance* problem){
         }
     }
     return best_cross;
+}
+
+static char is_not_in_tabu(int i,int j, int k, int h, move* tabu) {
+
+    for(int u = 0; u < TABU_SIZE; u++){
+        
+        if(tabu[u].i == i &&
+           tabu[u].j == j &&
+           tabu[u].k == k &&
+           tabu[u].h == h)
+            return 0;
+           
+    }
+
+    return 1;
+}
+
+static move find_best_cross_tabu(int* tmp_sol, instance* problem, move* tabu){
+    move best_move = {-1,-1,-1,-1, INFINITY};
+
+    for(int i=0;i<problem->nnodes-2;i++){
+        for(int j=i+2;j<problem->nnodes;j++){
+            if(i==0 && j+1==problem->nnodes) continue;
+            double delta_cost=check_cross(problem,tmp_sol,i,j);
+            if(delta_cost < best_move.delta_cost+EPSILON && is_not_in_tabu(i, j, i+1, j+1, tabu)){
+                best_move.i = i;
+                best_move.j = j;
+                best_move.k = i+1;
+                best_move.h = j+1;
+                best_move.delta_cost = delta_cost;
+            }
+        }
+    }
+
+    if(best_move.delta_cost == INFINITY) print_error("ALL POSSIBLE MOVE IN THE TABU");
+
+    return best_move;
 }
 
 #pragma endregion
@@ -134,6 +171,10 @@ void solve_heuristic (cli_info* cli_info, instance* problem) {
     for(int i=0;i < problem->nnodes && (start_time + cli_info->time_limit) > get_time(); i++) {
         tsp_greedy(i,problem, opt_func, cli_info->method);
     }
+
+
+    print_best_solution_info(problem,&cli_info);
+    tabu_search(problem, start_time, cli_info);
 
     uint64_t end_time = get_time();
 
@@ -224,4 +265,47 @@ void tsp_g2opt_best(int* tmp_sol, double* cost, instance* problem){
         #endif
     }
   }
+}
+
+void tabu_search(instance* problem, uint64_t initial_time, cli_info* cli_info) {
+    move *tabu_table = (move*) malloc(TABU_SIZE * sizeof(move));
+
+    //reinizialize current solution
+    int* tmp_sol = malloc(sizeof(int) * problem->nnodes);
+    for(int i = 0; i < problem->nnodes; i++)   
+        tmp_sol[i] = problem->combination[i];
+
+    double cost = problem->result;
+    int tabu_index = 0;
+
+    //TODO: fix until work
+    while ((initial_time + cli_info->time_limit) <= get_time()) {
+
+        move m = find_best_cross_tabu(tmp_sol,problem, tabu_table);
+        
+        #if VERBOSE > 1
+        printf("delta cost:\t%10.4f\n",  m.delta_cost);
+        #endif
+
+        cost += m.delta_cost;
+        reverse(tmp_sol,m.i+1,m.j);
+
+        if(m.delta_cost >= EPSILON) {
+            tabu_table[tabu_index % TABU_SIZE] = m;
+            tabu_index++;
+        }
+        else{
+            if(cost < problem->result) {
+                problem->result = cost;
+                printf("new_cost: %10.4f\n", problem->result);
+                
+                for(int i = 0; i < problem->nnodes; i++)    
+                    problem->combination[i] = tmp_sol[i];
+
+                #if VERBOSE > 2
+                check_path_cost(tmp_sol,*cost,problem);
+                #endif
+            }
+        }         
+    }
 }

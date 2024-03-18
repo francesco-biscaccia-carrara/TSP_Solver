@@ -26,7 +26,7 @@ void parse_cli(int argc, char **argv,cli_info* cli_data){
     strcpy(cli_data->file_name,"");
 
     for (int i = 1; i < argc; i++) { 
-        if (!strcmp(argv[i],"-tl") ||!strcmp(argv[i],"-max_time")) cli_data->time_limit = abs(atoi(argv[++i])+1);
+        if (!strcmp(argv[i],"-tl") ||!strcmp(argv[i],"-max_time")) cli_data->time_limit = abs(atoi(argv[++i]));
         if (!strcmp(argv[i],"-in")  || !strcmp(argv[i],"-f")  || !strcmp(argv[i],"-file"))  strcpy(cli_data->file_name,argv[++i]);
         if (!strcmp(argv[i],"-n") || !strcmp(argv[i],"-n_nodes")) cli_data->nnodes = abs(atoi(argv[++i]));
         if (!strcmp(argv[i],"-algo") || !strcmp(argv[i],"-method") || !strcmp(argv[i],"-alg")) strcpy(cli_data->method,argv[++i]);
