@@ -15,4 +15,5 @@
 extern void print_error(const char *err);
 extern double time_elapsed(double intial_time);
 extern double get_time();
+extern void save_cost_on_file(size_t nnodes,uint32_t seed,double cost);
 #endif

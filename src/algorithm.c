@@ -63,14 +63,14 @@ static point_n_dist get_min_distance_point(int index, instance *problem, int* re
 static void check_path_cost(int* tmp_sol,double tmp_cost,instance* problem){
 
     double cost_saved = tmp_cost;
-    double computed_cost =0;
+    double cost_computed =0;
     
     for(int i=0;i< problem->nnodes-1;i++){
-        computed_cost+=tsp_save_weight(problem,tmp_sol[i],tmp_sol[i+1]);
+        cost_computed+=tsp_save_weight(problem,tmp_sol[i],tmp_sol[i+1]);
     }
-    computed_cost+=tsp_save_weight(problem,tmp_sol[problem->nnodes-1],tmp_sol[0]);
-    if (cost_saved - computed_cost > EPSILON){
-        print_error("SOMETHING WRONG HAPPENS");
+    cost_computed+=tsp_save_weight(problem,tmp_sol[problem->nnodes-1],tmp_sol[0]);
+    if (cost_saved - cost_computed > EPSILON){
+        print_error("cost_saved and cost_computed differ!");
     }
 }
 
@@ -291,6 +291,8 @@ void tabu_search(instance* problem, double initial_time, cli_info* cli_info) {
 
         cost += m.delta_cost;
         reverse(tmp_sol,m.i+1,m.j);
+
+        save_cost_on_file(problem->nnodes,problem->random_seed,cost);
 
         if(m.delta_cost >= EPSILON) {
             tabu_table[tabu_index % TABU_SIZE] = m;

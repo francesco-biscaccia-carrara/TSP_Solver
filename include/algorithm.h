@@ -27,7 +27,6 @@ typedef struct {
 extern void solve_heuristic (cli_info* information, instance* problem);
 
 extern void tsp_greedy(int index, instance* problem, void (opt_func)(int*, double*, instance*), char* opt_func_name);
-//We could embed both in a single funcion and pass another pointer (a lot of redundance now)
 extern void tsp_g2opt(int* tmp_sol, double* cost, instance* problem);
 extern void tsp_g2opt_best(int* tmp_sol, double* cost, instance* problem);
 extern void tabu_search(instance* problem, double initial_time, cli_info* cli_info);

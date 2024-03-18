@@ -44,3 +44,4 @@ void print_best_solution_info(const instance* problem,const cli_info* cli){
     printf("Starting node:\t%i\n",problem->solution[0]);
 	printf("Cost: \t%10.4f\n", problem->cost);
 }
+
