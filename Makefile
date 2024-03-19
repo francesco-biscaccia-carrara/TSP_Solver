@@ -1,14 +1,17 @@
-output : main.o tsp.o utils.o load.o display.o algorithm.o
-	gcc main.o tsp.o utils.o load.o display.o algorithm.o -lm -o main && rm *.o
+output : main.o tsp.o utils.o load.o display.o algorithm.o mt.o
+	gcc main.o tsp.o utils.o load.o display.o algorithm.o mt.o -lm -o main && rm *.o
 
-test : test.o tsp.o utils.o load.o display.o algorithm.o
-	gcc test.o tsp.o utils.o load.o display.o algorithm.o -lm -o test && rm *.o
+test : test.o tsp.o utils.o load.o display.o algorithm.o mt.o
+	gcc test.o tsp.o utils.o load.o display.o algorithm.o mt.o -lm -o test && rm *.o
 
 test.o: test.c
 	gcc -c test.c
 
 main.o: main.c
 	gcc -c main.c
+
+mt.o: src/mt.c include/mt.h
+	gcc -c src/mt.c
 
 algorithm.o: src/algorithm.c include/algorithm.h
 	gcc -c src/algorithm.c

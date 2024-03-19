@@ -15,5 +15,8 @@
 extern void print_error(const char *err);
 extern double time_elapsed(double intial_time);
 extern double get_time();
-extern void save_cost_on_file(size_t nnodes,uint32_t seed,double cost);
+extern FILE* start_plot_pipeline();
+extern void double_to_plot(FILE* gnuplot_pipe,double cost);
+extern void close_plot_pipeline(FILE* gnuplot_pipe);
+
 #endif

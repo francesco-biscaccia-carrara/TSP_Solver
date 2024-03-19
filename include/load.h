@@ -9,8 +9,9 @@
 typedef struct {
     size_t nnodes;
     uint32_t random_seed;
-    char file_name[60];
-    char method[20];
+    char file_name[64];
+    char method[23];
+    char mt;
     uint64_t time_limit;
 } cli_info;
 

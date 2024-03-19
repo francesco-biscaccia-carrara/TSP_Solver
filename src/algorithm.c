@@ -1,16 +1,26 @@
 #include "../include/algorithm.h"
 #include "../include/tsp.h"
+#include "../include/mt.h"
 #include "../include/utils.h"
 
-#define TABU_SIZE 80
+#define TABU_SIZE 50
+#define STD_NUM_THREADS 16
+mt_context mt_g2opt_b;
+
 #pragma region static_functions
+/*
+static uint16_t suggest_num_threads(size_t n){
+    if(n/10 < 1) return 8;
+    if(n/10 >1 && n/10 <10) return 16;
+    if(n/10 >10) return 24;
+}*/
 
 /// @brief transform 2d coordinate for a triangular matrix in 1d array
 /// @param n number of rows
 /// @param i row
 /// @param j column
 /// @return index where the desired value is stored
-static int coords_to_index(uint32_t n, int i, int j){
+static int coords_to_index(size_t n, int i, int j){
     return i<j ? INDEX(n,i,j) : INDEX(n,j,i);
 }
 
@@ -147,6 +157,57 @@ static move find_best_cross_tabu(int* tmp_sol, instance* problem, move* tabu){
     return best_move;
 }
 
+#pragma region mt_function
+
+static void* find_local_best_swap(void* data){
+    mt_data_g2pot_b* d = (mt_data_g2pot_b*) data;
+    instance* prob = (instance*) d->prob;
+    cross * curr_cross = (cross*) d->best_cross; 
+
+    int start = d->k * prob->nnodes/mt_g2opt_b.num_threads - d->k;
+    int end = ((d->k)+1)* prob->nnodes/mt_g2opt_b.num_threads-1 < prob->nnodes-2 ? ((d->k)+1)* prob->nnodes/mt_g2opt_b.num_threads-1 : prob->nnodes-2 ;
+
+    cross best_cross = {-1,-1,INFINITY};
+    for(int i=start;i<end;i++){
+        for(int j=i+2;j<prob->nnodes;j++){
+            if(i==0 && j+1==prob->nnodes) continue;
+            double delta_cost=check_cross(prob,d->tmp_sol,i,j);
+            if(delta_cost < best_cross.delta_cost+EPSILON){
+                best_cross.i=i;
+                best_cross.j=j;
+                best_cross.delta_cost= delta_cost;
+            }
+        }
+    }
+    pthread_mutex_lock(&mt_g2opt_b.mutex);
+    if(best_cross.delta_cost < curr_cross->delta_cost+EPSILON){
+                curr_cross->i = best_cross.i;
+                curr_cross->j = best_cross.j;
+                curr_cross->delta_cost = best_cross.delta_cost;
+    }
+    pthread_mutex_unlock(&mt_g2opt_b.mutex);
+    return NULL;
+}
+
+static cross find_best_cross_mt(int* tmp_sol,const instance* problem){
+    cross best_cross = {-1,-1,INFINITY};
+    
+    init_mt_context(&mt_g2opt_b,STD_NUM_THREADS);
+    mt_data_g2pot_b data_array[mt_g2opt_b.num_threads];
+
+    for (int k = 0; k <mt_g2opt_b.num_threads; k++) {
+        data_array[k].prob = problem;
+        data_array[k].tmp_sol = tmp_sol;
+        data_array[k].best_cross = &best_cross;
+        data_array[k].k=k;
+        assign_task(&mt_g2opt_b,k,find_local_best_swap,&data_array[k]);
+    }
+    delete_mt_context(&mt_g2opt_b);
+    return best_cross;
+}
+
+#pragma endregion
+
 #pragma endregion
 
 void solve_heuristic (cli_info* cli_info, instance* problem) {
@@ -162,7 +223,8 @@ void solve_heuristic (cli_info* cli_info, instance* problem) {
     }
     else if(!strncmp(cli_info->method,"G2OPT_B",7) || 
             !strncmp(cli_info->method,"TABU_B",6)) {
-        opt_func = tsp_g2opt_best;
+        if(cli_info->mt) opt_func = tsp_g2opt_best_mt;
+        else opt_func = tsp_g2opt_best;
     }
     else {
         print_error("No function with alias");
@@ -270,6 +332,26 @@ void tsp_g2opt_best(int* tmp_sol, double* cost, instance* problem){
   }
 }
 
+void tsp_g2opt_best_mt(int* tmp_sol, double* cost, instance* problem){
+  char improve = 1;
+  
+  while (improve) {
+    cross curr_cross = find_best_cross_mt(tmp_sol,problem);
+
+    if(curr_cross.delta_cost >= EPSILON) {
+        improve = 0;
+    }
+    else {
+        reverse(tmp_sol,curr_cross.i+1,curr_cross.j);
+        *cost+=curr_cross.delta_cost;
+        
+        #if VERBOSE > 2
+        check_path_cost(tmp_sol,*cost,problem);
+        #endif
+    }
+  }
+}
+
 void tabu_search(instance* problem, double initial_time, cli_info* cli_info) {
     move *tabu_table = (move*) malloc(TABU_SIZE * sizeof(move));
 
@@ -280,6 +362,8 @@ void tabu_search(instance* problem, double initial_time, cli_info* cli_info) {
 
     double cost = problem->cost;
     int tabu_index = 0;
+
+    FILE* pipe = start_plot_pipeline();
 
     while (time_elapsed(initial_time) <= cli_info->time_limit) {
 
@@ -292,7 +376,7 @@ void tabu_search(instance* problem, double initial_time, cli_info* cli_info) {
         cost += m.delta_cost;
         reverse(tmp_sol,m.i+1,m.j);
 
-        save_cost_on_file(problem->nnodes,problem->random_seed,cost);
+        double_to_plot(pipe,cost);
 
         if(m.delta_cost >= EPSILON) {
             tabu_table[tabu_index % TABU_SIZE] = m;
@@ -312,4 +396,5 @@ void tabu_search(instance* problem, double initial_time, cli_info* cli_info) {
             }
         }         
     }
+    close_plot_pipeline(pipe);
 }
