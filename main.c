@@ -15,8 +15,10 @@ int main(int argc, char **argv){
 
 	//instance* problem=instance_new();
 
+	signal(SIGINT, check_signal);
+
 	#if VERBOSE > 1
-	printf("Time Limit\t: %llu ms\n",cli_data.time_limit);
+	printf("Time Limit\t: %lu ms\n",cli_data.time_limit);
 	printf("CLI line\t: ' ");
 	for (int a = 0; a < argc; a++) printf("%s ", argv[a]); 
 	printf("'\n\n");

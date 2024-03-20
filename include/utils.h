@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 extern void print_error(const char *err);
 extern double time_elapsed(double intial_time);
@@ -18,5 +19,5 @@ extern double get_time();
 extern FILE* start_plot_pipeline();
 extern void double_to_plot(FILE* gnuplot_pipe,double cost);
 extern void close_plot_pipeline(FILE* gnuplot_pipe);
-
+extern void check_signal(const int sigint);
 #endif

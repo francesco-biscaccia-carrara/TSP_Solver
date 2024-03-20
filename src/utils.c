@@ -35,3 +35,7 @@ void close_plot_pipeline(FILE* gnuplot_pipe){
     fprintf(gnuplot_pipe,"e\n");
     pclose(gnuplot_pipe);
 }
+
+void check_signal(const int sigint) {
+    print_error("Exit...");
+}

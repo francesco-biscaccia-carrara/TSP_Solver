@@ -20,7 +20,7 @@ void tsp_create_plot_data(const instance *problem){
 #pragma endregion
 
 void tsp_plot(const instance *problem, const cli_info* cli){
-    char file_name[100];
+    char file_name[101];
     tsp_create_plot_data(problem);
     
     if(problem->random_seed) sprintf(file_name,"plot/n_%ld_s_%u_%s_plot.png",problem->nnodes,problem->random_seed,cli->method);

@@ -3,7 +3,7 @@
 #include "../include/mt.h"
 #include "../include/utils.h"
 
-#define TABU_SIZE 50
+#define TABU_SIZE 500
 #define STD_NUM_THREADS 16
 mt_context mt_g2opt_b;
 
@@ -232,7 +232,7 @@ void solve_heuristic (cli_info* cli_info, instance* problem) {
     
     double initial_time = get_time();
 
-    for(int i=0;i < problem->nnodes && time_elapsed(initial_time) <= get_time(); i++) {
+    for(int i=0;i < problem->nnodes || time_elapsed(initial_time) <= get_time(); i++) {
         tsp_greedy(i,problem, opt_func, cli_info->method);
     }
 
