@@ -1,6 +1,8 @@
 #include "../include/mt.h"
 #include "../include/utils.h"
 
+#define NODES_THRESHOLD 100
+
 void init_mt_context(mt_context* ctx,int num_threads){
     ctx->num_threads=num_threads;
     ctx->threads = (pthread_t*) malloc(num_threads*sizeof(pthread_t));
@@ -17,9 +19,9 @@ void delete_mt_context(mt_context* ctx){
     free(ctx->threads);
 }
 
-extern uint16_t best_num_threads(size_t n){
+extern uint16_t sugg_num_threads(size_t n){
     uint16_t real_cores = sysconf(_SC_NPROCESSORS_ONLN);
-    if(n<50) return 0;
-    if(n>50 && n < 100) return sysconf(_SC_NPROCESSORS_ONLN);
-    else return 2*sysconf(_SC_NPROCESSORS_ONLN);
+    if(n<NODES_THRESHOLD) return 0;
+    if(n>NODES_THRESHOLD && n < NODES_THRESHOLD*10) return 2*sysconf(_SC_NPROCESSORS_ONLN);
+    else return 3*sysconf(_SC_NPROCESSORS_ONLN);
 }

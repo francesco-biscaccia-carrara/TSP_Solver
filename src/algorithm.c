@@ -4,7 +4,6 @@
 #include "../include/utils.h"
 
 #define TABU_SIZE 500
-#define STD_NUM_THREADS 16
 static mt_context mt_g2opt_b;
 
 #pragma region static_functions
@@ -186,7 +185,7 @@ static void* find_local_best_swap(void* data){
 static cross find_best_cross_mt(int* tmp_sol,const instance* problem){
     cross best_cross = {-1,-1,INFINITY};
     
-    init_mt_context(&mt_g2opt_b,STD_NUM_THREADS);
+    init_mt_context(&mt_g2opt_b,sugg_num_threads(problem->nnodes));
     mt_data_g2pot_b data_array[mt_g2opt_b.num_threads];
 
     for (int k = 0; k <mt_g2opt_b.num_threads; k++) {
