@@ -1,8 +1,6 @@
 #include "../include/mt.h"
 #include "../include/utils.h"
 
-#pragma region static_functions
-
 void init_mt_context(mt_context* ctx,int num_threads){
     ctx->num_threads=num_threads;
     ctx->threads = (pthread_t*) malloc(num_threads*sizeof(pthread_t));
@@ -19,4 +17,9 @@ void delete_mt_context(mt_context* ctx){
     free(ctx->threads);
 }
 
-#pragma endregion
+extern uint16_t best_num_threads(size_t n){
+    uint16_t real_cores = sysconf(_SC_NPROCESSORS_ONLN);
+    if(n<50) return 0;
+    if(n>50 && n < 100) return sysconf(_SC_NPROCESSORS_ONLN);
+    else return 2*sysconf(_SC_NPROCESSORS_ONLN);
+}

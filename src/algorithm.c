@@ -5,15 +5,9 @@
 
 #define TABU_SIZE 500
 #define STD_NUM_THREADS 16
-mt_context mt_g2opt_b;
+static mt_context mt_g2opt_b;
 
 #pragma region static_functions
-/*
-static uint16_t suggest_num_threads(size_t n){
-    if(n/10 < 1) return 8;
-    if(n/10 >1 && n/10 <10) return 16;
-    if(n/10 >10) return 24;
-}*/
 
 /// @brief transform 2d coordinate for a triangular matrix in 1d array
 /// @param n number of rows
@@ -232,7 +226,7 @@ void solve_heuristic (cli_info* cli_info, instance* problem) {
     
     double initial_time = get_time();
 
-    for(int i=0;i < problem->nnodes || time_elapsed(initial_time) <= get_time(); i++) {
+    for(int i=0;i < problem->nnodes && time_elapsed(initial_time) <= cli_info->time_limit; i++) {
         tsp_greedy(i,problem, opt_func, cli_info->method);
     }
 
