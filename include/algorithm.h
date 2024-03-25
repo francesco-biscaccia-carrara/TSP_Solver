@@ -33,10 +33,10 @@ typedef struct{
 
 extern void solve_heuristic (cli_info* information, instance* problem);
 
-extern void tsp_greedy(int index, instance* problem, void (opt_func)(int*, double*, instance*), char* opt_func_name);
+extern void tsp_greedy(int, instance*, void (opt_func)(int*, double*, instance*), char*);
 extern void tsp_g2opt(int* tmp_sol, double* cost, instance* problem);
 extern void tsp_g2opt_best(int* tmp_sol, double* cost, instance* problem);
 extern void tsp_g2opt_best_mt(int* tmp_sol, double* cost, instance* problem);
 extern void tabu_search(instance* problem, double initial_time, cli_info* cli_info);
-
+extern void VNS(instance*, double, cli_info*);
 #endif

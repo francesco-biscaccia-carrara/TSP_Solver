@@ -15,6 +15,7 @@ typedef struct {
     uint64_t time_limit;
 } cli_info;
 
+extern cli_info global_cli;
 extern void parse_cli(int argc, char **argv, cli_info* cli_data);
 
 #endif

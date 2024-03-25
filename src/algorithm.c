@@ -13,7 +13,7 @@ static mt_context mt_g2opt_b;
 /// @param i row
 /// @param j column
 /// @return index where the desired value is stored
-static int coords_to_index(size_t n, int i, int j){
+static inline int coords_to_index(size_t n, int i, int j){
     return i<j ? INDEX(n,i,j) : INDEX(n,j,i);
 }
 
@@ -21,10 +21,10 @@ static double euc_2d(point* a, point* b) {
     double dx = b->x - a->x;
     double dy = b->y - a->y; 
 
-    return sqrt(SQUARE(dx) + SQUARE(dy));
+    return ((int) (sqrt(SQUARE(dx) + SQUARE(dy)) + 0.5)) + 0.0;
 }
 
-static void reverse(int* solution, int i,int j){
+static void reverse(int* solution, int i, int j){
     while(i<j){
         int tmp = solution[i];
         solution[i]=solution[j];
@@ -35,11 +35,12 @@ static void reverse(int* solution, int i,int j){
 
 static double tsp_save_weight(instance * problem, int i, int j){
     if (i == j) return 0;
+    int ind = coords_to_index(problem->nnodes,i,j);
 
-    if(!problem->edge_weights[coords_to_index(problem->nnodes,i,j)])
-        problem->edge_weights[coords_to_index(problem->nnodes,i,j)] = euc_2d(&(problem->points[i]), &(problem->points[j]));
+    if(!problem->edge_weights[ind])
+        problem->edge_weights[ind] = euc_2d(&(problem->points[i]), &(problem->points[j]));
       
-    return problem->edge_weights[coords_to_index(problem->nnodes,i,j)];
+    return problem->edge_weights[ind];
 }
 
 static point_n_dist get_min_distance_point(int index, instance *problem, int* res) {
@@ -48,9 +49,8 @@ static point_n_dist get_min_distance_point(int index, instance *problem, int* re
     point_n_dist out = { .dist = 0.0, .index = 0};
 
     for(int i = 0; i < problem->nnodes; i++) {
-        
         if(res[i] != 0) continue;
-
+        
         double dist = tsp_save_weight(problem,index,i);
 
         if (dist < min && dist != 0) {
@@ -148,6 +148,36 @@ static move find_best_cross_tabu(int* tmp_sol, instance* problem, move* tabu){
     if(best_move.delta_cost == INFINITY) print_error("ALL POSSIBLE MOVE IN THE TABU");
 
     return best_move;
+} 
+
+int comp(const void * elem1, const void * elem2) {
+    int f = *((int*) elem1);
+    int s = *((int*) elem2);
+    if(f > s) return 1;
+    if(f < s) return -1;
+    return 0;
+}
+
+static void kick(int* tmp_sol, int size) {
+    int ternary[3] = {-1, -1, -1};
+    ternary[0] = rand()%size;
+    
+    int x = -1;
+    while ((x = rand()%size) == ternary[0]);
+    ternary[1] = x;    
+    while ((x = rand()%size) == ternary[0] || x == ternary[1]);
+    ternary[2] = x;
+
+    qsort(ternary, 3, sizeof(int), comp);
+
+    int* infuncsol = (int*) calloc(size, sizeof(int));
+    for(int c = 0; c <= ternary[0]; c++) infuncsol[c] = tmp_sol[c];
+    for(int c = 0; c < ternary[2] - ternary[1]; c++) infuncsol[ternary[0]+1+c] = tmp_sol[ternary[2] - c];
+    for(int c = 0; c < ternary[1] - ternary[0]; c++) infuncsol[ternary[0]+ ternary[2] - ternary[1]+1+c] = tmp_sol[ternary[0] + 1 + c];
+    for(int c = ternary[2]+1; c <size; c++) infuncsol[c] = tmp_sol[c];
+    for(int c = 0; c < size; c++) tmp_sol[c] = infuncsol[c];
+
+    if(infuncsol != NULL) free(infuncsol);
 }
 
 #pragma region mt_function
@@ -208,7 +238,8 @@ void solve_heuristic (cli_info* cli_info, instance* problem) {
     //GET OPTIMIZATION FUNCTION FOR GREEDY
     void *opt_func;
     if (!strncmp(cli_info->method,"GREEDY",5) || 
-        !strncmp(cli_info->method,"TABU_R",6)) {
+        !strncmp(cli_info->method,"TABU_R",6) ||
+        !strncmp(cli_info->method,"VNS",3)) {
         opt_func = NULL;
     }
     else if(!strncmp(cli_info->method,"G2OPT_F",7)) {
@@ -233,6 +264,10 @@ void solve_heuristic (cli_info* cli_info, instance* problem) {
         !strncmp(cli_info->method,"TABU_R",6)) {
         tabu_search(problem, initial_time, cli_info);
         }
+    if (
+        !strncmp(cli_info->method,"VNS",5)) {
+        VNS(problem, initial_time, cli_info);
+    }
 
     double end_time = get_time();
 
@@ -292,7 +327,7 @@ void tsp_g2opt(int* tmp_sol, double* cost, instance* problem){
     while (improve) {
     cross curr_cross = find_first_cross(tmp_sol,problem);
 
-    if(curr_cross.delta_cost >= EPSILON) {
+    if(curr_cross.delta_cost >= -EPSILON) {
         improve = 0;
     }
     else {
@@ -311,7 +346,7 @@ void tsp_g2opt_best(int* tmp_sol, double* cost, instance* problem){
   while (improve) {
     cross curr_cross = find_best_cross(tmp_sol,problem);
 
-    if(curr_cross.delta_cost >= EPSILON) {
+    if(curr_cross.delta_cost >= -EPSILON) {
         improve = 0;
     }
     else {
@@ -390,4 +425,34 @@ void tabu_search(instance* problem, double initial_time, cli_info* cli_info) {
         }         
     }
     close_plot_pipeline(pipe);
+}
+
+void VNS(instance* problem, double initial_time, cli_info* cli_info) {
+    
+    double cost = problem->cost;
+    int* tmp_sol = malloc(sizeof(int) * problem->nnodes);
+    memcpy(tmp_sol, problem->solution, problem->nnodes * sizeof(problem->solution[0]));
+    
+
+    while (time_elapsed(initial_time) <= cli_info->time_limit)
+    {
+        tsp_g2opt_best(tmp_sol, &cost, problem);
+        if(cost < problem->cost) {
+            problem->cost = cost;
+            memcpy(problem->solution, tmp_sol, problem->nnodes * sizeof(problem->solution[0]));
+            
+            #if VERBOSE > 0
+            printf("new best cost:\t%10.4f\n", problem->cost);
+            #endif
+        }
+        for(int i = 0; i < 4; i++) kick(tmp_sol, problem->nnodes);
+        
+        cost = 0;
+        for (size_t i = 0; i < problem->nnodes - 1; i++) {
+            cost += tsp_save_weight(problem, tmp_sol[i],tmp_sol[i+1]);
+        }
+        cost +=tsp_save_weight(problem, tmp_sol[problem->nnodes-1], tmp_sol[0]);
+    }
+
+    free(tmp_sol);
 }
