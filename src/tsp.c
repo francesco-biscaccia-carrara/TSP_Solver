@@ -1,6 +1,15 @@
 #include "../include/tsp.h"
 
+#define SQUARE(x)   (x*x)
+
 #pragma region static_functions
+
+static double euc_2d(point* a, point* b) {
+    double dx = b->x - a->x;
+    double dy = b->y - a->y; 
+
+    return ((int) (sqrt(SQUARE(dx) + SQUARE(dy)) + 0.5)) + 0.0;
+}
 
 static void tsp_read_file(instance * problem, const char* file){
     FILE *f = fopen(file, "r");
@@ -139,4 +148,14 @@ void instance_delete(instance* problem) {
     #if VERBOSE > 1
     printf("\e[1mDELETE THE ISTANCE\e[m\n");
     #endif
+}
+
+double tsp_save_weight(instance * problem, int i, int j){
+    if (i == j) return 0;
+    int ind = coords_to_index(problem->nnodes,i,j);
+
+    if(!problem->edge_weights[ind])
+        problem->edge_weights[ind] = euc_2d(&(problem->points[i]), &(problem->points[j]));
+      
+    return problem->edge_weights[ind];
 }

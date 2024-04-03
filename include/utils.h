@@ -14,6 +14,7 @@
 #include <signal.h>
 
 extern void print_error(const char *err);
+int coords_to_index(size_t n, int i, int j);
 extern double time_elapsed(double intial_time);
 extern double get_time();
 extern FILE* start_plot_pipeline();

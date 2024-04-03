@@ -2,6 +2,7 @@
 #include "include/display.h"
 #include "include/load.h"
 #include "include/tsp.h"
+#include "include/cplex_solver.h"
 
 #define TESTPHASE 0
 
@@ -34,9 +35,12 @@ out procedure (int argc, char **argv) {
 	instance* problem = instance_new_cli(&cli_data);
 	//tsp_instance_from_cli(problem,&cli_data);
 	
-	solve_heuristic(&cli_data, problem);
+	if(!strcmp(cli_data.method,"CPLEX")) tsp_CPX_opt(problem);
+	else solve_heuristic(&cli_data, problem);
+	
 	print_best_solution_info(problem,&cli_data);
-	tsp_plot(problem,&cli_data);  
+	//TODO: wait the adjust of solution
+	//tsp_plot(problem,&cli_data);  
 	instance_delete(problem);
 
 	ret.cost = problem->cost;

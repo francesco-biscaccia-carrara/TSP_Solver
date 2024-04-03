@@ -10,6 +10,7 @@ static void help_info(){
     printf("\n '-tl / -max_time <time_dbl>' to specity the max execution time (int value);");
     printf("\n '-n / -n_nodes <num_nodes_int>' to specify the number of nodes in the TSP instance (int value);");
     printf("\n '-algo / -method / -alg <method>' to specify the method to solve the TSP instance;");
+    //TODO: add all new method 
     printf("\n\tImplemented method: \n\t\t- GREEDY = greedy search,\n\t\t- G2OPT_F = greedy + 2opt w. first swaps,\n\t\t- G2OPT_B = greedy + 2opt w. best swaps");
     printf("\n '-seed / -rnd_seed <seed>' to specity the random seed (int value);");
     printf("\n '-multi_th / -mt' to use multithreading computation;");

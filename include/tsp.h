@@ -24,6 +24,7 @@ typedef struct{
 
 extern instance* instance_new();
 extern instance* instance_new_cli(cli_info* cli_info);
-
 extern void instance_delete(instance * inst);
+
+extern double tsp_save_weight(instance * problem, int i, int j);
 #endif

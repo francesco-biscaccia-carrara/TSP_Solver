@@ -6,8 +6,6 @@
 
 #define EPSILON     1e-7
 //#define INT_TOL		1e-5 	
-#define SQUARE(x)   (x*x)
-#define INDEX(n,i,j) ((i*n-(i-1)*(i)/2) + (j-i-1)-i)
 
 typedef struct{
     int i,j;

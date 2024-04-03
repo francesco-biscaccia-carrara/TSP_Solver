@@ -1,32 +1,30 @@
-output : main.o tsp.o utils.o load.o display.o algorithm.o mt.o
-	gcc main.o tsp.o utils.o load.o display.o algorithm.o mt.o -lm -o main && rm *.o
+CC = gcc
+CFLAGS = -I./include
+CPLEXDIR = /opt/ibm/ILOG/CPLEX_Studio2211/cplex
+CPLEXINC = -I$(CPLEXDIR)/include 
+CPLEXLIB = -L$(CPLEXDIR)/lib/x86-64_linux/static_pic -lcplex
+SRCDIR = src
+INCDIR = include
 
-test : test.o tsp.o utils.o load.o display.o algorithm.o mt.o
-	gcc test.o tsp.o utils.o load.o display.o algorithm.o mt.o -lm -o test && rm *.o
+SRCS = $(wildcard $(SRCDIR)/*.c)
+OBJS = $(SRCS:$(SRCDIR)/%.c=%.o) 
+OBJS += main.o
+DEPS = $(wildcard $(INCDIR)/*.h)
+TARGET = main
+TEST = test
 
-test.o: test.c
-	gcc -c test.c
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(CPLEXINC) $(CPLEXLIB) -lm -lpthread -g -O3 && rm -f $(OBJS)
 
 main.o: main.c
-	gcc -c main.c
+	$(CC) $(CPLEXINC) $(CPLEXINC) $(CPLEXLIB) -c main.c -o main.o
 
-mt.o: src/mt.c include/mt.h
-	gcc -c src/mt.c
-
-algorithm.o: src/algorithm.c include/algorithm.h
-	gcc -c src/algorithm.c
-
-display.o: src/display.c include/display.h
-	gcc -c src/display.c
-
-load.o: src/load.c include/load.h
-	gcc -c src/load.c
-
-tsp.o: src/tsp.c include/tsp.h
-	gcc -c src/tsp.c
-
-utils.o: src/utils.c include/utils.h
-	gcc -c src/utils.c
+%.o: $(SRCDIR)/%.c $(DEPS)
+	$(CC) $(CFLAGS) $(CPLEXINC) $(CPLEXLIB) -c $< -o $@
 
 clean:
-	rm *.o main test
+	rm -f $(OBJS)

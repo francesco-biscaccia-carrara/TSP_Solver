@@ -41,7 +41,8 @@ void tsp_plot(const instance *problem, const cli_info* cli){
 
 void print_best_solution_info(const instance* problem,const cli_info* cli){
     printf("\n\e[1mBest Solution Found\e[m (by \e[1m%s\e[m)\n",cli->method);
-    printf("Starting node:\t%i\n",problem->solution[0]);
+    //TODO: TMP change. We have to convert CPLEX format sol into our format sol
+    if(strcmp(cli->method,"CPLEX")) printf("Starting node:\t%i\n",problem->solution[0]);
 	printf("Cost: \t%10.4f\n", problem->cost);
 }
 

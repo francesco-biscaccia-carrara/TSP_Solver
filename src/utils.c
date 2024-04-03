@@ -1,5 +1,17 @@
 #include "../include/utils.h"
 
+#define INDEX(n,i,j) (i *n + j - (( i + 1 ) * ( i + 2 )) / 2)
+
+/// @brief transform 2d coordinate for a triangular matrix in 1d array
+/// @param n number of rows
+/// @param i row
+/// @param j column
+/// @return index where the desired value is stored
+int coords_to_index(size_t n, int i, int j){
+    if (i == j) print_error("i == j");
+    return i<j ? INDEX(n,i,j) : INDEX(n,j,i);
+}
+
 void print_error(const char *err){
     printf("\n\x1b[31mERROR: %s\x1b[0m\n", err); 
     fflush(NULL); 

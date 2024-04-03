@@ -8,22 +8,6 @@ static mt_context mt_g2opt_b;
 
 #pragma region static_functions
 
-/// @brief transform 2d coordinate for a triangular matrix in 1d array
-/// @param n number of rows
-/// @param i row
-/// @param j column
-/// @return index where the desired value is stored
-static inline int coords_to_index(size_t n, int i, int j){
-    return i<j ? INDEX(n,i,j) : INDEX(n,j,i);
-}
-
-static double euc_2d(point* a, point* b) {
-    double dx = b->x - a->x;
-    double dy = b->y - a->y; 
-
-    return ((int) (sqrt(SQUARE(dx) + SQUARE(dy)) + 0.5)) + 0.0;
-}
-
 static void reverse(int* solution, int i, int j){
     while(i<j){
         int tmp = solution[i];
@@ -31,16 +15,6 @@ static void reverse(int* solution, int i, int j){
         solution[j]=tmp;
         i++;j--;
     }
-}
-
-static double tsp_save_weight(instance * problem, int i, int j){
-    if (i == j) return 0;
-    int ind = coords_to_index(problem->nnodes,i,j);
-
-    if(!problem->edge_weights[ind])
-        problem->edge_weights[ind] = euc_2d(&(problem->points[i]), &(problem->points[j]));
-      
-    return problem->edge_weights[ind];
 }
 
 static point_n_dist get_min_distance_point(int index, instance *problem, int* res) {
@@ -232,6 +206,8 @@ static cross find_best_cross_mt(int* tmp_sol,const instance* problem){
 #pragma endregion
 
 #pragma endregion
+
+
 
 void solve_heuristic (cli_info* cli_info, instance* problem) {
 
