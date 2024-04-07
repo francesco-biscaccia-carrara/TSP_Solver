@@ -4,6 +4,43 @@
 
 #pragma region static_functions
 
+void solution_as_array(int* succ, int nnodes,int* sol){
+	int j = succ[0];
+	for(int i =0;i<nnodes;i++){
+		sol[i]=j;
+		j = succ[j];
+	}
+}
+
+void add_sec(CPXCENVptr env, CPXLPptr lp,instance* problem,int ncomp,int ncols,int* comp){
+
+	if(ncomp==1) print_error("no sec needed for 1 comp!");
+
+	int* index = (int*) calloc(ncols,sizeof(int));
+	double* value = (double*) calloc(ncols,sizeof(double));
+
+	for(int k=1;k<=ncomp;k++){
+		int nnz=0;
+		char sense ='L';
+		int start_index = 0;
+		double rhs = -1.0;
+		for(int i =0;i<problem->nnodes;i++){
+			if(comp[i]!=k) continue;
+			rhs++;
+			for(int j =i+1;j < problem->nnodes;j++){
+				if(comp[j]!=k) continue;
+				index[nnz]=coords_to_index(problem->nnodes,i,j);
+				value[nnz]=1.0;
+				nnz++;
+			}
+		}
+		CPXaddrows(env,lp,0,1,nnz,&rhs,&sense,&start_index,index,value,NULL,NULL);
+	}
+
+	free(index);
+	free(value);
+}
+
 void build_model(instance *problem, CPXENVptr env, CPXLPptr lp){    
 	int izero = 0;
 	char binary = 'B'; 
@@ -58,16 +95,74 @@ void build_model(instance *problem, CPXENVptr env, CPXLPptr lp){
 
 }
 
+void build_sol(const double *xstar, instance *inst, int *succ, int *comp, int *ncomp){   
+#ifdef DEBUG
+	int *degree = (int *) calloc(inst->nnodes, sizeof(int));
+	for ( int i = 0; i < inst->nnodes; i++ )
+	{
+		for ( int j = i+1; j < inst->nnodes; j++ )
+		{
+			int k = xpos(i,j,inst);
+			if ( fabs(xstar[k]) > EPS && fabs(xstar[k]-1.0)) > EPS ) print_error(" wrong xstar in build_sol()");
+			if ( xstar[k] > 0.5 ) 
+			{
+				++degree[i];
+				++degree[j];
+			}
+		}
+	}
+	for ( int i = 0; i < inst->nnodes; i++ )
+	{
+		if ( degree[i] != 2 ) print_error("wrong degree in build_sol()");
+	}	
+	free(degree);
+#endif
+
+	*ncomp = 0;
+	for ( int i = 0; i < inst->nnodes; i++ )
+	{
+		succ[i] = -1;
+		comp[i] = -1;
+	}
+	
+	for ( int start = 0; start < inst->nnodes; start++ )
+	{
+		if ( comp[start] >= 0 ) continue;  // node "start" was already visited, just skip it
+
+		// a new component is found
+		(*ncomp)++;
+		int i = start;
+		int done = 0;
+		while ( !done )  // go and visit the current component
+		{
+			comp[i] = *ncomp;
+			done = 1;
+			for ( int j = 0; j < inst->nnodes; j++ )
+			{
+				if ( i != j && xstar[coords_to_index(inst->nnodes,i,j)] > 0.5 && comp[j] == -1 ) // the edge [i,j] is selected in xstar and j was not visited before 
+				{
+					succ[i] = j;
+					i = j;
+					done = 0;
+					break;
+				}
+			}
+		}	
+		succ[i] = start;  // last arc to close the cycle
+		
+		// go to the next component...
+	}
+}
+
+
 #pragma endregion
 
 
 int tsp_CPX_opt(instance *problem){  
-    char prob_name[100];
-    sprintf(prob_name,"TSP_n-%lu_s-%u",problem->nnodes,problem->random_seed);
-
+	
 	int error;
 	CPXENVptr env = CPXopenCPLEX(&error);
-	CPXLPptr lp = CPXcreateprob(env, &error, prob_name); 
+	CPXLPptr lp = CPXcreateprob(env, &error, "TSP"); 
 
 	build_model(problem, env, lp);
 
@@ -77,6 +172,7 @@ int tsp_CPX_opt(instance *problem){
 
 	int ncols = CPXgetnumcols(env, lp);
 	double sol_cost = 0;
+	double best_obj;
 	double *xstar = (double *) calloc(ncols, sizeof(double));
 	if (CPXgetx(env, lp, xstar, 0, ncols-1)) print_error("CPXgetx() error");	
 	for ( int i = 0; i < problem->nnodes; i++ ){
@@ -88,8 +184,11 @@ int tsp_CPX_opt(instance *problem){
 		
 	}
 
+	//Cost check
+	CPXgetbestobjval(env,lp,&best_obj);
+	if(sol_cost > best_obj + 1e-7 || sol_cost < best_obj - 1e-7) print_error("EZ");
+
 	if(sol_cost < problem->cost){
-		//Update solution
 		problem->cost = sol_cost;
 	}
 
@@ -103,4 +202,49 @@ int tsp_CPX_opt(instance *problem){
 
 }
 
+void tsp_blender_loop(instance* problem, cli_info* cli){
+	int error;
+	CPXENVptr env = CPXopenCPLEX(&error);
+	CPXLPptr lp = CPXcreateprob(env, &error, "TSP"); 
+
+	build_model(problem, env, lp);
+	double start_time = get_time(); 
+	double lb = problem->cost;
+
+	int *succ= calloc(problem->nnodes,sizeof(int));
+	int *sol= calloc(problem->nnodes,sizeof(int));
+	int *comp = calloc(problem->nnodes,sizeof(int)); 
+	int ncomp;
+	int iter=0;
+
+	while(1){
+		iter++;
+		CPXsetdblparam(env,CPX_PARAM_TILIM,cli->time_limit-time_elapsed(start_time));
+		if (CPXmipopt(env,lp)) print_error("CPXmipopt() error");   
+		CPXgetbestobjval(env,lp,&lb);
+		//Print incumbent cost
+		printf("Iter: %3d\tCost: %10.4f\n",iter,lb);
+		int ncols = CPXgetnumcols(env, lp);
+		double *xstar = (double *) calloc(ncols, sizeof(double));
+		if (CPXgetx(env, lp, xstar, 0, ncols-1)) print_error("CPXgetx() error");
+		build_sol(xstar,problem,succ,comp,&ncomp);
+		free(xstar);
+		if(ncomp==1) break;
+		add_sec(env,lp,problem,ncomp,ncols,comp);
+		if(time_elapsed(start_time) > cli->time_limit) break;
+	}
+
+	if(lb < problem->cost){
+		problem->cost=lb;
+		//Update incumbent
+		solution_as_array(succ,problem->nnodes,sol);
+		problem->solution=sol;
+	}
+
+	free(succ);
+	free(comp);
+
+	CPXfreeprob(env, &lp);
+	CPXcloseCPLEX(&env); 
+}
 

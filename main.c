@@ -35,12 +35,12 @@ out procedure (int argc, char **argv) {
 	instance* problem = instance_new_cli(&cli_data);
 	//tsp_instance_from_cli(problem,&cli_data);
 	
-	if(!strcmp(cli_data.method,"CPLEX")) tsp_CPX_opt(problem);
+	if(!strcmp(cli_data.method,"CPLEX")) tsp_blender_loop(problem,&cli_data);
 	else solve_heuristic(&cli_data, problem);
 	
 	print_best_solution_info(problem,&cli_data);
 	//TODO: wait the adjust of solution
-	//tsp_plot(problem,&cli_data);  
+	tsp_plot(problem,&cli_data);  
 	instance_delete(problem);
 
 	ret.cost = problem->cost;
