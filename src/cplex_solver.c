@@ -86,7 +86,7 @@ void build_model(instance *problem, CPXENVptr env, CPXLPptr lp){
     free(value);
     free(index);	
 
-    #if VERBOSE > 1
+    #if DEBUG
 	CPXwriteprob(env, lp, "model.lp", NULL);   
     #endif
 
@@ -236,9 +236,12 @@ void tsp_blender_loop(instance* problem, cli_info* cli){
 
 	if(lb < problem->cost){
 		problem->cost=lb;
+
 		//Update incumbent
-		solution_as_array(succ,problem->nnodes,sol);
-		problem->solution=sol;
+		if( ncomp == 1){
+			solution_as_array(succ,problem->nnodes,sol);
+			problem->solution=sol;
+		}	
 	}
 
 	free(succ);

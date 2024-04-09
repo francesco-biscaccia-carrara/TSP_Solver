@@ -6,6 +6,7 @@
 #pragma region static_functions
 
 void tsp_create_plot_data(const instance *problem){
+    if(problem->solution == NULL) return;
     FILE* file = fopen(".tmp.dat","w");
 
     for(int i=0;i < problem->nnodes; i++){ 
@@ -20,6 +21,7 @@ void tsp_create_plot_data(const instance *problem){
 #pragma endregion
 
 void tsp_plot(const instance *problem, const cli_info* cli){
+    if(fopen(".tmp.data","r") == NULL) return;
     char file_name[101];
     tsp_create_plot_data(problem);
     
