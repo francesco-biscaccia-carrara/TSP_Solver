@@ -180,6 +180,9 @@ void instance_set_solution(TSPinst* inst, const int* tour, const double cost) {
 }
 
 
+/*===============================================================================*/
+
+
 /// @brief default constructor of TSPenv
 /// @return an instance of TPSenv
 TSPenv* environment_new() {

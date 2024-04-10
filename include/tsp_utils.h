@@ -34,5 +34,6 @@ extern void     kick(int*, const unsigned int);
 
 //Display function
 extern void     print_sol(const TSPinst*, const TSPenv*);
-
+extern char*    format_arc(const TSPinst*, char*, const unsigned int, const unsigned int);
+extern void     plot_log(const TSPinst*, FILE*);
 #endif

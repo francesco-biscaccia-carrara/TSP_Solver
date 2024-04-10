@@ -127,6 +127,7 @@ cross find_best_cross(TSPinst* inst, const int* tour) {
 }
 
 
+//TODO: REWRITE THIS FUNCTION
 static int comp(const void * elem1, const void * elem2) {
     int f = *((int*) elem1);
     int s = *((int*) elem2);
@@ -171,4 +172,31 @@ void print_sol(const TSPinst* inst,const TSPenv* env) {
     //TODO: TMP change. We have to convert CPLEX format sol into our format sol
     if(strcmp(env->method,"CPLEX")) printf("Starting node:\t%i\n",inst->solution[0]);
 	printf("Cost: \t%10.4f\n", inst->cost);
+}
+
+
+/// @brief print an arc in format x1.00,y1.00;x2.00,y2.00
+/// @param inst instance of TSPinst
+/// @param dest destination string
+/// @param i node i
+/// @param j node j
+/// @return pointer to dest
+char* format_arc(const TSPinst* inst,char* dest, const unsigned int i, const unsigned int j) {
+    point pi = inst->points[i];
+    point pj = inst->points[j];
+    sprintf(dest, "%10.4f,%10.4f;%10.4f,%10.4f", pi.x, pi.y, pj.x, pj.y);
+    return dest;
+}
+
+
+/// @brief Write on a file the list of arc in a particular format
+/// @param inst instance of TSPinst
+/// @param dest_file pointer to destination file
+void plot_log(const TSPinst* inst, FILE* dest_file) {
+
+    char string[120]; 
+    for(int i = 0; i < inst->nnodes - 1; i++) {
+        fprintf(dest_file, "%s\n", format_arc(inst, string, inst->solution[i], inst->solution[i+1]));
+    }
+    fprintf(dest_file, "%s\n", format_arc(inst, string, inst->solution[inst->nnodes-1], inst->solution[0]));
 }

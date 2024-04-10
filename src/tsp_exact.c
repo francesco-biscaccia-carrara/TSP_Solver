@@ -112,8 +112,7 @@ void build_sol(const double *xstar, TSPinst *inst, int *succ, int *comp, int *nc
 #endif
 
 	*ncomp = 0;
-	for ( int i = 0; i < inst->nnodes; i++ )
-	{
+	for ( int i = 0; i < inst->nnodes; i++ ) {
 		succ[i] = -1;
 		comp[i] = -1;
 	}
@@ -146,7 +145,6 @@ void build_sol(const double *xstar, TSPinst *inst, int *succ, int *comp, int *nc
 		// go to the next component...
 	}
 }
-
 
 #pragma endregion
 

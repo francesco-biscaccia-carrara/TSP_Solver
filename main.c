@@ -9,7 +9,12 @@ int main(int argc, char **argv) {
     if(!strcmp(env->method,"CPLEX")) tsp_bender_loop(inst,env);
 	else TSPsolve(inst, env);
 
+    FILE* f = fopen("test.txt", "w");
+    plot_log(inst, f);
+    fclose(f);
+
     instance_delete(inst);
     environment_delete(env);
+    system("cd plot && python3.10 plot_solution.py");
     return 0;
 }
