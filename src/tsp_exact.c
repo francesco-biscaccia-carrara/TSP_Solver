@@ -1,19 +1,12 @@
-#include "../include/cplex_solver.h"
+#include "../include/tsp_exact.h"
 #include "../include/tsp.h"
 #include "../include/utils.h"
 
+
 #pragma region static_functions
 
-void solution_as_array(int* succ, int nnodes,int* sol){
-	int j = succ[0];
-	for(int i =0;i<nnodes;i++){
-		sol[i]=j;
-		j = succ[j];
-	}
-}
-
-void add_sec(CPXCENVptr env, CPXLPptr lp,instance* problem,int ncomp,int ncols,int* comp){
-
+void add_sec(CPXCENVptr env, CPXLPptr lp,TSPinst* problem,int ncomp,int ncols,int* comp){
+	printf("add_sec\n");
 	if(ncomp==1) print_error("no sec needed for 1 comp!");
 
 	int* index = (int*) calloc(ncols,sizeof(int));
@@ -41,7 +34,7 @@ void add_sec(CPXCENVptr env, CPXLPptr lp,instance* problem,int ncomp,int ncols,i
 	free(value);
 }
 
-void build_model(instance *problem, CPXENVptr env, CPXLPptr lp){    
+void build_model(TSPinst *problem, CPXENVptr env, CPXLPptr lp){    
 	int izero = 0;
 	char binary = 'B'; 
     double lb = 0.0;
@@ -54,7 +47,7 @@ void build_model(instance *problem, CPXENVptr env, CPXLPptr lp){
 	for ( int i = 0; i < problem->nnodes; i++ ){
 		for ( int j = i+1; j < problem->nnodes; j++ ){
 			sprintf(cname[0], "x(%d,%d)", i+1,j+1);  
-			double obj = tsp_save_weight(problem,i,j);
+			double obj = get_arc(problem,i,j);
 			if ( CPXnewcols(env, lp, 1, &obj, &lb, &ub, &binary, cname) ){
                 printf("%d",CPXnewcols(env, lp, 1, &obj, &lb, &ub, &binary, cname));
                 print_error("wrong CPXnewcols on x var.s");
@@ -86,7 +79,7 @@ void build_model(instance *problem, CPXENVptr env, CPXLPptr lp){
     free(value);
     free(index);	
 
-    #if DEBUG
+    #if VERBOSE > 1
 	CPXwriteprob(env, lp, "model.lp", NULL);   
     #endif
 
@@ -95,15 +88,15 @@ void build_model(instance *problem, CPXENVptr env, CPXLPptr lp){
 
 }
 
-void build_sol(const double *xstar, instance *inst, int *succ, int *comp, int *ncomp){   
-#ifdef DEBUG
+void build_sol(const double *xstar, TSPinst *inst, int *succ, int *comp, int *ncomp){   
+#if VERBOSE > 2
 	int *degree = (int *) calloc(inst->nnodes, sizeof(int));
 	for ( int i = 0; i < inst->nnodes; i++ )
 	{
 		for ( int j = i+1; j < inst->nnodes; j++ )
 		{
 			int k = xpos(i,j,inst);
-			if ( fabs(xstar[k]) > EPS && fabs(xstar[k]-1.0)) > EPS ) print_error(" wrong xstar in build_sol()");
+			if ( fabs(xstar[k]) > EPSILON && fabs(xstar[k]-1.0) > EPSILON ) print_error(" wrong xstar in build_sol()");
 			if ( xstar[k] > 0.5 ) 
 			{
 				++degree[i];
@@ -157,15 +150,12 @@ void build_sol(const double *xstar, instance *inst, int *succ, int *comp, int *n
 
 #pragma endregion
 
-
-int tsp_CPX_opt(instance *problem){  
-	
+int tsp_CPX_opt(TSPinst *problem){  
 	int error;
 	CPXENVptr env = CPXopenCPLEX(&error);
 	CPXLPptr lp = CPXcreateprob(env, &error, "TSP"); 
 
 	build_model(problem, env, lp);
-
 
 	if (  CPXmipopt(env,lp)) print_error("CPXmipopt() error");    
     
@@ -178,7 +168,7 @@ int tsp_CPX_opt(instance *problem){
 	for ( int i = 0; i < problem->nnodes; i++ ){
 		for ( int j = i+1; j < problem->nnodes; j++ )
 			if (xstar[coords_to_index(problem->nnodes,i,j)] > 0.5) {
-				sol_cost += tsp_save_weight(problem,i,j);
+				sol_cost += get_arc(problem,i,j);
 				printf("  ... x(%3d,%3d) = 1\n", i+1,j+1);
 			}
 		
@@ -202,7 +192,7 @@ int tsp_CPX_opt(instance *problem){
 
 }
 
-void tsp_blender_loop(instance* problem, cli_info* cli){
+void tsp_bender_loop(TSPinst* problem, TSPenv* cli){
 	int error;
 	CPXENVptr env = CPXopenCPLEX(&error);
 	CPXLPptr lp = CPXcreateprob(env, &error, "TSP"); 
@@ -239,7 +229,7 @@ void tsp_blender_loop(instance* problem, cli_info* cli){
 
 		//Update incumbent
 		if( ncomp == 1){
-			solution_as_array(succ,problem->nnodes,sol);
+			cth_convert(sol, succ, problem->nnodes);
 			problem->solution=sol;
 		}	
 	}
@@ -250,4 +240,3 @@ void tsp_blender_loop(instance* problem, cli_info* cli){
 	CPXfreeprob(env, &lp);
 	CPXcloseCPLEX(&env); 
 }
-

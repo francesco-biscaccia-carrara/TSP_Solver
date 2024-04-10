@@ -9,16 +9,14 @@
 #include <float.h> 
 #include <sys/time.h>
 #include <stdint.h>
-#include <math.h>
 #include <sys/stat.h>
-#include <signal.h>
 
-extern void print_error(const char *err);
-int coords_to_index(size_t n, int i, int j);
-extern double time_elapsed(double intial_time);
-extern double get_time();
-extern FILE* start_plot_pipeline();
-extern void double_to_plot(FILE* gnuplot_pipe,double cost);
-extern void close_plot_pipeline(FILE* gnuplot_pipe);
-extern void check_signal(const int sigint);
+extern void     print_error(const char*);
+extern int      coords_to_index(const unsigned int, const int, const int);
+extern double   get_time();
+extern double   time_elapsed(const double);
+extern void     reverse(int*,unsigned int,unsigned int);
+extern char     strnin(const char*, char**, const size_t);
+extern int*     cth_convert(int*, int*, const unsigned int);
+
 #endif

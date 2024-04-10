@@ -1,81 +1,15 @@
-#include "include/algorithm.h"
-#include "include/display.h"
-#include "include/load.h"
-#include "include/tsp.h"
-#include "include/cplex_solver.h"
+#include "include/tsp_solver.h"
+#include "include/tsp_exact.h"
 
-#define TESTPHASE 0
+int main(int argc, char **argv) {
+    TSPenv* env = environment_new_cli(argv, argc);
+    printf("%s\n", env->file_name);
+    TSPinst* inst = instance_new_env(env);
 
-typedef struct {
-	double cost;
-	int seed;
-} out;
+    if(!strcmp(env->method,"CPLEX")) tsp_bender_loop(inst,env);
+	else TSPsolve(inst, env);
 
-out procedure (int argc, char **argv) {
-	out ret = {.cost = 0, .seed=10};
-	if (argc < 2) {
-		printf("Usage: %s -h/ -help/ --help/  to get some help\n", argv[0]);
-		exit(1);
-	} 
-
-	cli_info cli_data;
-	parse_cli(argc,argv,&cli_data);
-
-	//instance* problem=instance_new();
-
-	signal(SIGINT, check_signal);
-
-	#if VERBOSE > 1
-	printf("Time Limit\t: %lu s\n",cli_data.time_limit);
-	printf("CLI line\t: ' ");
-	for (int a = 0; a < argc; a++) printf("%s ", argv[a]); 
-	printf("'\n\n");
-	#endif
-
-	instance* problem = instance_new_cli(&cli_data);
-	//tsp_instance_from_cli(problem,&cli_data);
-	
-	if(!strcmp(cli_data.method,"CPLEX")) tsp_blender_loop(problem,&cli_data);
-	else solve_heuristic(&cli_data, problem);
-	
-	print_best_solution_info(problem,&cli_data);
-	//TODO: wait the adjust of solution
-	tsp_plot(problem,&cli_data);  
-	instance_delete(problem);
-
-	ret.cost = problem->cost;
-	ret.seed = cli_data.random_seed;
-
-	return ret;
+    instance_delete(inst);
+    environment_delete(env);
+    return 0;
 }
-
-
-#if TESTPHASE == 1
-int main(int argc, char **argv){
-
-	FILE *f = fopen("performance_python/data_comparison.csv", "w");
-	char* ss[3] = {"VNS_B", "VNS_R"};
-
-	fprintf(f, "2, VNS_B, VNS_R\n");
-	for(int i = 0; i < 10; i++) {
-		sprintf(argv[6], "%i", i);
-		printf("SEED:%s\n", argv[6]);
-		fprintf(f, "%i", i);
-		for(int j = 0; j < 2; j++) {
-			argv[8] = ss[j];
-			printf("PROCEDURE %s\n", argv[8]);
-			out proc = procedure(argc, argv);
-			fprintf(f, ", %10.4f",proc.cost);
-		}
-		fprintf(f, "\n");
-
-	} 
-	system("cd performance_python && python3.10 perfprof.py -D , -T 3 -M 2 data_comparison.csv pp.pdf -P \"all instances, shift 2 sec.s\"");
-	return 0; 
-}
-#else
-int main(int argc, char **argv){
-	out proc = procedure(argc, argv);
-	return 0; 
-}
-#endif

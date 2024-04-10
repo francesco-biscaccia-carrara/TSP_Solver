@@ -1,86 +1,34 @@
 #include "../include/tsp.h"
 
-#define SQUARE(x)   (x*x)
-
 #pragma region static_functions
 
-static double euc_2d(point* a, point* b) {
-    double dx = b->x - a->x;
-    double dy = b->y - a->y; 
-
-    return ((int) (sqrt(SQUARE(dx) + SQUARE(dy)) + 0.5)) + 0.0;
+/// @brief print output for help function
+static void help_info(){
+    printf("\e[1mTo set the parameters properly you have to execute tsp and add:\e[m");
+    printf("\n '-in / -f / -file <filename.tsp>' to specity the input file; ");
+    printf("\n '-tl / -max_time <time_dbl>' to specity the max execution time (int value);");
+    printf("\n '-n / -n_nodes <num_nodes_int>' to specify the number of nodes in the TSP instance (int value);");
+    printf("\n '-algo / -method / -alg <method>' to specify the method to solve the TSP instance;");
+    //TODO: add all new method 
+    printf("\n\tImplemented method: \n\t\t- GREEDY = greedy search,\n\t\t- G2OPT_F = greedy + 2opt w. first swaps,\n\t\t- G2OPT_B = greedy + 2opt w. best swaps");
+    printf("\n '-seed / -rnd_seed <seed>' to specity the random seed (int value);");
+    printf("\n '-multi_th / -mt' to use multithreading computation;");
+    printf("\n '-help / --help / -h' to get help.");
+    printf("\n\nNOTICE: you can insert only .tsp file or random seed and number of nodes, NOT BOTH!\n");
 }
 
-static void tsp_read_file(instance * problem, const char* file){
-    FILE *f = fopen(file, "r");
 
-    if ( f == NULL ){
-        instance_delete(problem);
-        print_error("input file not found!");
-    }
-
-    char line[201];
-    char node_section = 0;
-    char *par_name;   
-
-    while(fgets(line, sizeof(line), f) != NULL){
-    
-        if (strlen(line) <= 1) continue; 
-
-        if(!node_section) par_name = strtok(line, " :");
-        else par_name=strtok(line, " ");
-
-        if (!strncmp(par_name, "TYPE", 4)) {
-            if (strncmp(strtok(NULL, " :"), "TSP",3)){
-                instance_delete(problem);
-                print_error(" format error: only TYPE: TSP implemented!"); 
-            }
-        }
-        
-        if (!strncmp(par_name, "DIMENSION", 9)){
-            if (problem->nnodes > 0){
-                instance_delete(problem);
-                print_error(" repeated DIMENSION section in input file!");
-            }
-            
-            problem->nnodes = atoi(strtok(NULL, " :"));
-            problem->points = (point *) calloc(problem->nnodes, sizeof(point));
-            problem->edge_weights = (double *) calloc(((problem->nnodes*(problem->nnodes-1)/2)), sizeof(double));
-            
-            if (problem->points == NULL) print_error(" failed to allocate memory for points vector!");
-            if (problem->edge_weights == NULL) print_error(" failed to allocate memory for edge_weights vector!");
-
-        }
-
-        if (!strncmp(par_name, "EDGE_WEIGHT_TYPE", 16)){
-            if (strncmp(strtok(NULL, " :"), "ATT",3)){
-                instance_delete(problem);
-                print_error(" format error: only EDGE_WEIGHT_TYPE: ATT implemented!"); 
-            }
-        }
-
-        if (!strncmp(par_name, "NODE_COORD_SECTION", 18)) node_section=1;
-
-        if (!strncmp(par_name, "EOF", 3)) node_section=0;
-
-        if(node_section){
-            int i = atoi(par_name)-1;
-            if ( i >= 0 && i < problem->nnodes ){
-                problem->points[i].x = atof(strtok(NULL, " "));
-                problem->points[i].y = atof(strtok(NULL, " "));
-            }
-        }
-
-    }
-}
-
-static void tsp_generate_random_point(uint32_t nnodes, uint32_t seed, instance* inst) {
-    
+/// @brief function to provide a random instance to test functionality of TSP solver
+/// @param inst instance of TSPinst
+/// @param nnodes number of nodes inside TSP inst
+/// @param seed seed to set random instance.
+static void tsp_rnd_inst(TSPinst* inst, unsigned int nnodes, const unsigned int seed) {
     inst->nnodes = nnodes;
-    inst->random_seed=seed;
+    inst->random_seed = seed;
     inst->points = (point *) calloc(inst->nnodes, sizeof(point));
     inst->edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
-    
+    inst->solution = malloc(nnodes * sizeof(int));
+
     srand(seed);
 
     #if VERBOSE > 0
@@ -100,62 +48,208 @@ static void tsp_generate_random_point(uint32_t nnodes, uint32_t seed, instance* 
     #endif
 }
 
+
+/// @brief parser of .tsp file
+/// @param inst instance of TSPinst
+/// @param file name of .tsp file
+static void tsp_read_file(TSPinst* inst, const char* file) {
+    FILE *f = fopen(file, "r");
+
+    if ( f == NULL ){
+        instance_delete(inst);
+        print_error("input file not found!");
+    }
+
+    char line[201];
+    char node_section = 0;
+    char *par_name;   
+
+    while(fgets(line, sizeof(line), f) != NULL){
+    
+        if (strlen(line) <= 1) continue; 
+
+        if(!node_section) par_name = strtok(line, " :");
+        else par_name=strtok(line, " ");
+
+        if (!strncmp(par_name, "TYPE", 4)) {
+            if (strncmp(strtok(NULL, " :"), "TSP",3)){
+                instance_delete(inst);
+                print_error(" format error: only TYPE: TSP implemented!"); 
+            }
+        }
+        
+        if (!strncmp(par_name, "DIMENSION", 9)){
+            if (inst->nnodes > 0){
+                instance_delete(inst);
+                print_error(" repeated DIMENSION section in input file!");
+            }
+            
+            inst->nnodes = atoi(strtok(NULL, " :"));
+            inst->points = (point *) calloc(inst->nnodes, sizeof(point));
+            inst->edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
+            inst->solution = malloc(inst->nnodes * sizeof(int));
+
+            if (inst->points == NULL) print_error(" failed to allocate memory for points vector!");
+            if (inst->edge_weights == NULL) print_error(" failed to allocate memory for edge_weights vector!");
+
+        }
+
+        if (!strncmp(par_name, "EDGE_WEIGHT_TYPE", 16)){
+            if (strncmp(strtok(NULL, " :"), "ATT",3)){
+                instance_delete(inst);
+                print_error(" format error: only EDGE_WEIGHT_TYPE: ATT implemented!"); 
+            }
+        }
+
+        if (!strncmp(par_name, "NODE_COORD_SECTION", 18)) node_section=1;
+
+        if (!strncmp(par_name, "EOF", 3)) node_section=0;
+
+        if(node_section){
+            int i = atoi(par_name)-1;
+            if ( i >= 0 && i < inst->nnodes ){
+                inst->points[i].x = atof(strtok(NULL, " "));
+                inst->points[i].y = atof(strtok(NULL, " "));
+            }
+        }
+
+    }
+}
+
 #pragma endregion
 
-instance* instance_new() {
-    instance *problem = (instance*) calloc(1,sizeof(instance));
 
-    problem->nnodes = 0;
-    problem->random_seed = 0;
-    problem->points = NULL;
-    problem->edge_weights = NULL;
-    problem->solution = NULL;
-    problem->cost = DBL_MAX;
+/// @brief default constructor of TSPinst
+/// @return an instance of TSPinst
+TSPinst* instance_new() {
+    TSPinst *inst = (TSPinst*) calloc(1,sizeof(TSPinst));
+    inst->cost = DBL_MAX;
 
     #if VERBOSE > 1
     printf("\e[1mGENERATE NEW ISTANCE\e[m\n");
     #endif
 
-    return problem;
+    return inst;
 }
 
-instance* instance_new_cli(cli_info* cli_info) {
-    instance *problem = instance_new();
 
-    if(!strncmp(cli_info->file_name,"RND",3) || fopen(cli_info->file_name, "r")==NULL){
-        tsp_generate_random_point(cli_info->nnodes,cli_info->random_seed,problem);
+/// @brief build TSPinst with TSPenv data
+/// @param env instance of TSPenv
+/// @return an instance of TSPinst
+TSPinst* instance_new_env(TSPenv* env) {
+    TSPinst* inst = instance_new();
+
+    if(!strncmp(env->file_name,"RND",3) || fopen(env->file_name, "r")==NULL){
+        tsp_rnd_inst(inst, env->nnodes,env->random_seed);
     }else{
-        tsp_read_file(problem,cli_info->file_name);
+        tsp_read_file(inst,env->file_name);
     }
 
     #if VERBOSE > 0
         printf("------\e[1mInstance data\e[m------");
-        printf("\n - nodes : %ld",problem->nnodes);
-        if(problem->random_seed) printf("\n - random_seed : %u",problem->random_seed);
+        printf("\n - nodes : %i",inst->nnodes);
+        if(inst->random_seed) printf("\n - random_seed : %u",inst->random_seed);
         printf("\n-------------------------\n\n");
-    #endif 
+    #endif
 
-    return problem;
+    return inst;
 }
 
-void instance_delete(instance* problem) {
 
-    free(problem->points);
-    free(problem->edge_weights);
-    free(problem->solution);
-    free(problem);
+/// @brief free memory of an instance of TSPinst
+/// @param inst instance of TSPinst
+void instance_delete(TSPinst* inst) {
+    free(inst->points);
+    free(inst->edge_weights);
+    free(inst->solution);
+    free(inst);
 
     #if VERBOSE > 1
     printf("\e[1mDELETE THE ISTANCE\e[m\n");
     #endif
 }
 
-double tsp_save_weight(instance * problem, int i, int j){
-    if (i == j) return 0;
-    int ind = coords_to_index(problem->nnodes,i,j);
 
-    if(!problem->edge_weights[ind])
-        problem->edge_weights[ind] = euc_2d(&(problem->points[i]), &(problem->points[j]));
-      
-    return problem->edge_weights[ind];
+/// @brief setter for a "solution" (tour and cost) inside TSPinst
+/// @param inst instance of TSPinst
+/// @param tour hamiltonian circuit
+/// @param cost cost of tour
+void instance_set_solution(TSPinst* inst, const int* tour, const double cost) {
+    inst->cost = cost;
+    memcpy(inst->solution, tour, inst->nnodes * sizeof(inst->solution[0]));
+}
+
+
+/// @brief default constructor of TSPenv
+/// @return an instance of TPSenv
+TSPenv* environment_new() {
+    TSPenv *environment = (TSPenv*) calloc(1,sizeof(TSPenv));
+    environment->file_name = calloc(64, sizeof(char));
+    environment->method = calloc(23, sizeof(char));
+    environment->time_limit = MAX_TIME;
+
+    #if VERBOSE > 1
+    printf("\e[1mGENERATE NEW ENVIRONMENT\e[m\n");
+    #endif
+
+    return environment;
+}
+
+
+/// @brief build TSPenv with cli arguments
+/// @param argv arguments value passed by cli 
+/// @param argc arguments size passed by cli
+/// @return an instance of TSPenv
+TSPenv* environment_new_cli(char** argv, const int argc) {
+    TSPenv* env = environment_new();
+
+    char* time_comm[] = {"-tl", "-max_time"};
+    char* file_comm[] = {"-in", "-f", "-file"};
+    char* node_comm[] = {"-n", "-n_nodes"};
+    char* algo_comm[] = {"-algo", "-method", "-alg"};
+    char* seed_comm[] = {"-seed", "-rnd_seed", "-s"};
+    char* mtth_comm[] = {"-mt", "-multi_th"};
+    char* help_comm[] = {"-help", "-h", "--help"};
+
+    for (int i = 1; i < argc; i++) { 
+        if (strnin(argv[i], time_comm, 2))  env->time_limit = abs(atof(argv[++i]));
+        if (strnin(argv[i], file_comm, 3))  strcpy(env->file_name,argv[++i]);
+        if (strnin(argv[i], node_comm, 2))  env->nnodes = abs(atoi(argv[++i]));
+        if (strnin(argv[i], algo_comm, 3))  strcpy(env->method,argv[++i]);
+        if (strnin(argv[i], seed_comm, 3))  env->random_seed = abs(atoi(argv[++i])); 
+        if (strnin(argv[i], mtth_comm, 2))  env->mt = 1;  
+        if (strnin(argv[i], help_comm, 3))  { help_info(); exit(0); }  
+    }
+
+    if(env->nnodes && env->random_seed) strcpy(env->file_name,"RND");
+    return env; 
+}
+
+
+/// @brief free memory of an instance of TSPenv
+/// @param env instance of TSPenv
+void environment_delete(TSPenv* env) {
+    free(env->file_name);
+    free(env->method);
+    free(env);
+
+    #if VERBOSE > 1
+    printf("\e[1mDELETE THE ENVIRONMENT\e[m\n");
+    #endif
+}
+
+
+/// @brief setter of method inside TSPenv
+/// @param env instance of TSPenv
+/// @param method_name name of desired method to solve TSP
+void environment_set_method(TSPenv* env, char* method_name) {
+    env->method = method_name;
+}
+
+
+/// @brief setter of seed inside TSPenv
+/// @param env instance of TSPenv
+/// @param seed number for random seed 
+void environment_set_seed(TSPenv* env, const unsigned int seed) {
+    env->random_seed = seed;
 }
