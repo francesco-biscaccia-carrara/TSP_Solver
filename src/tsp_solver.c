@@ -99,7 +99,6 @@ void TSPg2opt(TSPinst* inst, int* tour, double* cost) {
 void TSPg2optb(TSPinst* inst, int* tour, double* cost) {
     while (1) {
         cross curr_cross = find_best_cross(inst, tour);
-
         if(curr_cross.delta_cost >= -EPSILON) return;
         
         reverse(tour,curr_cross.i+1,curr_cross.j);

@@ -89,3 +89,16 @@ int* cth_convert(int* hsol, int* csol, const unsigned int array_size) {
 
     return hsol;
 }
+
+
+/// @brief write an array into csv file
+/// @param dest destination file 
+/// @param content array to write inside csv file
+/// @param size length of content
+void format_csv_line(FILE* dest, const double* content, const unsigned int size) {
+    fprintf(dest, "%f", content[0]);
+    for(int i = 1; i < size; i++) {
+        fprintf(dest, ",%f",content[i]);
+    }
+    fprintf(dest, "\n");
+}

@@ -18,5 +18,6 @@ extern double   time_elapsed(const double);
 extern void     reverse(int*,unsigned int,unsigned int);
 extern char     strnin(const char*, char**, const size_t);
 extern int*     cth_convert(int*, int*, const unsigned int);
+extern void     format_csv_line(FILE*, const double*, const unsigned int);
 
 #endif

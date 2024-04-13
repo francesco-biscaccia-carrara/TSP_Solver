@@ -81,8 +81,8 @@ double check_cross(TSPinst* inst, const int* tour, const unsigned int i, const u
     if (i>j) return check_cross(inst, tour, j, i);
     int k = (j+1 == inst->nnodes) ? 0 : j+1;
 
-    return  get_arc(inst, inst->solution[i], inst->solution[j]) + get_arc(inst, inst->solution[i+1], inst->solution[k]) -
-            get_arc(inst, inst->solution[i], inst->solution[k]) + get_arc(inst, inst->solution[i], inst->solution[i+1]);
+    return  (get_arc(inst,tour[i],tour[j]) + get_arc(inst,tour[i+1],tour[k])) - 
+            (get_arc(inst,tour[i],tour[i+1]) + get_arc(inst,tour[j],tour[k]));
 }
 
 
