@@ -18,5 +18,5 @@ for line in lines:
 
 plt.plot(xval, yval, "-o")
 plt.title("greedy solution")
-plt.savefig("out/test.pgf")
-    
+#plt.savefig("out/test.pgf")
+plt.show();   

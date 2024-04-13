@@ -40,7 +40,7 @@ void check_tour_cost(TSPinst* inst, const int* tour, const double expected_cost)
     for(int i = 0; i < inst->nnodes-1; i++) {
         actual_cost += get_arc(inst, tour[i], tour[i+1]); 
     }
-    actual_cost += get_arc(inst, tour[0], tour[inst->nnodes]);
+    actual_cost += get_arc(inst, tour[0], tour[inst->nnodes-1]);
 
     if (!abs(expected_cost-actual_cost) > EPSILON) return;
     print_error("cost_saved and cost_computed differ!");

@@ -6,7 +6,6 @@
 #pragma region static_functions
 
 void add_sec(CPXCENVptr env, CPXLPptr lp,TSPinst* problem,int ncomp,int ncols,int* comp){
-	printf("add_sec\n");
 	if(ncomp==1) print_error("no sec needed for 1 comp!");
 
 	int* index = (int*) calloc(ncols,sizeof(int));
@@ -88,28 +87,37 @@ void build_model(TSPinst *problem, CPXENVptr env, CPXLPptr lp){
 
 }
 
+int xpos(int i, int j, TSPinst *inst)      // to be verified                                           
+/***************************************************************************************************************************/
+{ 
+	if ( i == j ) print_error(" i == j in xpos" );
+	if ( i > j ) return xpos(j,i,inst);
+	int pos = i * inst->nnodes + j - (( i + 1 ) * ( i + 2 )) / 2;
+	return pos;
+}
+
 void build_sol(const double *xstar, TSPinst *inst, int *succ, int *comp, int *ncomp){   
-#if VERBOSE > 2
-	int *degree = (int *) calloc(inst->nnodes, sizeof(int));
-	for ( int i = 0; i < inst->nnodes; i++ )
-	{
-		for ( int j = i+1; j < inst->nnodes; j++ )
+	#if VERBOSE > 2
+		int *degree = (int *) calloc(inst->nnodes, sizeof(int));
+		for ( int i = 0; i < inst->nnodes; i++ )
 		{
-			int k = xpos(i,j,inst);
-			if ( fabs(xstar[k]) > EPSILON && fabs(xstar[k]-1.0) > EPSILON ) print_error(" wrong xstar in build_sol()");
-			if ( xstar[k] > 0.5 ) 
+			for ( int j = i+1; j < inst->nnodes; j++ )
 			{
-				++degree[i];
-				++degree[j];
+				int k = xpos(i,j,inst);
+				if ( fabs(xstar[k]) > EPSILON && fabs(xstar[k]-1.0) > EPSILON ) print_error(" wrong xstar in build_sol()");
+				if ( xstar[k] > 0.5 ) 
+				{
+					++degree[i];
+					++degree[j];
+				}
 			}
 		}
-	}
-	for ( int i = 0; i < inst->nnodes; i++ )
-	{
-		if ( degree[i] != 2 ) print_error("wrong degree in build_sol()");
-	}	
-	free(degree);
-#endif
+		for ( int i = 0; i < inst->nnodes; i++ )
+		{
+			if ( degree[i] != 2 ) print_error("wrong degree in build_sol()");
+		}	
+		free(degree);
+	#endif
 
 	*ncomp = 0;
 	for ( int i = 0; i < inst->nnodes; i++ ) {
@@ -216,19 +224,50 @@ void tsp_bender_loop(TSPinst* problem, TSPenv* cli){
 		double *xstar = (double *) calloc(ncols, sizeof(double));
 		if (CPXgetx(env, lp, xstar, 0, ncols-1)) print_error("CPXgetx() error");
 		build_sol(xstar,problem,succ,comp,&ncomp);
+
 		free(xstar);
 		if(ncomp==1) break;
 		add_sec(env,lp,problem,ncomp,ncols,comp);
 		if(time_elapsed(start_time) > cli->time_limit) break;
 	}
 
+
+
 	if(lb < problem->cost){
 		problem->cost=lb;
-
+		
 		//Update incumbent
 		if( ncomp == 1){
 			cth_convert(sol, succ, problem->nnodes);
 			problem->solution=sol;
+			//check_tour_cost(problem, problem->solution, problem->cost);
+			int prev = 0;
+			for(int i = 0; i < problem->nnodes; i++) {printf("|%i", succ[i]);}
+			printf("\n\n");
+			for(int i = 0; i < problem->nnodes; i++) {printf("%i->", succ[prev]);
+			prev = succ[prev]; }
+			printf("\n\n");
+
+			double cost = 0;
+			for(int i = 0; i < problem->nnodes-1; i++) {
+				cost += get_arc(problem, problem->solution[i], problem->solution[i+1]); 
+			}
+			cost += get_arc(problem, problem->solution[0], problem->solution[problem->nnodes-1]);
+			printf("computed cost: %10.4f\n", cost);	
+
+		}
+		else{			
+			patching(problem, succ, comp);
+			cth_convert(sol, succ, problem->nnodes);
+			problem->solution=sol;
+
+			double cost1 = 0;
+			for(int i = 0; i < problem->nnodes-1; i++) {
+				cost1 += get_arc(problem, problem->solution[i], problem->solution[i+1]); 
+			}
+			cost1 += get_arc(problem, problem->solution[0], problem->solution[problem->nnodes]);
+
+			printf("computed cost: %10.4f\n", cost1);	
 		}	
 	}
 
@@ -237,4 +276,75 @@ void tsp_bender_loop(TSPinst* problem, TSPenv* cli){
 
 	CPXfreeprob(env, &lp);
 	CPXcloseCPLEX(&env); 
+}
+
+static double delta_cost(TSPinst* inst, const unsigned int j, const unsigned int jp, 
+										const unsigned int i, const unsigned int ip) {
+
+	return (get_arc(inst, i, jp) + get_arc(inst, j, ip)) - (get_arc(inst, i, ip) + get_arc(inst, j, jp));
+
+}
+
+void patching(TSPinst* inst, int* succ, int* comp) {
+	int groups = arrunique(comp, inst->nnodes);
+	double min = 10e+8;
+	int best_q = 0,best_qnext = 0;
+	int best_s = 0,best_snext = 0;
+	int best_set = 0;
+
+	int kgroup[groups];
+	for(int o = 0; o < groups; o++) kgroup[o] = o+1;
+
+
+	while(groups > 1) {
+	
+	for(int k1 = 0; k1 < groups-1; k1++) {
+		printf("K = %i\n", kgroup[k1]);
+		for(int k2 = k1+1; k2 < groups; k2++) {
+			if(kgroup[k1] == kgroup[k2]) { continue; }
+			for(int i = 0; i < inst->nnodes; i++) {
+				if(comp[i] != kgroup[k1]) continue;
+
+				for(int j = 0; j < inst->nnodes; j++) {
+					if(comp[j] != kgroup[k2]) continue;
+
+					double dc = delta_cost(inst, j, succ[j], i, succ[i]);
+					if(dc < min) {
+						min = dc;
+						best_q = i;
+						best_s = j;
+						best_qnext = succ[i];
+						best_snext = succ[j];
+						best_set = k2;
+					}
+
+				}
+			}
+		}
+		printf("INFO\nmin:%10.4f\nq:%i\nqn:%i\ns:%i\nsn:%i\nbest_set:%i\n", min, best_q, best_qnext, best_s, best_snext, kgroup[best_set]);
+
+		inst->cost += min;
+		succ[best_q] = best_snext;
+		succ[best_s] = best_qnext;
+		min = 10e+8;
+
+		for(int z = 0; z < inst->nnodes; z++) {
+			if(comp[z] == kgroup[best_set]) {
+				comp[z] = kgroup[k1];
+			}
+		}
+
+		kgroup[best_set] = kgroup[groups-1];
+
+		groups--;
+		if(arrunique(succ, inst->nnodes) != inst->nnodes) perror("ecco vedi istanza sbagliata, l'avevo detto, sei un pirla, vergognati");
+
+		printf("\nKGROUP\n");
+		for(int i = 0 ; i < groups; i++) {
+		printf(",%i", kgroup[i]);
+		}
+		printf("\n");
+	}
+	}
+	printf("obtained cost: %10.4f\n", inst->cost);
 }

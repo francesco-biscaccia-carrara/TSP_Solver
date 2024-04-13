@@ -123,7 +123,7 @@ void TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
     while (time_elapsed(init_time) <= env->time_limit) {
         TSPg2optb(inst, tmp_sol, &cost);
 
-        if(cost < inst->cost) {
+        if(cost < inst->cost - EPSILON) {
             instance_set_solution(inst, tmp_sol, cost);
             
             #if VERBOSE > 0

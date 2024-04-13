@@ -57,6 +57,29 @@ void reverse(int* array, unsigned int from, unsigned int to){
 }
 
 
+/// @brief get number of unique integer element inside an array
+/// @param inst array of integer 
+/// @param size size of array
+/// @return number of unque values
+int arrunique(const int* inst, const unsigned int size) {
+    if(size <= 0) print_error("input not valid");
+    int elem[size];
+    elem[0] = inst[0];
+    int out = 1;
+    char seen = 0;
+
+    for(int i = 0; i < size; i++) {
+        for(int j = 0; j < out; j++) {
+            if((seen = (elem[j] == inst[i])) != 0) break;
+        }
+
+        if(!seen) elem[out++] = inst[i];
+        seen = 0;
+    }
+    return out;
+}
+
+
 /// @brief check if a string is inside an array
 /// @param target string to check 
 /// @param array array of strings
@@ -82,7 +105,7 @@ char strnin(const char* target,char** array, const size_t array_size){
 /// @return pointer where solution is stored
 int* cth_convert(int* hsol, int* csol, const unsigned int array_size) {
     int j = csol[0];
-	for(int i = 0;i<array_size;i++) {
+	for(int i = 0; i<array_size; i++) {
 		hsol[i] = j;
 		j = csol[j];
 	}

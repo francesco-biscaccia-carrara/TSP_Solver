@@ -8,5 +8,6 @@
 
 extern int      tsp_CPX_opt(TSPinst*);
 extern void     tsp_bender_loop(TSPinst*, TSPenv*);
+extern void     patching(TSPinst*, int*, int*);
 
 #endif

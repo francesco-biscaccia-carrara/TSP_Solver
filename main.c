@@ -29,16 +29,20 @@ int main(int argc, char **argv) {
     TSPenv* env = environment_new_cli(argv, argc);
     printf("%s\n", env->file_name);
     TSPinst* inst = instance_new_env(env);
-
-    if(!strcmp(env->method,"CPLEX")) tsp_bender_loop(inst,env);
+    
+    if(!strcmp(env->method,"CPLEX")) {
+        tsp_bender_loop(inst,env);
+        TSPg2optb(inst, inst->solution, &(inst->cost));
+        //check_tour_cost(inst, inst->solution, inst->cost);
+    }
 	else TSPsolve(inst, env);
 
-    FILE* f = fopen("test.txt", "w");
+    FILE* f = fopen("plot/input/test.txt", "w");
     plot_log(inst, f);
     fclose(f);
 
     instance_delete(inst);
-    environment_delete(env);
+    //environment_delete(env);
     system("cd plot && python3.10 plot_solution.py");
     return 0;
 }
