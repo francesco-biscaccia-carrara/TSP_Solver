@@ -155,40 +155,42 @@ cross find_best_cross(TSPinst* inst, const int* tour) {
 }
 
 
-//TODO: REWRITE THIS FUNCTION
-static int comp(const void * elem1, const void * elem2) {
-    int f = *((int*) elem1);
-    int s = *((int*) elem2);
-    if(f > s) return 1;
-    if(f < s) return -1;
-    return 0;
-}
-
-
 /// @brief create random changes into a solution
 /// @param tour hamiltonian circuit
 /// @param size number of nodes inside path
-//TODO: REWRITE THIS FUNCTIONS
 void kick(int* tour, const unsigned int size) {
     int ternary[3] = {-1, -1, -1};
     
     ternary[0] = rand()%size;
-    int x = -1;
-    while ((x = rand()%size) == ternary[0]);
-    ternary[1] = x;
-    while ((x = rand()%size) == ternary[0] || x == ternary[1]);
-    ternary[2] = x;
+    while ((ternary[1] = rand()%size) == ternary[0]);
+    while ((ternary[2] = rand()%size) == ternary[0] || ternary[2] == ternary[1]);
+    qsort(ternary, 3, sizeof(int), ascending);
 
-    qsort(ternary, 3, sizeof(int), comp);
 
-    int* infuncsol = (int*) calloc(size, sizeof(int));
-    for(int c = 0; c <= ternary[0]; c++) infuncsol[c] = tour[c];
-    for(int c = 0; c < ternary[2] - ternary[1]; c++) infuncsol[ternary[0]+1+c] = tour[ternary[2] - c];
-    for(int c = 0; c < ternary[1] - ternary[0]; c++) infuncsol[ternary[0]+ ternary[2] - ternary[1]+1+c] = tour[ternary[0] + 1 + c];
-    for(int c = ternary[2]+1; c <size; c++) infuncsol[c] = tour[c];
-    for(int c = 0; c < size; c++) tour[c] = infuncsol[c];
+    int infuncsol[size];
+    memcpy(infuncsol, tour, size * sizeof(int));
+    switch (rand()%3)
+    {
+        case 0:
+            for(int c = 0; c < ternary[2] - ternary[1]; c++) infuncsol[ternary[0]+1+c] = tour[ternary[2] - c];
+            for(int c = 0; c < ternary[1] - ternary[0]; c++) infuncsol[ternary[0]+ ternary[2] - ternary[1]+1+c] = tour[ternary[0] + 1 + c];
+            break;
+    
+        case 1:
+            for(int c = 0; c < ternary[2] - ternary[1]; c++) infuncsol[ternary[0] + 1 + c] = tour[ternary[1] + 1 + c];
+            for(int c = 0; c < ternary[1] - ternary[0]; c++) infuncsol[ternary[0] + ternary[2] - ternary[1] + 1 + c] = tour[ternary[0] + 1 + c];
+            break;
 
-    if(infuncsol != NULL) free(infuncsol);
+        case 2:
+            for(int c = 0; c < ternary[1] - ternary[0]; c++) infuncsol[ternary[0] + 1 + c] = tour[ternary[1] - c];
+            for(int c = 0; c < ternary[2] - ternary[1]; c++) infuncsol[ternary[1] + 1 + c] = tour[ternary[2] - c];
+            break;
+
+        default:
+            print_error("Something wrong happen");
+            break;
+    }
+    memcpy(tour, infuncsol, size * sizeof(int));
 }
 
 
@@ -197,13 +199,12 @@ void kick(int* tour, const unsigned int size) {
 /// @param env instance of TSPenv
 void print_sol(const TSPinst* inst,const TSPenv* env) {
     printf("\n\e[1mBest Solution Found\e[m (by \e[1m%s\e[m)\n",env->method);
-    //TODO: TMP change. We have to convert CPLEX format sol into our format sol
-    if(strcmp(env->method,"CPLEX")) printf("Starting node:\t%i\n",inst->solution[0]);
+    printf("Starting node:\t%i\n",inst->solution[0]);
 	printf("Cost: \t%10.4f\n", inst->cost);
 }
 
 
-/// @brief print an arc in format x1.00,y1.00;x2.00,y2.00
+/// @brief print an arc in format x1[%10.4f],y1[%10.4f];x2[%10.4f],y2[%10.4f]
 /// @param inst instance of TSPinst
 /// @param dest destination string
 /// @param i node i

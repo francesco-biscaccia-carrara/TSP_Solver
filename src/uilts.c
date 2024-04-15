@@ -80,6 +80,19 @@ int arrunique(const int* inst, const unsigned int size) {
 }
 
 
+/// @brief compare for ascending order
+/// @param elem1 first element to compare 
+/// @param elem2 second element to compare
+/// @return 1 if elem1 > elem2, -1 if elem1 < elem2, 0 otherwise 
+int ascending(const void * elem1, const void * elem2) {
+    int f = *((int*) elem1);
+    int s = *((int*) elem2);
+    if(f > s) return 1;
+    if(f < s) return -1;
+    return 0;
+}
+
+
 /// @brief check if a string is inside an array
 /// @param target string to check 
 /// @param array array of strings

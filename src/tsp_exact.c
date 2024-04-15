@@ -11,7 +11,7 @@ void add_sec(CPXCENVptr env, CPXLPptr lp,TSPinst* problem,int ncomp,int ncols,in
 	int* index = (int*) calloc(ncols,sizeof(int));
 	double* value = (double*) calloc(ncols,sizeof(double));
 
-	for(int k=1;k<=ncomp;k++){
+	for(int k=1;k<=ncomp;k++) {
 		int nnz=0;
 		char sense ='L';
 		int start_index = 0;
@@ -87,15 +87,6 @@ void build_model(TSPinst *problem, CPXENVptr env, CPXLPptr lp){
 
 }
 
-int xpos(int i, int j, TSPinst *inst)      // to be verified                                           
-/***************************************************************************************************************************/
-{ 
-	if ( i == j ) print_error(" i == j in xpos" );
-	if ( i > j ) return xpos(j,i,inst);
-	int pos = i * inst->nnodes + j - (( i + 1 ) * ( i + 2 )) / 2;
-	return pos;
-}
-
 void build_sol(const double *xstar, TSPinst *inst, int *succ, int *comp, int *ncomp){   
 	#if VERBOSE > 2
 		int *degree = (int *) calloc(inst->nnodes, sizeof(int));
@@ -103,7 +94,7 @@ void build_sol(const double *xstar, TSPinst *inst, int *succ, int *comp, int *nc
 		{
 			for ( int j = i+1; j < inst->nnodes; j++ )
 			{
-				int k = xpos(i,j,inst);
+				int k = coords_to_index(inst->nnodes, i,j);
 				if ( fabs(xstar[k]) > EPSILON && fabs(xstar[k]-1.0) > EPSILON ) print_error(" wrong xstar in build_sol()");
 				if ( xstar[k] > 0.5 ) 
 				{
@@ -156,12 +147,25 @@ void build_sol(const double *xstar, TSPinst *inst, int *succ, int *comp, int *nc
 
 #pragma endregion
 
-int tsp_CPX_opt(TSPinst *problem){  
+
+/// @brief Solve an instance of TSP with a mixed exact approach
+/// @param inst instance of TSPinst
+/// @param env instance  of TSPenv
+void TSPCsolve(TSPinst* inst, TSPenv* env) {
+	
+	if(!strncmp(env->method,"BENDERS", 7)) tsp_bender_loop(inst, env, UINT_MAX);
+	else if(!strncmp(env->method,"PATCHING", 8)) tsp_bender_loop(inst, env, 4);
+	else { print_error("No function with alias"); }
+
+} 
+
+
+int tsp_CPX_opt(TSPinst *inst) {
 	int error;
 	CPXENVptr env = CPXopenCPLEX(&error);
 	CPXLPptr lp = CPXcreateprob(env, &error, "TSP"); 
 
-	build_model(problem, env, lp);
+	build_model(inst, env, lp);
 
 	if (  CPXmipopt(env,lp)) print_error("CPXmipopt() error");    
     
@@ -171,10 +175,10 @@ int tsp_CPX_opt(TSPinst *problem){
 	double best_obj;
 	double *xstar = (double *) calloc(ncols, sizeof(double));
 	if (CPXgetx(env, lp, xstar, 0, ncols-1)) print_error("CPXgetx() error");	
-	for ( int i = 0; i < problem->nnodes; i++ ){
-		for ( int j = i+1; j < problem->nnodes; j++ )
-			if (xstar[coords_to_index(problem->nnodes,i,j)] > 0.5) {
-				sol_cost += get_arc(problem,i,j);
+	for ( int i = 0; i < inst->nnodes; i++ ){
+		for ( int j = i+1; j < inst->nnodes; j++ )
+			if (xstar[coords_to_index(inst->nnodes,i,j)] > 0.5) {
+				sol_cost += get_arc(inst,i,j);
 				printf("  ... x(%3d,%3d) = 1\n", i+1,j+1);
 			}
 		
@@ -184,8 +188,8 @@ int tsp_CPX_opt(TSPinst *problem){
 	CPXgetbestobjval(env,lp,&best_obj);
 	if(sol_cost > best_obj + 1e-7 || sol_cost < best_obj - 1e-7) print_error("EZ");
 
-	if(sol_cost < problem->cost){
-		problem->cost = sol_cost;
+	if(sol_cost < inst->cost){
+		inst->cost = sol_cost;
 	}
 
 	free(xstar);
@@ -198,22 +202,27 @@ int tsp_CPX_opt(TSPinst *problem){
 
 }
 
-void tsp_bender_loop(TSPinst* problem, TSPenv* cli){
+
+/// @brief use bender's loop to solve a solution from LP solution
+/// @param inst instacne of TSPinst
+/// @param cli instance of TSPenv
+/// @param max_iter maximum number of iter step
+void tsp_bender_loop(TSPinst* inst, TSPenv* cli, const unsigned int max_iter) {
 	int error;
 	CPXENVptr env = CPXopenCPLEX(&error);
 	CPXLPptr lp = CPXcreateprob(env, &error, "TSP"); 
 
-	build_model(problem, env, lp);
+	build_model(inst, env, lp);
 	double start_time = get_time(); 
-	double lb = problem->cost;
+	double lb = inst->cost;
 
-	int *succ= calloc(problem->nnodes,sizeof(int));
-	int *sol= calloc(problem->nnodes,sizeof(int));
-	int *comp = calloc(problem->nnodes,sizeof(int)); 
+	int *succ= 	calloc(inst->nnodes,sizeof(int));
+	int *sol= 	calloc(inst->nnodes,sizeof(int));
+	int *comp = calloc(inst->nnodes,sizeof(int)); 
 	int ncomp;
 	int iter=0;
 
-	while(iter < 3){
+	while(iter < max_iter) {
 		iter++;
 		CPXsetdblparam(env,CPX_PARAM_TILIM,cli->time_limit-time_elapsed(start_time));
 		if (CPXmipopt(env,lp)) print_error("CPXmipopt() error");
@@ -226,28 +235,22 @@ void tsp_bender_loop(TSPinst* problem, TSPenv* cli){
 		int ncols = CPXgetnumcols(env, lp);
 		double *xstar = (double *) calloc(ncols, sizeof(double));
 		if (CPXgetx(env, lp, xstar, 0, ncols-1)) print_error("CPXgetx() error");
-		build_sol(xstar,problem,succ,comp,&ncomp);
+		build_sol(xstar,inst,succ,comp,&ncomp);
 
 		free(xstar);
 		if(ncomp==1) break;
-		add_sec(env,lp,problem,ncomp,ncols,comp);
+		add_sec(env,lp,inst,ncomp,ncols,comp);
 		if(time_elapsed(start_time) > cli->time_limit) break;
 	}
-
-	if(lb < problem->cost){
-		problem->cost=lb;
+	if(lb < inst->cost){
+		inst->cost=lb;
 		
-		//Update incumbent
-		if( ncomp == 1){
-			cth_convert(sol, succ, problem->nnodes);
-			problem->solution=sol;
+		if( ncomp != 1) patching(inst, succ, comp, ncomp);
 
-		}
-		else{			
-			patching(problem, succ, comp);
-			cth_convert(sol, succ, problem->nnodes);
-			problem->solution=sol;	
-		}	
+		cth_convert(sol, succ, inst->nnodes);
+		inst->solution=sol;	
+		double cost = recompute_cost(inst);
+		inst->cost = cost;
 	}
 
 	free(succ);
@@ -256,13 +259,19 @@ void tsp_bender_loop(TSPinst* problem, TSPenv* cli){
 	CPXcloseCPLEX(&env); 
 }
 
-void patching(TSPinst* inst, int* succ, int* comp) {
+
+/// @brief patching for a non final bender's loop solution 
+/// @param inst instance of TSPinst
+/// @param succ solution in cplex format
+/// @param comp array that associate edge with route number
+/// @param comp_size number of unique element into comp array
+void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size) {
 
 	double min = DBL_MAX;
 	int best_i = 0, best_j = 0;
 	int best_set = 0;
 
-	int group_size = arrunique(comp, inst->nnodes);
+	int group_size = comp_size;
 	int kgroup[group_size];
 	for(int o = 0; o < group_size; o++) kgroup[o] = o+1;
 

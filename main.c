@@ -30,14 +30,14 @@ int test(int argc, char** argv) {
 int main(int argc, char **argv) {
     TSPenv* env = environment_new_cli(argv, argc);
     TSPinst* inst = instance_new_env(env);
+
+    char* cplex_func[] = { "BENDERS", "PATCHING"};
     
-    if(!strcmp(env->method,"CPLEX")) {
-        tsp_bender_loop(inst,env);
+    if(strnin(env->method, cplex_func, 2)) {
+        TSPCsolve(inst,env);
         TSPg2optb(inst, inst->solution, &(inst->cost));
     }
 	else TSPsolve(inst, env);
-
-
 
     FILE* f = fopen("plot/input/test.txt", "w");
     plot_log(inst, f);

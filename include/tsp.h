@@ -4,7 +4,7 @@
 
 #define MAX_DIST    10000
 #define MAX_TIME    3.6e+6
-#define VERBOSE	    2
+#define VERBOSE	    3
 
 #include "utils.h"
 
