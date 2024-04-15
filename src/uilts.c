@@ -9,12 +9,12 @@ void print_error(const char *error_message){
 } 
 
 
+#define INDEX(n,i,j) (i * (n - 0.5*i - 1.5) + j -1)
 /// @brief transform 2d coordinate for a triangular matrix in 1d array
 /// @param n number of rows
 /// @param i row index
 /// @param j column index
 /// @return index where the desired value is stored into a 1d array
-#define INDEX(n,i,j) (i * (n - 0.5*i - 1.5) + j -1)
 int coords_to_index(const unsigned int n,const int i,const int j){
     if (i == j) print_error("i == j");
     return i<j ? INDEX(n,i,j) : INDEX(n,j,i);

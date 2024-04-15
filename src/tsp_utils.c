@@ -1,16 +1,30 @@
 #include "../include/tsp_utils.h"
 
 
+#define SQUARE(x)       (x*x)
 /// @brief compute euclidian distance for 2d points
 /// @param a instance of point
 /// @param b instance of point
 /// @return euclidan distance between a and b
-#define SQUARE(x)       (x*x)
 double euc_2d(const point a, const point b) {
     double dx = b.x - a.x;
     double dy = b.y - a.y; 
 
     return sqrt(SQUARE(dx) + SQUARE(dy));
+}
+
+
+/// @brief compute the delta cost between 2 arc switch
+/// @param inst instance of TSPinst
+/// @param i node i
+/// @param in next of i
+/// @param j node j
+/// @param jn next of j
+/// @return result of (c_ij + c_injn) - (c_iin + c_jjn)
+double delta_cost(TSPinst* inst, const unsigned int i, const unsigned int in, const unsigned int j, const unsigned int jn) {
+
+    return  (get_arc(inst, i, j) + get_arc(inst, in, jn)) - 
+            (get_arc(inst, i, in) + get_arc(inst, j, jn));
 }
 
 
@@ -44,6 +58,21 @@ void check_tour_cost(TSPinst* inst, const int* tour, const double expected_cost)
 
     if (!abs(expected_cost-actual_cost) > EPSILON) return;
     print_error("cost_saved and cost_computed differ!");
+}
+
+
+/// @brief recompute cost of a solution (used for transfer result from cplex to heur)
+/// @param inst instance of TSPinst
+/// @return cost of tour;
+double recompute_cost(TSPinst* inst) {
+    double out_cost = 0;
+    
+    for(int i = 0; i < inst->nnodes-1; i++) {
+        out_cost += get_arc(inst, inst->solution[i], inst->solution[i+1]); 
+    }
+    out_cost += get_arc(inst, inst->solution[0], inst->solution[inst->nnodes-1]);
+
+    return out_cost;
 }
 
 
@@ -81,8 +110,7 @@ double check_cross(TSPinst* inst, const int* tour, const unsigned int i, const u
     if (i>j) return check_cross(inst, tour, j, i);
     int k = (j+1 == inst->nnodes) ? 0 : j+1;
 
-    return  (get_arc(inst,tour[i],tour[j]) + get_arc(inst,tour[i+1],tour[k])) - 
-            (get_arc(inst,tour[i],tour[i+1]) + get_arc(inst,tour[j],tour[k]));
+    return delta_cost(inst, tour[i], tour[i+1], tour[j], tour[k]);
 }
 
 
@@ -143,11 +171,11 @@ static int comp(const void * elem1, const void * elem2) {
 //TODO: REWRITE THIS FUNCTIONS
 void kick(int* tour, const unsigned int size) {
     int ternary[3] = {-1, -1, -1};
-    ternary[0] = rand()%size;
     
+    ternary[0] = rand()%size;
     int x = -1;
     while ((x = rand()%size) == ternary[0]);
-    ternary[1] = x;    
+    ternary[1] = x;
     while ((x = rand()%size) == ternary[0] || x == ternary[1]);
     ternary[2] = x;
 

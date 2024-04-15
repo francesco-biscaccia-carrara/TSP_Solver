@@ -18,8 +18,10 @@ typedef struct {
 
 //generic functions
 extern double   euc_2d(const point, const point);
+extern double   delta_cost(TSPinst*, const unsigned int, const unsigned int, const unsigned int, const unsigned int);
 extern double   get_arc(TSPinst*, const unsigned int, const unsigned int);
 extern void     check_tour_cost(TSPinst*, const int*, const double);
+extern double   recompute_cost(TSPinst*);
 
 //greedy functions
 extern near_neighbor get_nearest_neighbor(TSPinst*, const unsigned int, const int*);

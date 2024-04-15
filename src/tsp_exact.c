@@ -213,13 +213,16 @@ void tsp_bender_loop(TSPinst* problem, TSPenv* cli){
 	int ncomp;
 	int iter=0;
 
-	while(1){
+	while(iter < 3){
 		iter++;
 		CPXsetdblparam(env,CPX_PARAM_TILIM,cli->time_limit-time_elapsed(start_time));
-		if (CPXmipopt(env,lp)) print_error("CPXmipopt() error");   
+		if (CPXmipopt(env,lp)) print_error("CPXmipopt() error");
 		CPXgetbestobjval(env,lp,&lb);
-		//Print incumbent cost
+		
+		#if VERBOSE > 0
 		printf("Iter: %3d\tCost: %10.4f\n",iter,lb);
+		#endif
+
 		int ncols = CPXgetnumcols(env, lp);
 		double *xstar = (double *) calloc(ncols, sizeof(double));
 		if (CPXgetx(env, lp, xstar, 0, ncols-1)) print_error("CPXgetx() error");
@@ -231,8 +234,6 @@ void tsp_bender_loop(TSPinst* problem, TSPenv* cli){
 		if(time_elapsed(start_time) > cli->time_limit) break;
 	}
 
-
-
 	if(lb < problem->cost){
 		problem->cost=lb;
 		
@@ -240,111 +241,80 @@ void tsp_bender_loop(TSPinst* problem, TSPenv* cli){
 		if( ncomp == 1){
 			cth_convert(sol, succ, problem->nnodes);
 			problem->solution=sol;
-			//check_tour_cost(problem, problem->solution, problem->cost);
-			int prev = 0;
-			for(int i = 0; i < problem->nnodes; i++) {printf("|%i", succ[i]);}
-			printf("\n\n");
-			for(int i = 0; i < problem->nnodes; i++) {printf("%i->", succ[prev]);
-			prev = succ[prev]; }
-			printf("\n\n");
-
-			double cost = 0;
-			for(int i = 0; i < problem->nnodes-1; i++) {
-				cost += get_arc(problem, problem->solution[i], problem->solution[i+1]); 
-			}
-			cost += get_arc(problem, problem->solution[0], problem->solution[problem->nnodes-1]);
-			printf("computed cost: %10.4f\n", cost);	
 
 		}
 		else{			
 			patching(problem, succ, comp);
 			cth_convert(sol, succ, problem->nnodes);
-			problem->solution=sol;
-
-			double cost1 = 0;
-			for(int i = 0; i < problem->nnodes-1; i++) {
-				cost1 += get_arc(problem, problem->solution[i], problem->solution[i+1]); 
-			}
-			cost1 += get_arc(problem, problem->solution[0], problem->solution[problem->nnodes]);
-
-			printf("computed cost: %10.4f\n", cost1);	
+			problem->solution=sol;	
 		}	
 	}
 
 	free(succ);
 	free(comp);
-
 	CPXfreeprob(env, &lp);
 	CPXcloseCPLEX(&env); 
 }
 
-static double delta_cost(TSPinst* inst, const unsigned int j, const unsigned int jp, 
-										const unsigned int i, const unsigned int ip) {
-
-	return (get_arc(inst, i, jp) + get_arc(inst, j, ip)) - (get_arc(inst, i, ip) + get_arc(inst, j, jp));
-
-}
-
 void patching(TSPinst* inst, int* succ, int* comp) {
-	int groups = arrunique(comp, inst->nnodes);
-	double min = 10e+8;
-	int best_q = 0,best_qnext = 0;
-	int best_s = 0,best_snext = 0;
+
+	double min = DBL_MAX;
+	int best_i = 0, best_j = 0;
 	int best_set = 0;
 
-	int kgroup[groups];
-	for(int o = 0; o < groups; o++) kgroup[o] = o+1;
+	int group_size = arrunique(comp, inst->nnodes);
+	int kgroup[group_size];
+	for(int o = 0; o < group_size; o++) kgroup[o] = o+1;
 
 
-	while(groups > 1) {
-	
-	for(int k1 = 0; k1 < groups-1; k1++) {
-		printf("K = %i\n", kgroup[k1]);
-		for(int k2 = k1+1; k2 < groups; k2++) {
-			if(kgroup[k1] == kgroup[k2]) { continue; }
-			for(int i = 0; i < inst->nnodes; i++) {
-				if(comp[i] != kgroup[k1]) continue;
+	while(group_size > 1) {
+		for(int k1 = 0; k1 < group_size-1; k1++) {
+			for(int k2 = k1+1; k2 < group_size; k2++) {
+				for(int i = 0; i < inst->nnodes; i++) {
+					if(comp[i] != kgroup[k1]) continue;
 
-				for(int j = 0; j < inst->nnodes; j++) {
-					if(comp[j] != kgroup[k2]) continue;
+					for(int j = 0; j < inst->nnodes; j++) {
+						if(comp[j] != kgroup[k2]) continue;
 
-					double dc = delta_cost(inst, j, succ[j], i, succ[i]);
-					if(dc < min) {
-						min = dc;
-						best_q = i;
-						best_s = j;
-						best_qnext = succ[i];
-						best_snext = succ[j];
-						best_set = k2;
+						double del_cost = delta_cost(inst, j, succ[j], i, succ[i]);
+						if(del_cost < min) {
+							min = del_cost;
+							best_i = i;
+							best_j = j;
+							best_set = k2;
+						}
+
 					}
-
 				}
 			}
-		}
-		printf("INFO\nmin:%10.4f\nq:%i\nqn:%i\ns:%i\nsn:%i\nbest_set:%i\n", min, best_q, best_qnext, best_s, best_snext, kgroup[best_set]);
 
-		inst->cost += min;
-		succ[best_q] = best_snext;
-		succ[best_s] = best_qnext;
-		min = 10e+8;
+			#if VERBOSE > 1
+				printf("\n=============INFO=============\n");
+				printf("tour n°: %i\n", kgroup[k1]);
+				printf("min:\t%10.4f\ni:\t\t%i\nsucc[i]:\t%i\nj:\t\t%i\nsucc[j]:\t%i\nbest_set:\t%i\n", min, best_i, succ[best_i], best_j, succ[best_j], kgroup[best_set]);
+				printf("==============================\n");
+			#endif
 
-		for(int z = 0; z < inst->nnodes; z++) {
-			if(comp[z] == kgroup[best_set]) {
-				comp[z] = kgroup[k1];
+			inst->cost += min;
+			int dummy = succ[best_i];
+			succ[best_i] = succ[best_j];
+			succ[best_j] = dummy;
+
+			for(int z = 0; z < inst->nnodes; z++) {
+				if(comp[z] == kgroup[best_set]) comp[z] = kgroup[k1];
 			}
+			kgroup[best_set] = kgroup[--group_size];
+
+			#if VERBOSE > 1
+				if(arrunique(succ, inst->nnodes) != inst->nnodes) perror("error in solution building");
+				printf("\nremaining tour: %i", kgroup[0]);
+				for(int i = 1 ; i < group_size; i++) {
+				printf(",%i", kgroup[i]);
+				}
+				printf("\n");
+			#endif
+
+			min = DBL_MAX;
 		}
-
-		kgroup[best_set] = kgroup[groups-1];
-
-		groups--;
-		if(arrunique(succ, inst->nnodes) != inst->nnodes) perror("ecco vedi istanza sbagliata, l'avevo detto, sei un pirla, vergognati");
-
-		printf("\nKGROUP\n");
-		for(int i = 0 ; i < groups; i++) {
-		printf(",%i", kgroup[i]);
-		}
-		printf("\n");
 	}
-	}
-	printf("obtained cost: %10.4f\n", inst->cost);
 }
