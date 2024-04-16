@@ -160,6 +160,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 } 
 
 
+//TODO: Remove
 int tsp_CPX_opt(TSPinst *inst) {
 	int error;
 	CPXENVptr env = CPXopenCPLEX(&error);
@@ -226,10 +227,11 @@ void tsp_bender_loop(TSPinst* inst, TSPenv* cli, const unsigned int max_iter) {
 		iter++;
 		CPXsetdblparam(env,CPX_PARAM_TILIM,cli->time_limit-time_elapsed(start_time));
 		if (CPXmipopt(env,lp)) print_error("CPXmipopt() error");
-		CPXgetbestobjval(env,lp,&lb);
-		
+		//CPXgetbestobjval(env,lp,&lb);
+		CPXgetobjval(env,lp,&lb);
+
 		#if VERBOSE > 0
-		printf("Iter: %3d\tCost: %10.4f\n",iter,lb);
+		printf("Iter: %3d\tLower Bound: %10.4f\n",iter,lb);
 		#endif
 
 		int ncols = CPXgetnumcols(env, lp);
@@ -242,6 +244,7 @@ void tsp_bender_loop(TSPinst* inst, TSPenv* cli, const unsigned int max_iter) {
 		add_sec(env,lp,inst,ncomp,ncols,comp);
 		if(time_elapsed(start_time) > cli->time_limit) break;
 	}
+
 	if(lb < inst->cost){
 		inst->cost=lb;
 		
