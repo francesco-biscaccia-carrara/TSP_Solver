@@ -5,23 +5,24 @@
 
 #pragma region static_functions
 
-void add_sec(CPXCENVptr env, CPXLPptr lp,TSPinst* problem,int ncomp,int ncols,int* comp){
+void add_sec(CPXCENVptr env, CPXLPptr lp,const unsigned int nnodes,const int ncomp,const int* comp){
 	if(ncomp==1) print_error("no sec needed for 1 comp!");
 
-	int* index = (int*) calloc(ncols,sizeof(int));
-	double* value = (double*) calloc(ncols,sizeof(double));
+	int* index = (int*) calloc((nnodes*(nnodes-1))/2,sizeof(int));
+	double* value = (double*) calloc((nnodes*(nnodes-1))/2,sizeof(double));
+
+	char sense ='L';
+	int start_index = 0;
 
 	for(int k=1;k<=ncomp;k++) {
 		int nnz=0;
-		char sense ='L';
-		int start_index = 0;
 		double rhs = -1.0;
-		for(int i =0;i<problem->nnodes;i++){
+		for(int i =0;i<nnodes;i++){
 			if(comp[i]!=k) continue;
 			rhs++;
-			for(int j =i+1;j < problem->nnodes;j++){
+			for(int j =i+1;j < nnodes;j++){
 				if(comp[j]!=k) continue;
-				index[nnz]=coords_to_index(problem->nnodes,i,j);
+				index[nnz]=coords_to_index(nnodes,i,j);
 				value[nnz]=1.0;
 				nnz++;
 			}
@@ -78,10 +79,11 @@ void build_model(TSPinst *problem, CPXENVptr env, CPXLPptr lp){
     free(value);
     free(index);	
 
+	/*TODO: remove?
     #if VERBOSE > 1
 	CPXwriteprob(env, lp, "model.lp", NULL);   
     #endif
-
+	*/
 	free(cname[0]);
 	free(cname);
 
@@ -217,8 +219,8 @@ void tsp_bender_loop(TSPinst* inst, TSPenv* cli, const unsigned int max_iter) {
 	double start_time = get_time(); 
 	double lb = inst->cost;
 
-	int *succ= 	calloc(inst->nnodes,sizeof(int));
-	int *sol= 	calloc(inst->nnodes,sizeof(int));
+	int *succ = calloc(inst->nnodes,sizeof(int));
+	int *sol  = calloc(inst->nnodes,sizeof(int));
 	int *comp = calloc(inst->nnodes,sizeof(int)); 
 	int ncomp;
 	int iter=0;
@@ -234,14 +236,15 @@ void tsp_bender_loop(TSPinst* inst, TSPenv* cli, const unsigned int max_iter) {
 		printf("Iter: %3d\tLower Bound: %10.4f\n",iter,lb);
 		#endif
 
-		int ncols = CPXgetnumcols(env, lp);
+		//int ncols = CPXgetnumcols(env, lp); TODO: remove? ncols always = (inst->nnodes*(inst->nnodes-1))/2
+		int ncols = (inst->nnodes*(inst->nnodes-1))/2;
 		double *xstar = (double *) calloc(ncols, sizeof(double));
 		if (CPXgetx(env, lp, xstar, 0, ncols-1)) print_error("CPXgetx() error");
 		build_sol(xstar,inst,succ,comp,&ncomp);
 
 		free(xstar);
 		if(ncomp==1) break;
-		add_sec(env,lp,inst,ncomp,ncols,comp);
+		add_sec(env,lp,inst->nnodes,ncomp,comp);
 		if(time_elapsed(start_time) > cli->time_limit) break;
 	}
 
