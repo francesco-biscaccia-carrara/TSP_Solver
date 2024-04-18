@@ -63,14 +63,17 @@ void check_tour_cost(TSPinst* inst, const int* tour, const double expected_cost)
 
 /// @brief recompute cost of a solution (used for transfer result from cplex to heur)
 /// @param inst instance of TSPinst
+/// @param tmp_sol solution as combination (if NULL => use inst->solution)
 /// @return cost of tour;
-double recompute_cost(TSPinst* inst) {
+double compute_cost(TSPinst* inst,const int* tmp_sol) {
+    if(tmp_sol == NULL) tmp_sol=inst->solution;
+
     double out_cost = 0;
     
     for(int i = 0; i < inst->nnodes-1; i++) {
-        out_cost += get_arc(inst, inst->solution[i], inst->solution[i+1]); 
+        out_cost += get_arc(inst, tmp_sol[i], tmp_sol[i+1]); 
     }
-    out_cost += get_arc(inst, inst->solution[0], inst->solution[inst->nnodes-1]);
+    out_cost += get_arc(inst, tmp_sol[0], tmp_sol[inst->nnodes-1]);
 
     return out_cost;
 }

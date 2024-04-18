@@ -31,9 +31,9 @@ int main(int argc, char **argv) {
     TSPenv* env = environment_new_cli(argv, argc);
     TSPinst* inst = instance_new_env(env);
 
-    char* cplex_func[] = { "BENDERS", "PATCHING"};
+    char* cplex_func[] = { "BENDERS", "PATCHING","BRANCH_BOUND"};
     
-    if(strnin(env->method, cplex_func, 2)) {
+    if(strnin(env->method, cplex_func, 3)) {
         TSPCsolve(inst,env);
         TSPg2optb(inst, inst->solution, &(inst->cost));
     }
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     instance_delete(inst);
     environment_delete(env);
     //FIXME: Bisca has python3
-    //system("cd plot && python3 plot_solution.py");
-    system("cd plot && python3.10 plot_solution.py");
+    system("cd plot && python3 plot_solution.py &");
+    //system("cd plot && python3.10 plot_solution.py &");
     return 0;
 }
