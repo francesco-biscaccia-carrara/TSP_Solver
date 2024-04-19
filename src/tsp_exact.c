@@ -249,7 +249,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 	double init_time = get_time();
 
 	if(!strncmp(env->method,"BENDERS", 7)) TSPCbenders(inst, env, &CPLEX_env,&CPLEX_lp);
-	else if(!strncmp(env->method,"BRANCH_BOUND", 12)) TSPCbranchbound(inst, env, &CPLEX_env,&CPLEX_lp);
+	else if(!strncmp(env->method,"BRANCH_CUT", 12)) TSPCbranchcut(inst, env, &CPLEX_env,&CPLEX_lp);
 	else { print_error("No function with alias"); }
 
 	double final_time = get_time();
@@ -266,7 +266,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 /// @param tsp_env instance of TSPenv
 /// @param env pointer to CPEXENVptr
 /// @param lp pointer to CPEXLPptr
-void TSPCbranchbound(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
+void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 
 	//Model has add_sec_callback installed
 	CPXLONG contextid = CPX_CALLBACKCONTEXT_CANDIDATE;

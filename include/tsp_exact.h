@@ -8,7 +8,7 @@
 
 extern void     TSPCsolve(TSPinst*, TSPenv*);
 
-extern void     TSPCbranchbound(TSPinst*,TSPenv*,CPXENVptr*,CPXLPptr*);
+extern void     TSPCbranchcut(TSPinst*,TSPenv*,CPXENVptr*,CPXLPptr*);
 extern void     TSPCbenders(TSPinst*, TSPenv*,CPXENVptr*,CPXLPptr*);
 extern void     patching(TSPinst*, int*, int*, const unsigned int);
 
