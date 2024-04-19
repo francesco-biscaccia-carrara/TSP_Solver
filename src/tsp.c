@@ -1,5 +1,7 @@
 #include "../include/tsp.h"
 
+double* edge_weights;
+
 #pragma region static_functions
 
 /// @brief print output for help function
@@ -26,7 +28,7 @@ static void tsp_rnd_inst(TSPinst* inst, unsigned int nnodes, const unsigned int 
     inst->nnodes = nnodes;
     inst->random_seed = seed;
     inst->points = (point *) calloc(inst->nnodes, sizeof(point));
-    inst->edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
+    edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
     inst->solution = malloc(nnodes * sizeof(int));
 
     srand(seed);
@@ -86,11 +88,11 @@ static void tsp_read_file(TSPinst* inst, const char* file) {
             
             inst->nnodes = atoi(strtok(NULL, " :"));
             inst->points = (point *) calloc(inst->nnodes, sizeof(point));
-            inst->edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
+            edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
             inst->solution = malloc(inst->nnodes * sizeof(int));
 
             if (inst->points == NULL) print_error(" failed to allocate memory for points vector!");
-            if (inst->edge_weights == NULL) print_error(" failed to allocate memory for edge_weights vector!");
+            if (edge_weights == NULL) print_error(" failed to allocate memory for edge_weights vector!");
 
         }
 
@@ -160,7 +162,7 @@ TSPinst* instance_new_env(TSPenv* env) {
 /// @param inst instance of TSPinst
 void instance_delete(TSPinst* inst) {
     free(inst->points);
-    free(inst->edge_weights);
+    free(edge_weights);
     free(inst->solution);
     free(inst);
 

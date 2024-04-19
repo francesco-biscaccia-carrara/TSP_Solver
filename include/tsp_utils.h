@@ -18,18 +18,18 @@ typedef struct {
 
 //generic functions
 extern double   euc_2d(const point, const point);
-extern double   delta_cost(TSPinst*, const unsigned int, const unsigned int, const unsigned int, const unsigned int);
-extern double   get_arc(TSPinst*, const unsigned int, const unsigned int);
-extern void     check_tour_cost(TSPinst*, const int*, const double);
+extern double   delta_cost(const TSPinst*, const unsigned int, const unsigned int, const unsigned int, const unsigned int);
+extern double   get_arc(const TSPinst*, const unsigned int, const unsigned int);
+extern void     check_tour_cost(const TSPinst*, const int*, const double);
 extern double   compute_cost(TSPinst*,const int*);
 
 //greedy functions
-extern near_neighbor get_nearest_neighbor(TSPinst*, const unsigned int, const int*);
+extern near_neighbor get_nearest_neighbor(const TSPinst*, const unsigned int, const int*);
 
 //G2opt functions
-extern double   check_cross(TSPinst*,const int*, const unsigned int, const unsigned int);
-extern cross    find_first_cross(TSPinst*, const int*);
-extern cross    find_best_cross(TSPinst*, const int*);
+extern double   check_cross(const TSPinst*,const int*, const unsigned int, const unsigned int);
+extern cross    find_first_cross(const TSPinst*, const int*);
+extern cross    find_best_cross(const TSPinst*, const int*);
 
 //VNS functions
 extern void     kick(int*, const unsigned int);

@@ -21,7 +21,7 @@ double euc_2d(const point a, const point b) {
 /// @param j node j
 /// @param jn next of j
 /// @return result of (c_ij + c_injn) - (c_iin + c_jjn)
-double delta_cost(TSPinst* inst, const unsigned int i, const unsigned int in, const unsigned int j, const unsigned int jn) {
+double delta_cost(const TSPinst* inst, const unsigned int i, const unsigned int in, const unsigned int j, const unsigned int jn) {
 
     return  (get_arc(inst, i, j) + get_arc(inst, in, jn)) - 
             (get_arc(inst, i, in) + get_arc(inst, j, jn));
@@ -33,14 +33,14 @@ double delta_cost(TSPinst* inst, const unsigned int i, const unsigned int in, co
 /// @param i node of index i
 /// @param j node of index j
 /// @return euclidian distance between i and j
-double get_arc(TSPinst* inst, const unsigned int i, const unsigned int j) {
+double get_arc(const TSPinst* inst, const unsigned int i, const unsigned int j) {
+    if(edge_weights == NULL) perror("EDGE WEIGHT not initialized");
     if (i == j) return 0.0;
     int q = coords_to_index(inst->nnodes, i, j);
-    if(!inst->edge_weights[q]) {
-        inst->edge_weights[q] = euc_2d(inst->points[i], inst->points[j]);
+    if(!edge_weights[q]) {
+        edge_weights[q] = euc_2d(inst->points[i], inst->points[j]);
     } 
-
-    return inst->edge_weights[q];
+    return edge_weights[q];
 }
 
 
@@ -48,7 +48,7 @@ double get_arc(TSPinst* inst, const unsigned int i, const unsigned int j) {
 /// @param inst instance of TSPinst 
 /// @param tour hamiltonian circuit
 /// @param expected_cost expected cost of tour 
-void check_tour_cost(TSPinst* inst, const int* tour, const double expected_cost) {
+void check_tour_cost(const TSPinst* inst, const int* tour, const double expected_cost) {
     double actual_cost = 0;
     
     for(int i = 0; i < inst->nnodes-1; i++) {
@@ -84,7 +84,7 @@ double compute_cost(TSPinst* inst,const int* tmp_sol) {
 /// @param index starting node
 /// @param res list of already viewed points
 /// @return return point and distance
-near_neighbor get_nearest_neighbor(TSPinst* inst, const unsigned int index, const int* res) {
+near_neighbor get_nearest_neighbor(const TSPinst* inst, const unsigned int index, const int* res) {
     double min = DBL_MAX;
     near_neighbor out = { .dist = 0.0, .index = 0};
 
@@ -109,7 +109,7 @@ near_neighbor get_nearest_neighbor(TSPinst* inst, const unsigned int index, cons
 /// @param i node of index i
 /// @param j node of index j
 /// @return difference betweem c_ij + c_(i+1)k and c_ik + c_i(i+1)
-double check_cross(TSPinst* inst, const int* tour, const unsigned int i, const unsigned int j) {
+double check_cross(const TSPinst* inst, const int* tour, const unsigned int i, const unsigned int j) {
     if (i>j) return check_cross(inst, tour, j, i);
     int k = (j+1 == inst->nnodes) ? 0 : j+1;
 
@@ -121,7 +121,7 @@ double check_cross(TSPinst* inst, const int* tour, const unsigned int i, const u
 /// @param inst instance of TSPinst 
 /// @param tour hamiltonian circuit
 /// @return first cross found, if exists, otherwise a cross {-1,-1, EPSILON} 
-cross find_first_cross(TSPinst* inst, const int* tour) {
+cross find_first_cross(const TSPinst* inst, const int* tour) {
 
     for(int i=0; i< inst->nnodes-2; i++) {
         for(int j=i+2; j<inst->nnodes; j++) {
@@ -139,7 +139,7 @@ cross find_first_cross(TSPinst* inst, const int* tour) {
 /// @param inst instance of TSPinst
 /// @param tour hamiltonian circuit
 /// @return best cross found, if exists, otherwise a cross {-1,-1, EPSILON}
-cross find_best_cross(TSPinst* inst, const int* tour) {
+cross find_best_cross(const TSPinst* inst, const int* tour) {
     cross best_cross = {-1,-1,INFINITY};
 
     for(int i=0;i<inst->nnodes-2;i++){

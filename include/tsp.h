@@ -4,7 +4,7 @@
 
 #define MAX_DIST    10000
 #define MAX_TIME    3.6e+6
-#define VERBOSE	    2
+#define VERBOSE	    3
 
 #include "utils.h"
 
@@ -17,7 +17,6 @@ typedef struct{
     unsigned int    nnodes;
     unsigned int    random_seed;
     point *         points;
-    double *        edge_weights;
     double          cost;
     int*            solution;
 } TSPinst;
@@ -30,6 +29,8 @@ typedef struct{
     char            mt;
     uint64_t        time_limit;
 } TSPenv;
+
+extern double* edge_weights;
 
 //TSPinst functions
 extern TSPinst* instance_new();

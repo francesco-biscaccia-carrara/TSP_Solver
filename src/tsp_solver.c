@@ -57,14 +57,14 @@ void TSPgreedy(TSPinst* inst, const unsigned int intial_node, void(tsp_func)(TSP
     cost += get_arc(inst, result[inst->nnodes-1], intial_node);
 
     #if VERBOSE > 1
-    printf("Partial \e[1mGREEDY\e[m solution starting from [%i]: \t%10.4f\n", intial_node, cost);
+    printf("Partial \e[1m%7s\e[m solution starting from [%i]: \t%10.4f\n","GREEDY" , intial_node, cost);
     #endif
 
     if(tsp_func != NULL) {
         tsp_func(inst, result, &cost);
 
         #if VERBOSE > 1
-        printf("Partial \e[1m%s\e[m solution starting from [%i]: \t%10.4f\n", func_name, intial_node, cost);
+        printf("Partial \e[1m%7s\e[m solution starting from [%i]: \t%10.4f\n", func_name, intial_node, cost);
         #endif
     }
     
