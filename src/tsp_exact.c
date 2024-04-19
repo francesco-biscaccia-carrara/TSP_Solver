@@ -9,7 +9,7 @@
 void CPLEX_log(CPXENVptr* env,unsigned int seed,unsigned int nnodes,const char* method){
 	CPXsetdblparam(*env, CPX_PARAM_SCRIND, CPX_OFF);
     char cplex_log_file[100];
-    sprintf(cplex_log_file, "log/%u-%d-%s.log", seed, nnodes,method);
+    sprintf(cplex_log_file, "log/n_%u-%d-%s.log", seed, nnodes,method);
     if ( CPXsetlogfilename(*env, cplex_log_file, "w") ) print_error("CPXsetlogfilename error.\n");
 }
 
@@ -242,7 +242,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 	CPXLPptr CPLEX_lp = NULL;
 	CPLEX_model_new(inst, &CPLEX_env, &CPLEX_lp);
 
-	#if VERBOSE > 1
+	#if VERBOSE > 2
 		CPLEX_log(&CPLEX_env,env->random_seed,inst->nnodes,env->method);
 	#endif
 
@@ -252,13 +252,13 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 	else if(!strncmp(env->method,"BRANCH_BOUND", 12)) TSPCbranchbound(inst, env, &CPLEX_env,&CPLEX_lp);
 	else { print_error("No function with alias"); }
 
-	CPLEX_model_delete(&CPLEX_env,&CPLEX_lp);
-
 	double final_time = get_time();
 
-    #if VERBOSE > 0
+	#if VERBOSE > 0
 		printf("TSP problem solved in %10.4f sec.s\n", final_time-init_time);
 	#endif
+
+	CPLEX_model_delete(&CPLEX_env,&CPLEX_lp);
 } 
 
 /// @brief use branch&cut to find a solution from LP solution
@@ -288,6 +288,7 @@ void TSPCbranchbound(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* l
 
 	if(lb < inst->cost){
 		int* sol  = calloc(inst->nnodes,sizeof(int));
+
 		double cost = compute_cost(inst,cth_convert(sol, succ, inst->nnodes));
 		instance_set_solution(inst,sol,cost);
 	}
@@ -325,7 +326,7 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 		free(x_star);
 
 		//Iter = 0 --> BENDERS reache the end
-		if(ncomp==1){
+		if(ncomp == 1){
 			iter=0;
 			break;
 		}
