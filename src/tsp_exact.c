@@ -324,16 +324,19 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 		rewrite_solution(x_star,inst->nnodes,succ,comp,&ncomp);
 		free(x_star);
 
-		if(ncomp==1) break;
+		//Iter = 0 --> BENDERS reache the end
+		if(ncomp==1){
+			iter=0;
+			break;
+		}
 
 		//We always apply patching on Benders, in order to have solution if we exceed tl
 		add_sec(*env,*lp,inst->nnodes,ncomp,comp);
 		patching(inst,succ,comp,ncomp);
-		if(time_elapsed(start_time) > tsp_env->time_limit) break;
 	}
 
 	if(lb < inst->cost){
-		if(ncomp != 1) patching(inst, succ, comp, ncomp);
+		if(iter) strcpy(tsp_env->method,"BENDERS-PATCHING");
 
 		int* sol  = calloc(inst->nnodes,sizeof(int));
 		double cost = compute_cost(inst,cth_convert(sol, succ, inst->nnodes));

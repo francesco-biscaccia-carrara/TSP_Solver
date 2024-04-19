@@ -1,5 +1,5 @@
 Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
-CPXPARAM_TimeLimit                               3599999.9999859333
+CPXPARAM_TimeLimit                               1.999985933303833
 Found incumbent of value 95136.359981 after 0.00 sec. (0.54 ticks)
 Tried aggregator 1 time.
 Reduced MIP has 100 rows, 4950 columns, and 9900 nonzeros.
@@ -26,22 +26,22 @@ Root relaxation solution time = 0.01 sec. (2.97 ticks)
       0     0    78850.5680     6    95136.3600       Cuts: 3      155   17.12%
 *     0+    0                        78876.0221    78850.5680             0.03%
       0     0        cutoff          78876.0221    78876.0221      157    0.00%
-Elapsed time = 0.15 sec. (118.23 ticks, tree = 0.01 MB, solutions = 2)
+Elapsed time = 0.13 sec. (118.23 ticks, tree = 0.01 MB, solutions = 2)
 
 Cover cuts applied:  4
 Zero-half cuts applied:  9
 Gomory fractional cuts applied:  3
 
 Root node processing (before b&c):
-  Real time             =    0.15 sec. (118.42 ticks)
+  Real time             =    0.13 sec. (118.42 ticks)
 Parallel b&c, 8 threads:
   Real time             =    0.00 sec. (0.00 ticks)
   Sync time (average)   =    0.00 sec.
   Wait time (average)   =    0.00 sec.
                           ------------
-Total (root+branch&cut) =    0.15 sec. (118.42 ticks)
+Total (root+branch&cut) =    0.13 sec. (118.42 ticks)
 Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
-CPXPARAM_TimeLimit                               3599999.8492670059
+CPXPARAM_TimeLimit                               1.8656229972839355
 Warning:  No solution found from 2 MIP starts.
 Retaining values of one MIP start for possible repair.
 Tried aggregator 1 time.
@@ -87,7 +87,7 @@ Parallel b&c, 8 threads:
                           ------------
 Total (root+branch&cut) =    0.10 sec. (104.72 ticks)
 Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
-CPXPARAM_TimeLimit                               3599999.743241787
+CPXPARAM_TimeLimit                               1.7617378234863281
 3 of 4 MIP starts provided solutions.
 MIP start 'm3' defined initial solution with objective 522563.4778.
 Retaining values of one MIP start for possible repair.
@@ -131,7 +131,7 @@ Parallel b&c, 8 threads:
                           ------------
 Total (root+branch&cut) =    0.09 sec. (97.81 ticks)
 Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
-CPXPARAM_TimeLimit                               3599999.6493167877
+CPXPARAM_TimeLimit                               1.6688699722290039
 5 of 6 MIP starts provided solutions.
 MIP start 'm5' defined initial solution with objective 505025.8292.
 Retaining values of one MIP start for possible repair.
@@ -175,7 +175,7 @@ Parallel b&c, 8 threads:
                           ------------
 Total (root+branch&cut) =    0.10 sec. (127.54 ticks)
 Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
-CPXPARAM_TimeLimit                               3599999.5461668968
+CPXPARAM_TimeLimit                               1.5663399696350098
 7 of 8 MIP starts provided solutions.
 MIP start 'm7' defined initial solution with objective 486556.6062.
 Retaining values of one MIP start for possible repair.
@@ -219,7 +219,7 @@ Parallel b&c, 8 threads:
                           ------------
 Total (root+branch&cut) =    0.11 sec. (142.20 ticks)
 Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
-CPXPARAM_TimeLimit                               3599999.4339718819
+CPXPARAM_TimeLimit                               1.4557850360870361
 9 of 10 MIP starts provided solutions.
 MIP start 'm9' defined initial solution with objective 473008.8975.
 Retaining values of one MIP start for possible repair.
@@ -263,7 +263,7 @@ Parallel b&c, 8 threads:
                           ------------
 Total (root+branch&cut) =    0.11 sec. (145.91 ticks)
 Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
-CPXPARAM_TimeLimit                               3599999.3191819191
+CPXPARAM_TimeLimit                               1.3423910140991211
 11 of 12 MIP starts provided solutions.
 MIP start 'm11' defined initial solution with objective 457660.4520.
 Retaining values of one MIP start for possible repair.
@@ -306,7 +306,7 @@ Parallel b&c, 8 threads:
                           ------------
 Total (root+branch&cut) =    0.09 sec. (105.05 ticks)
 Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
-CPXPARAM_TimeLimit                               3599999.228222847
+CPXPARAM_TimeLimit                               1.2523999214172363
 13 of 14 MIP starts provided solutions.
 MIP start 'm13' defined initial solution with objective 440453.2438.
 Retaining values of one MIP start for possible repair.
@@ -348,7 +348,7 @@ Parallel b&c, 8 threads:
                           ------------
 Total (root+branch&cut) =    0.08 sec. (108.69 ticks)
 Version identifier: 22.1.1.0 | 2022-11-28 | 9160aff4d
-CPXPARAM_TimeLimit                               3599999.1423959732
+CPXPARAM_TimeLimit                               1.167510986328125
 14 of 15 MIP starts provided solutions.
 MIP start 'm14' defined initial solution with objective 432766.8176.
 Retaining values of one MIP start for possible repair.
