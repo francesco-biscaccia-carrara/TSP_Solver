@@ -38,4 +38,5 @@ extern void     kick(int*, const unsigned int);
 extern void     print_sol(const TSPinst*, const TSPenv*);
 extern char*    format_arc(const TSPinst*, char*, const unsigned int, const unsigned int);
 extern void     plot_log(const TSPinst*, FILE*);
+extern void     plot_clog(const TSPinst*, int*, FILE*);
 #endif

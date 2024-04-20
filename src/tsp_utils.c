@@ -232,3 +232,11 @@ void plot_log(const TSPinst* inst, FILE* dest_file) {
     }
     fprintf(dest_file, "%s\n", format_arc(inst, string, inst->solution[inst->nnodes-1], inst->solution[0]));
 }
+
+
+void plot_clog(const TSPinst* inst, int* ctour, FILE* dest_file) {
+    char string[120]; 
+    for(int i = 0; i < inst->nnodes; i++) {
+        fprintf(dest_file, "%s\n", format_arc(inst, string, i, ctour[i]));
+    }
+}

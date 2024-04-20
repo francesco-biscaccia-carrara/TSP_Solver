@@ -46,8 +46,6 @@ int main(int argc, char **argv) {
     print_sol(inst, env);
     instance_delete(inst);
     environment_delete(env);
-    //FIXME: Bisca has python3
     system("cd plot && python3 plot_solution.py &");
-    //system("cd plot && python3.10 plot_solution.py &");
     return 0;
 }
