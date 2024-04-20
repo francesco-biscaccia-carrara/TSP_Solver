@@ -13,6 +13,7 @@ void CPLEX_log(CPXENVptr* env,unsigned int seed,unsigned int nnodes,const char* 
     if ( CPXsetlogfilename(*env, cplex_log_file, "w") ) print_error("CPXsetlogfilename error.\n");
 }
 
+
 void add_sec(CPXCENVptr env, CPXLPptr lp,const unsigned int nnodes,const int ncomp,const int* comp){
 
 	if(ncomp==1) print_error("no sec needed for 1 comp!");
@@ -81,7 +82,6 @@ void rewrite_solution(const double *xstar, const unsigned int nnodes, int *succ,
 	
 	for ( int start = 0; start < nnodes; start++ ){
 		if ( comp[start] >= 0 ) continue;  // node "start" was already visited, just skip it
-		// a new component is found
 		(*ncomp)++;
 		int i = start;
 		int done = 0;
@@ -97,11 +97,10 @@ void rewrite_solution(const double *xstar, const unsigned int nnodes, int *succ,
 				}
 			}
 		}	
-		succ[i] = start;  // last arc to close the cycle
-		
-		// go to the next component...
+		succ[i] = start;
 	}
 }
+
 
 void CPLEX_model_new(TSPinst* inst, CPXENVptr* env, CPXLPptr* lp){    
 	//Env and empty model created
@@ -155,10 +154,12 @@ void CPLEX_model_new(TSPinst* inst, CPXENVptr* env, CPXLPptr* lp){
 	free(cname);
 }
 
+
 void CPLEX_model_delete(CPXENVptr* env, CPXLPptr* lp){
 	CPXfreeprob(*env, lp);
 	CPXcloseCPLEX(env); 
 }
+
 
 /// @brief Solve a CPLEX problem (env,lp) 
 /// @param env CPLEX environment pointer
@@ -176,6 +177,7 @@ void CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, double* 
 
 	if (CPXgetx(*env,*lp, x_star, 0, CPXgetnumcols(*env,*lp)-1)) print_error("CPXgetx() error");
 }
+
 
 /// @brief Callback function to add sec to cut pool
 /// @param context callback context pointer
@@ -200,8 +202,8 @@ static int CPXPUBLIC add_sec_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 	if (ncomp == 1) return 0;
 
 	//Add sec section
-	int* index = (int*) calloc(ncols,sizeof(int));
-	double* value = (double*) calloc(ncols,sizeof(double));
+	int* index = calloc(ncols,sizeof(int));
+	double* value = calloc(ncols,sizeof(double));
 	
 	char sense ='L';
 	int start_index = 0;
@@ -233,6 +235,7 @@ static int CPXPUBLIC add_sec_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 
 #pragma endregion
 
+
 /// @brief Solve an instance of TSP with a mixed exact approach
 /// @param inst instance of TSPinst
 /// @param env instance  of TSPenv
@@ -261,6 +264,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 	CPLEX_model_delete(&CPLEX_env,&CPLEX_lp);
 } 
 
+
 /// @brief use branch&cut to find a solution from LP solution
 /// @param inst instance of TSPinst
 /// @param tsp_env instance of TSPenv
@@ -288,6 +292,7 @@ void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp)
 
 	if(lb < inst->cost){
 		int* sol  = calloc(inst->nnodes,sizeof(int));
+		if(ncomp != 1) patching(inst, succ, comp, ncomp);
 
 		double cost = compute_cost(inst,cth_convert(sol, succ, inst->nnodes));
 		instance_set_solution(inst,sol,cost);
@@ -297,6 +302,7 @@ void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp)
 	free(comp);
 
 }
+
 
 /// @brief use bender's loop to solve a solution from LP solution
 /// @param inst instance of TSPinst
@@ -354,9 +360,8 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 /// @param succ solution in cplex format
 /// @param comp array that associate edge with route number
 /// @param comp_size number of unique element into comp array
-void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size) { //FIXME: #Rick - maybe use local structu??
+void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size) {
 
-	double min = DBL_MAX;
 	int best_i = 0, best_j = 0;
 	int best_set = 0;
 
@@ -373,6 +378,7 @@ void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size)
 
 	while(group_size > 1) {
 		for(int k1 = 0; k1 < group_size-1; k1++) {
+			double min = DBL_MAX;
 			for(int k2 = k1+1; k2 < group_size; k2++) {
 
 				int i = kgroupp[k1];
@@ -422,7 +428,6 @@ void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size)
 				printf("\n");
 			#endif
 
-			min = DBL_MAX;
 		}
 	}
 }

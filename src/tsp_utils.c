@@ -234,6 +234,10 @@ void plot_log(const TSPinst* inst, FILE* dest_file) {
 }
 
 
+/// @brief Write on a file the list of arc in a particular format (from cplex sol)
+/// @param inst instance of TSPinst
+/// @param ctour tour into cplex format
+/// @param dest_file pointer to destination file
 void plot_clog(const TSPinst* inst, int* ctour, FILE* dest_file) {
     char string[120]; 
     for(int i = 0; i < inst->nnodes; i++) {
