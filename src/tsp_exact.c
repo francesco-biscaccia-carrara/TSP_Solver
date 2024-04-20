@@ -200,8 +200,8 @@ static int CPXPUBLIC add_sec_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 	if (ncomp == 1) return 0;
 
 	//Add sec section
-	int* index = (int*) calloc((nnodes*(nnodes-1))/2,sizeof(int));
-	double* value = (double*) calloc((nnodes*(nnodes-1))/2,sizeof(double));
+	int* index = (int*) calloc(ncols,sizeof(int));
+	double* value = (double*) calloc(ncols,sizeof(double));
 	
 	char sense ='L';
 	int start_index = 0;
@@ -209,7 +209,7 @@ static int CPXPUBLIC add_sec_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 	for(int k=1;k<=ncomp;k++) {
 		int nnz=0;
 		double rhs = -1.0;
-		for(int i = 0;i<nnodes;i++){
+		for(int i = 0;i < nnodes;i++){
 			if(comp[i]!=k) continue;
 			rhs++;
 			for(int j =i+1;j < nnodes;j++){
@@ -361,18 +361,24 @@ void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size)
 	int best_set = 0;
 
 	int group_size = comp_size;
-	int kgroup[group_size];
-	for(int o = 0; o < group_size; o++) kgroup[o] = o+1;
 
+	int kgroupp[group_size];
+	memset(kgroupp, 0, comp_size * sizeof(int));
+	int h = 0;
+	for(int l = 0; h < comp_size; l++) {
+		if(kgroupp[comp[l]-1] != 0) continue;
+		kgroupp[comp[l]-1] = succ[l];
+		h++;
+	}
 
 	while(group_size > 1) {
 		for(int k1 = 0; k1 < group_size-1; k1++) {
 			for(int k2 = k1+1; k2 < group_size; k2++) {
-				for(int i = 0; i < inst->nnodes; i++) {
-					if(comp[i] != kgroup[k1]) continue;
 
-					for(int j = 0; j < inst->nnodes; j++) {
-						if(comp[j] != kgroup[k2]) continue;
+				int i = kgroupp[k1];
+				int j = kgroupp[k2];
+				while (succ[i] != kgroupp[k1]) {
+					while (succ[j] != kgroupp[k2]) {
 
 						double del_cost = delta_cost(inst, j, succ[j], i, succ[i]);
 						if(del_cost < min) {
@@ -381,15 +387,17 @@ void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size)
 							best_j = j;
 							best_set = k2;
 						}
-
+						j = succ[j];
 					}
+					i = succ[i];
 				}
+				
 			}
 
 			#if VERBOSE > 2
 				printf("\n=============INFO=============\n");
-				printf("tour n°: %i\n", kgroup[k1]);
-				printf("min:\t%10.4f\ni:\t\t%i\nsucc[i]:\t%i\nj:\t\t%i\nsucc[j]:\t%i\nbest_set:\t%i\n", min, best_i, succ[best_i], best_j, succ[best_j], kgroup[best_set]);
+				printf("tour n°: %i\n", comp[kgroupp[k1]]);
+				printf("min:\t%10.4f\ni:\t\t%i\nsucc[i]:\t%i\nj:\t\t%i\nsucc[j]:\t%i\nbest_set:\t%i\n", min, best_i, succ[best_i], best_j, succ[best_j], comp[kgroupp[best_set]]);
 				printf("==============================\n");
 			#endif
 
@@ -398,16 +406,18 @@ void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size)
 			succ[best_i] = succ[best_j];
 			succ[best_j] = dummy;
 
-			for(int z = 0; z < inst->nnodes; z++) {
-				if(comp[z] == kgroup[best_set]) comp[z] = kgroup[k1];
+			int z = kgroupp[best_set]; 
+			while(succ[z] != kgroupp[best_set]) {
+				comp[z] = comp[kgroupp[k1]];
+				z = succ[z];
 			}
-			kgroup[best_set] = kgroup[--group_size];
+			kgroupp[best_set] = kgroupp[--group_size];
 
 			#if VERBOSE > 2
 				if(arrunique(succ, inst->nnodes) != inst->nnodes) perror("error in solution building");
-				printf("\nremaining tour: %i", kgroup[0]);
+				printf("\nremaining tour: %i", comp[kgroupp[0]]);
 				for(int i = 1 ; i < group_size; i++) {
-				printf(",%i", kgroup[i]);
+				printf(",%i", comp[kgroupp[i]]);
 				}
 				printf("\n");
 			#endif

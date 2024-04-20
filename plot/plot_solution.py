@@ -6,7 +6,6 @@ import re
 
 f = open("input/test.txt", "r")
 lines = f.readlines()
-matplotlib.use('pgf')
 
 for line in lines:
     v = re.findall("(.*),(.*);(.*),(.*)", line)
@@ -19,6 +18,6 @@ for line in lines:
     plt.plot(xval, yval, "-o", color = "xkcd:teal")
 
 plt.title("greedy solution")
-plt.savefig("out/test.pgf", backend='pgf')
+#plt.savefig("out/test.pgf", backend='pgf')
 #plt.savefig("out/test.png") Could be useful
-#plt.show();   
+plt.show();   
