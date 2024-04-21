@@ -27,7 +27,7 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     double final_time = get_time();
 
     #if VERBOSE > 0
-	printf("TSP problem solved in %10.4f sec.s\n", final_time-init_time);
+		print_lifespan(final_time,init_time);
 	#endif
 }
 

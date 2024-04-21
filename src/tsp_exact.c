@@ -167,15 +167,32 @@ void CPLEX_model_delete(CPXENVptr* env, CPXLPptr* lp){
 /// @param spare_time remaining time to compute a solution
 /// @param lower_bound cost of solution 
 /// @param x_star solution in CPX format
-void CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, double* lower_bound,double* x_star){
+int CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, double* lower_bound,double* x_star){
 
-	//TODO: handle infeas, time_exceed cases
+	if(spare_time < EPSILON) print_error("Time limit is too short!");
+	
 	CPXsetdblparam(*env,CPX_PARAM_TILIM,spare_time);
 	if (CPXmipopt(*env,*lp)) print_error("CPXmipopt() error");
 
-	CPXgetobjval(*env,*lp,lower_bound);
+	int STATE = 0;
+	switch(CPXgetstat(*env,*lp)){
+		case CPXMIP_TIME_LIM_FEAS: 
+			STATE=1; 
+			print_warn("Time limit exceeded, but integer solution exists!"); //Time limit exceeded, but integer solution exists 
+			break; 
+		case CPXMIP_TIME_LIM_INFEAS: 		
+			print_error("Time limit exceeded; no integer solution!"); //Time limit exceeded; no integer solution 
+			break; 		 
+		case CPXMIP_INFEASIBLE: 
+			print_error("Solution is integer infeasible!"); //Solution is integer infeasible 
+			break;
+		default: break;	
+	}
 
+	CPXgetobjval(*env,*lp,lower_bound);
 	if (CPXgetx(*env,*lp, x_star, 0, CPXgetnumcols(*env,*lp)-1)) print_error("CPXgetx() error");
+
+	return STATE; //0 all good, 1 time_exceeding, but exist sol
 }
 
 
@@ -184,6 +201,9 @@ void CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, double* 
 /// @param contextid context id
 /// @param userhandle data passed to callback
 static int CPXPUBLIC add_sec_callback(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* userhandle) { 
+
+	if(contextid != CPX_CALLBACKCONTEXT_CANDIDATE) print_error("wrong callback");
+
 	unsigned int nnodes = * (unsigned int*) userhandle;  
 	
 	int ncols = nnodes*(nnodes-1)/2;
@@ -199,7 +219,22 @@ static int CPXPUBLIC add_sec_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 	rewrite_solution(xstar,nnodes,succ,comp,&ncomp);
 	free(xstar);
 
-	if (ncomp == 1) return 0;
+	if (ncomp == 1) {
+		free(succ);
+		free(comp);
+		
+		//FIXME: Don't know if it is right
+		#if VERBOSE > 0
+			double incumbent = CPX_INFBOUND;
+			double l_bound = CPX_INFBOUND;
+			CPXcallbackgetinfodbl(context,CPXCALLBACKINFO_BEST_SOL,&incumbent);
+			CPXcallbackgetinfodbl(context,CPXCALLBACKINFO_BEST_BND,&l_bound);
+			printf("\e[1mBRANCH & CUT\e[m found new feasible solution: - Incumbent: %20.4f\tLower-Bound: %20.4f\tInt.Gap: %1.2f/100 \n",incumbent,l_bound,(1-l_bound/incumbent)*100);
+		#endif
+
+		return 0;
+	}
+	
 
 	//Add sec section
 	int* index = calloc(ncols,sizeof(int));
@@ -258,7 +293,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 	double final_time = get_time();
 
 	#if VERBOSE > 0
-		printf("TSP problem solved in %10.4f sec.s\n", final_time-init_time);
+		print_lifespan(final_time,init_time);
 	#endif
 
 	CPLEX_model_delete(&CPLEX_env,&CPLEX_lp);
@@ -286,7 +321,7 @@ void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp)
 
 	double* x_star = (double*) calloc((inst->nnodes*(inst->nnodes-1))/2, sizeof(double));
 	CPLEX_solve(env,lp,tsp_env->time_limit-time_elapsed(start_time),&lb,x_star);
-
+			
 	rewrite_solution(x_star,inst->nnodes,succ,comp,&ncomp);
 	free(x_star);
 
@@ -310,13 +345,15 @@ void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp)
 /// @param env pointer to CPEXENVptr
 /// @param lp pointer to CPEXLPptr
 void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {	
-	double start_time = get_time(); 
 	double lb = inst->cost;
 
 	int* succ = calloc(inst->nnodes,sizeof(int));
 	int* comp = calloc(inst->nnodes,sizeof(int)); 
 	int ncomp;
 	int iter=0;
+
+	double start_time = get_time(); 
+	if(tsp_env->time_limit-time_elapsed(start_time)<EPSILON) print_error("Time limit is too short!");
 
 	while(time_elapsed(start_time) < tsp_env->time_limit) {
 		iter++;
@@ -325,13 +362,13 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 		CPLEX_solve(env,lp,tsp_env->time_limit-time_elapsed(start_time),&lb,x_star);
 
 		#if VERBOSE > 0
-			printf("Lower-bound \e[1mBENDER'S LOOP\e[m itereation [%i]: \t%10.4f\n", iter, lb);
+			printf("Lower-Bound \e[1mBENDER'S LOOP\e[m itereation [%i]: \t%10.4f\n", iter, lb);
 		#endif
 
 		rewrite_solution(x_star,inst->nnodes,succ,comp,&ncomp);
 		free(x_star);
 
-		//Iter = 0 --> BENDERS reache the end
+		//Iter = 0 --> BENDERS reaches the end
 		if(ncomp == 1){
 			iter=0;
 			break;

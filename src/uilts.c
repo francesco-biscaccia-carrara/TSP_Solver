@@ -1,11 +1,19 @@
 #include "../include/utils.h"
 
+
 /// @brief used to print logical errors whenever they occur
 /// @param error_message text to print
 void print_error(const char *error_message){
-    printf("\n\x1b[31mERROR: %s\x1b[0m\n", error_message); 
+    printf("\n\x1b[31m\e[1m\e[4mERROR\e[0m\e[m\x1b[31m: %s\x1b[0m\n", error_message); 
     fflush(NULL); 
     exit(1);
+} 
+
+/// @brief used to print warning whenever they occur
+/// @param warning_message text to print
+void print_warn(const char *warning_message){
+    printf("\n\x1b[33m\e[1m\e[4mWARNING\e[0m\e[m\x1b[33m: %s\x1b[0m\n", warning_message);
+    fflush(NULL); 
 } 
 
 
@@ -137,4 +145,8 @@ void format_csv_line(FILE* dest, const double* content, const unsigned int size)
         fprintf(dest, ",%f",content[i]);
     }
     fprintf(dest, "\n");
+}
+
+void print_lifespan(const double final_time, const double init_time){
+    printf("\n\e[3mTSP problem solved in \e[0m%10.3f sec.s\n", final_time-init_time);
 }

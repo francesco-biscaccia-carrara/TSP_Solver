@@ -202,7 +202,7 @@ void kick(int* tour, const unsigned int size) {
 /// @param env instance of TSPenv
 void print_sol(const TSPinst* inst,const TSPenv* env) {
     printf("\n\e[1mBest Solution Found\e[m (by \e[1m%s\e[m)\n",env->method);
-    printf("Starting node:\t%i\n",inst->solution[0]);
+    //printf("Starting node:\t%i\n",inst->solution[0]); TODO: Can be removed?
 	printf("Cost: \t%10.4f\n", inst->cost);
 }
 
