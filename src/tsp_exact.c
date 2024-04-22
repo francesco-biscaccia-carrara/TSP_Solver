@@ -4,17 +4,25 @@
 
 
 #pragma region static_functions
-//TODO: END DOCS
 
-void CPLEX_log(CPXENVptr* env,unsigned int seed,unsigned int nnodes,const char* method){
+/// @brief Set CPLEX log on
+/// @param env CPLEX environment pointer
+/// @param env TSPenv instance pointer
+static void CPLEX_log(CPXENVptr* env,const TSPenv* tsp_env){
 	CPXsetdblparam(*env, CPX_PARAM_SCRIND, CPX_OFF);
     char cplex_log_file[100];
-    sprintf(cplex_log_file, "log/n_%u-%d-%s.log", seed, nnodes,method);
+    sprintf(cplex_log_file, "log/n_%u-%d-%s.log", tsp_env->random_seed, tsp_env->nnodes,tsp_env->method);
     if ( CPXsetlogfilename(*env, cplex_log_file, "w") ) print_error("CPXsetlogfilename error.\n");
 }
 
 
-void add_sec(CPXCENVptr env, CPXLPptr lp,const unsigned int nnodes,const int ncomp,const int* comp){
+/// @brief Set CPLEX log on
+/// @param env CPLEX environment pointer
+/// @param lp CPLEX model pointer
+/// @param nnodes number of nodes
+/// @param ncomp number of component
+/// @param comp array that associate a number from 1 to n-component for each node
+static void add_sec(CPXCENVptr env, CPXLPptr lp,const unsigned int nnodes,const int ncomp,const int* comp){
 
 	if(ncomp==1) print_error("no sec needed for 1 comp!");
 
@@ -51,7 +59,14 @@ void add_sec(CPXCENVptr env, CPXLPptr lp,const unsigned int nnodes,const int nco
 	free(value);
 }
 
-void rewrite_solution(const double *xstar, const unsigned int nnodes, int *succ, int *comp, int *ncomp){   
+
+/// @brief Decompose the solution in the xstar format into n-component format
+/// @param xstar solution in xstar format pointer
+/// @param nnodes numbers of nodes
+/// @param succ array of successor necessary to store the solution
+/// @param comp array that associate a number from 1 to n-component for each node
+/// @param ncomp number of component pointer
+static void decompose_sol(const double *xstar, const unsigned int nnodes, int *succ, int *comp, int *ncomp){   
 	#if VERBOSE > 2
 		int *degree = (int *) calloc(nnodes, sizeof(int));
 		for ( int i = 0; i < nnodes; i++ )
@@ -59,7 +74,7 @@ void rewrite_solution(const double *xstar, const unsigned int nnodes, int *succ,
 			for ( int j = i+1; j < nnodes; j++ )
 			{
 				int k = coords_to_index(nnodes, i,j);
-				if ( fabs(xstar[k]) > EPSILON && fabs(xstar[k]-1.0) > EPSILON ) print_error(" wrong xstar in rewrite_solution()");
+				if ( fabs(xstar[k]) > EPSILON && fabs(xstar[k]-1.0) > EPSILON ) print_error(" wrong xstar in decompose_sol()");
 				if ( xstar[k] > 0.5 ) 
 				{
 					++degree[i];
@@ -69,7 +84,7 @@ void rewrite_solution(const double *xstar, const unsigned int nnodes, int *succ,
 		}
 		for ( int i = 0; i < nnodes; i++ )
 		{
-			if ( degree[i] != 2 ) print_error("wrong degree in rewrite_solution()");
+			if ( degree[i] != 2 ) print_error("wrong degree in decompose_sol()");
 		}	
 		free(degree);
 	#endif
@@ -102,7 +117,11 @@ void rewrite_solution(const double *xstar, const unsigned int nnodes, int *succ,
 }
 
 
-void CPLEX_model_new(TSPinst* inst, CPXENVptr* env, CPXLPptr* lp){    
+/// @brief Create a CPLEX problem (env,lp) from a TSP instance
+/// @param inst TSPinst instance pointer
+/// @param env CPLEX environment pointer
+/// @param lp CPLEX model pointer
+static void CPLEX_model_new(TSPinst* inst, CPXENVptr* env, CPXLPptr* lp){    
 	//Env and empty model created
 	int error;
 	*env = CPXopenCPLEX(&error);
@@ -155,7 +174,10 @@ void CPLEX_model_new(TSPinst* inst, CPXENVptr* env, CPXLPptr* lp){
 }
 
 
-void CPLEX_model_delete(CPXENVptr* env, CPXLPptr* lp){
+/// @brief Delete a CPLEX problem (env,lp) 
+/// @param env CPLEX environment pointer
+/// @param lp CPLEX model pointer
+static void CPLEX_model_delete(CPXENVptr* env, CPXLPptr* lp){
 	CPXfreeprob(*env, lp);
 	CPXcloseCPLEX(env); 
 }
@@ -167,7 +189,7 @@ void CPLEX_model_delete(CPXENVptr* env, CPXLPptr* lp){
 /// @param spare_time remaining time to compute a solution
 /// @param lower_bound cost of solution 
 /// @param x_star solution in CPX format
-int CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, double* lower_bound,double* x_star){
+static int CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, double* lower_bound,double* x_star){
 
 	if(spare_time < EPSILON) print_error("Time limit is too short!");
 	
@@ -216,7 +238,7 @@ static int CPXPUBLIC add_sec_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 	int *comp = calloc(nnodes,sizeof(int)); 
 	int ncomp;
 
-	rewrite_solution(xstar,nnodes,succ,comp,&ncomp);
+	decompose_sol(xstar,nnodes,succ,comp,&ncomp);
 	free(xstar);
 
 	if (ncomp == 1) {
@@ -280,13 +302,13 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 	CPXLPptr CPLEX_lp = NULL;
 	CPLEX_model_new(inst, &CPLEX_env, &CPLEX_lp);
 
-	#if VERBOSE > 2
-		CPLEX_log(&CPLEX_env,env->random_seed,inst->nnodes,env->method);
+	#if VERBOSE > 0
+		CPLEX_log(&CPLEX_env,env);
 	#endif
 
 	double init_time = get_time();
 
-	if(!strncmp(env->method,"BENDERS", 7)) TSPCbenders(inst, env, &CPLEX_env,&CPLEX_lp);
+	if(!strncmp(env->method,"BENDER", 6)) TSPCbenders(inst, env, &CPLEX_env,&CPLEX_lp);
 	else if(!strncmp(env->method,"BRANCH_CUT", 12)) TSPCbranchcut(inst, env, &CPLEX_env,&CPLEX_lp);
 	else { print_error("No function with alias"); }
 
@@ -322,7 +344,7 @@ void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp)
 	double* x_star = (double*) calloc((inst->nnodes*(inst->nnodes-1))/2, sizeof(double));
 	CPLEX_solve(env,lp,tsp_env->time_limit-time_elapsed(start_time),&lb,x_star);
 			
-	rewrite_solution(x_star,inst->nnodes,succ,comp,&ncomp);
+	decompose_sol(x_star,inst->nnodes,succ,comp,&ncomp);
 	free(x_star);
 
 	if(lb < inst->cost){
@@ -365,7 +387,7 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 			printf("Lower-Bound \e[1mBENDER'S LOOP\e[m itereation [%i]: \t%10.4f\n", iter, lb);
 		#endif
 
-		rewrite_solution(x_star,inst->nnodes,succ,comp,&ncomp);
+		decompose_sol(x_star,inst->nnodes,succ,comp,&ncomp);
 		free(x_star);
 
 		//Iter = 0 --> BENDERS reaches the end

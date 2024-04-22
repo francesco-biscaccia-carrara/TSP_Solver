@@ -147,6 +147,12 @@ void format_csv_line(FILE* dest, const double* content, const unsigned int size)
     fprintf(dest, "\n");
 }
 
+/// @brief print the execution time to solve TSP problem
+/// @param final_time ending time
+/// @param init_time starting time
 void print_lifespan(const double final_time, const double init_time){
     printf("\n\e[3mTSP problem solved in \e[0m%10.3f sec.s\n", final_time-init_time);
 }
+
+/// @brief initialize random seed to prevent strange behaviour
+void init_random()  { for(int i=0;i<100;i++) rand();}

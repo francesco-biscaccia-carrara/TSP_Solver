@@ -141,6 +141,7 @@ TSPinst* instance_new() {
 TSPinst* instance_new_env(TSPenv* env) {
     TSPinst* inst = instance_new();
 
+    init_random();
     if(!strncmp(env->file_name,"RND",3) || fopen(env->file_name, "r")==NULL){
         tsp_rnd_inst(inst, env->nnodes,env->random_seed);
     }else{

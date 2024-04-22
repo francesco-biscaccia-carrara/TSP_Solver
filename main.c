@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     TSPenv* env = environment_new_cli(argv, argc);
     TSPinst* inst = instance_new_env(env);
 
-    char* cplex_func[] = { "BENDERS", "PATCHING","BRANCH_CUT"};
+    char* cplex_func[] = { "BENDER", "PATCHING","BRANCH_CUT"};
     
     if(strnin(env->method, cplex_func, 3)) {
         TSPCsolve(inst,env);

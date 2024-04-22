@@ -17,7 +17,7 @@ for line in lines:
     yval.append(float(v[0][3]))
     plt.plot(xval, yval, "-o", color = "xkcd:teal")
 
-plt.title("greedy solution")
+plt.title("TSP solution")
 #plt.savefig("out/test.pgf", backend='pgf')
-#plt.savefig("out/test.png") Could be useful
+plt.savefig("out/test.png") #Could be useful
 plt.show();   
