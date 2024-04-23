@@ -13,6 +13,7 @@ static void help_info(){
     printf("\n '-algo / -method / -alg <method>' to specify the method to solve the TSP instance;");
     //TODO: add all new method 
     printf("\n\tImplemented method: \n\t\t- GREEDY = greedy search,\n\t\t- G2OPT_F = greedy + 2opt w. first swaps,\n\t\t- G2OPT_B = greedy + 2opt w. best swaps");
+    //TODO: add warm flag
     printf("\n '-seed / -rnd_seed <seed>' to specity the random seed (int value);");
     printf("\n '-multi_th / -mt' to use multithreading computation;");
     printf("\n '-help / --help / -h' to get help.");
@@ -216,6 +217,7 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
     char* seed_comm[] = {"-seed", "-rnd_seed", "-s"};
     char* mtth_comm[] = {"-mt", "-multi_th"};
     char* help_comm[] = {"-help", "-h", "--help"};
+    char* warm_comm[] = {"-warm", "-w", "--warm"};
 
     for (int i = 1; i < argc; i++) { 
         if (strnin(argv[i], time_comm, 2))  env->time_limit = abs(atof(argv[++i]));
@@ -224,6 +226,7 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
         if (strnin(argv[i], algo_comm, 3))  strcpy(env->method,argv[++i]);
         if (strnin(argv[i], seed_comm, 3))  env->random_seed = abs(atoi(argv[++i])); 
         if (strnin(argv[i], mtth_comm, 2))  env->mt = 1;  
+        if (strnin(argv[i], warm_comm, 2))  env->warm = 1;  
         if (strnin(argv[i], help_comm, 3))  { help_info(); exit(0); }  
     }
 

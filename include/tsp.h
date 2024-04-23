@@ -27,6 +27,7 @@ typedef struct{
     char*           file_name;
     char*           method;
     char            mt;
+    char            warm;
     uint64_t        time_limit;
 } TSPenv;
 

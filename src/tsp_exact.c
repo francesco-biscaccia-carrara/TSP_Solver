@@ -1,4 +1,5 @@
 #include "../include/tsp_exact.h"
+#include "../include/tsp_solver.h"
 #include "../include/tsp.h"
 #include "../include/utils.h"
 
@@ -22,7 +23,7 @@ static void CPLEX_log(CPXENVptr* env,const TSPenv* tsp_env){
 /// @param nnodes number of nodes
 /// @param ncomp number of component
 /// @param comp array that associate a number from 1 to n-component for each node
-static void add_sec(CPXCENVptr env, CPXLPptr lp,const unsigned int nnodes,const int ncomp,const int* comp){
+static void add_SEC(CPXCENVptr env, CPXLPptr lp,const unsigned int nnodes,const int ncomp,const int* comp){
 
 	if(ncomp==1) print_error("no sec needed for 1 comp!");
 
@@ -114,6 +115,24 @@ static void decompose_sol(const double *xstar, const unsigned int nnodes, int *s
 		}	
 		succ[i] = start;
 	}
+}
+
+
+/// @brief Convert the solution saved on inst->solution to CPX format
+/// @param inst TSPinst pointer
+/// @param index array of indeces
+/// @param value array of non-zeros
+static void CPLEX_sol_from_inst(const TSPinst* inst,int* index, double* value){
+		int nnz=0;
+		int i;
+
+		for(i = 0;i<inst->nnodes-1;i++){
+				index[nnz]=coords_to_index(inst->nnodes,inst->solution[i],inst->solution[i+1]);
+				value[nnz]=1.0;
+				nnz++;
+			}
+		index[nnz]=coords_to_index(inst->nnodes,inst->solution[i],inst->solution[0]);
+		value[nnz]=1.0;
 }
 
 
@@ -222,7 +241,7 @@ static int CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, do
 /// @param context callback context pointer
 /// @param contextid context id
 /// @param userhandle data passed to callback
-static int CPXPUBLIC add_sec_callback(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* userhandle) { 
+static int CPXPUBLIC add_SEC_callback(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* userhandle) { 
 
 	if(contextid != CPX_CALLBACKCONTEXT_CANDIDATE) print_error("wrong callback");
 
@@ -251,7 +270,7 @@ static int CPXPUBLIC add_sec_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 			double l_bound = CPX_INFBOUND;
 			CPXcallbackgetinfodbl(context,CPXCALLBACKINFO_BEST_SOL,&incumbent);
 			CPXcallbackgetinfodbl(context,CPXCALLBACKINFO_BEST_BND,&l_bound);
-			printf("\e[1mBRANCH & CUT\e[m found new feasible solution: - Incumbent: %20.4f\tLower-Bound: %20.4f\tInt.Gap: %1.2f/100 \n",incumbent,l_bound,(1-l_bound/incumbent)*100);
+			printf("\e[1mBRANCH & CUT\e[m found new feasible solution - Incumbent: %20.4f\tLower-Bound: %20.4f\tInt.Gap: %1.2f%% \n",incumbent,l_bound,(1-l_bound/incumbent)*100);
 		#endif
 
 		return 0;
@@ -302,11 +321,28 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 	CPXLPptr CPLEX_lp = NULL;
 	CPLEX_model_new(inst, &CPLEX_env, &CPLEX_lp);
 
-	#if VERBOSE > 0
+	#if VERBOSE > 1
 		CPLEX_log(&CPLEX_env,env);
 	#endif
 
 	double init_time = get_time();
+
+	//'Warm-up' CPLEX with a feasibile solution given by G2OPT heu
+	if(env->warm){
+		TSPgreedy(inst, ((double)rand())/RAND_MAX*inst->nnodes, TSPg2optb, env->method);
+		print_warn("passing an heuristic solution to CPLEX...");
+
+		int ncols = (inst->nnodes*(inst->nnodes-1))/2;
+		int start_index = 0; 	
+		int effort_level = CPX_MIPSTART_NOCHECK;
+		int* index = (int*) calloc(ncols,sizeof(int));
+		double* value = (double*) calloc(ncols,sizeof(double));
+
+		CPLEX_sol_from_inst(inst,index,value);
+		if (CPXaddmipstarts(CPLEX_env, CPLEX_lp, 1,ncols, &start_index, index, value, &effort_level, NULL)) print_error("CPXaddmipstarts() error");	
+		free(index);
+		free(value);
+	}
 
 	if(!strncmp(env->method,"BENDER", 6)) TSPCbenders(inst, env, &CPLEX_env,&CPLEX_lp);
 	else if(!strncmp(env->method,"BRANCH_CUT", 12)) TSPCbranchcut(inst, env, &CPLEX_env,&CPLEX_lp);
@@ -329,10 +365,10 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 /// @param lp pointer to CPEXLPptr
 void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 
-	//Model has add_sec_callback installed
+	//Model has add_SEC_callback installed
 	CPXLONG contextid = CPX_CALLBACKCONTEXT_CANDIDATE;
 	int nnodes = inst->nnodes;
-	if (CPXcallbacksetfunc(*env, *lp, contextid, add_sec_callback, &nnodes)) print_error("CPXcallbacksetfunc() error");
+	if (CPXcallbacksetfunc(*env, *lp, contextid, add_SEC_callback, &nnodes)) print_error("CPXcallbacksetfunc() error");
 
 	double start_time = get_time(); 
 	double lb = inst->cost;
@@ -397,7 +433,7 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 		}
 
 		//We always apply patching on Benders, in order to have solution if we exceed tl
-		add_sec(*env,*lp,inst->nnodes,ncomp,comp);
+		add_SEC(*env,*lp,inst->nnodes,ncomp,comp);
 		patching(inst,succ,comp,ncomp);
 	}
 
