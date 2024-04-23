@@ -3,6 +3,7 @@ CFLAGS = -I./include
 CPLEXDIR = /opt/ibm/ILOG/CPLEX_Studio2211/cplex
 CPLEXINC = -I$(CPLEXDIR)/include 
 CPLEXLIB = -L$(CPLEXDIR)/lib/x86-64_linux/static_pic -lcplex
+CNOCOLIB = -L./concorde/mincut.a
 SRCDIR = src
 INCDIR = include
 

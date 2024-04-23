@@ -1,6 +1,6 @@
-#ifndef MINCUT_H  
+#ifndef __MINCUT_H  
 
-#define MINCUT_H
+#define __MINCUT_H
 
 /**
 *   Author Andrea De Lorenzi
@@ -11,9 +11,7 @@
 *   math.uwaterloo.ca/tsp/concorde/index.html
 */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <cstddef>
 
 #define CC_MINCUT_BIGDOUBLE   (1e30)
 #define CC_MINCUT_ONE_EPSILON (0.000001)
@@ -270,8 +268,7 @@ static int mincut_work(int ncount, int ecount, int* elist, double* dlen,
 static void
 free_graph(graph* G),
 connect_search(graph* G, int n, int marker, int* dstack),
-init_graph(graph* G),
-free_graph(graph* G, bool aux);
+init_graph(graph* G);
 
 void *CCutil_allocrus(size_t size);
 void CCutil_freerus(void* p);
