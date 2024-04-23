@@ -207,7 +207,13 @@ CLEANUP:
 static void free_graph(graph* G)
 {
     CC_IFFREE(G->nodelist, node);
-    CC_IFFREE(G->adjspace, int);
+    CC_IFFREE(G->edgelist, edge);
+#ifdef USE_GAP
+    CC_IFFREE(G->level, node*);
+#endif
+#ifdef HIGHEST_LABEL_PRF
+    CC_IFFREE(G->high, node*);
+#endif
 }
 
 static void connect_search(graph* G, int n, int marker, int* dstack)

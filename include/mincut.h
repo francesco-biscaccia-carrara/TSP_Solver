@@ -3,12 +3,14 @@
 #define __MINCUT_H
 
 /**
-*   Author Andrea De Lorenzi
-*   for the course of Operation Research 2, AY 2022/23
+*   @author Francesco Biscaccia Carrara
+*   for the course of Operation Research 2, AY 2023/24
 * 
 *   Source code extracted from the 03.12.19 release of the Concorde TSP solver
 *   developed by William Cook and available for academic research use at
 *   math.uwaterloo.ca/tsp/concorde/index.html
+*   
+*   Please, track any changes and update this file
 */
 
 #include <stdlib.h>
@@ -17,7 +19,7 @@
 #define CC_MINCUT_ONE_EPSILON (0.000001)
 #define SRK_ZERO_EPSILON (1e-10)
 #define CONNECT_ZERO_EPSILON (1e-10)
-#define INFINITY (1<<30)
+#define CC_INFINITY (1<<30)
 #define PRF_EPSILON 0.000000001
 #define GOING_IN  0
 #define GOING_OUT 1
@@ -75,7 +77,7 @@
 
 #ifdef USE_GAP
 #define RELABEL(n) {                                                      \
-    int relm = INFINITY;                                                  \
+    int relm = CC_INFINITY;                                                  \
     edge *rele;                                                           \
     int relt, relold = (n)->flowlabel;                                    \
                                                                           \
@@ -116,7 +118,7 @@
 }
 #else
 #define RELABEL(n) {                                                      \
-    int relm = INFINITY;                                                  \
+    int relm = CC_INFINITY;                                                  \
     edge *rele;                                                           \
     int relt;                                                             \
                                                                           \

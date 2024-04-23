@@ -2,6 +2,7 @@
 #include "../include/tsp_solver.h"
 #include "../include/tsp.h"
 #include "../include/utils.h"
+#include "../include/mincut.h"
 
 
 #pragma region static_functions
