@@ -47,7 +47,7 @@ static void add_SEC(CPXCENVptr env, CPXLPptr lp,const unsigned int nnodes,const 
 			}
 		}
 		if( CPXaddrows(env,lp,0,1,nnz,&rhs,&sense,&start_index,index,value,NULL,NULL)) print_error("CPXaddrows() error");
-		/*FIXME: Must exist a way to do that!
+		/*FIXME: Maybe I find a way: pointer to function
 		...CPXCALLBACKCONTEXTptr contextid, CPXCENVptr env, CPXLPptr lp
 		if(env != NULL && lp !=NULL) 
 			if( CPXaddrows(env,lp,0,1,nnz,&rhs,&sense,&start_index,index,value,NULL,NULL)) print_error("CPXaddrows() error");
@@ -130,7 +130,7 @@ static void CPLEX_sol_from_inst(const TSPinst* inst,int* index, double* value){
 				index[nnz]=coords_to_index(inst->nnodes,inst->solution[i],inst->solution[i+1]);
 				value[nnz]=1.0;
 				nnz++;
-			}
+		}
 		index[nnz]=coords_to_index(inst->nnodes,inst->solution[i],inst->solution[0]);
 		value[nnz]=1.0;
 }
@@ -264,7 +264,6 @@ static int CPXPUBLIC add_SEC_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 		free(succ);
 		free(comp);
 		
-		//FIXME: Don't know if it is right
 		#if VERBOSE > 0
 			double incumbent = CPX_INFBOUND;
 			double l_bound = CPX_INFBOUND;
