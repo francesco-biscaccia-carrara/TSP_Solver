@@ -16,7 +16,6 @@ static void CPLEX_log(CPXENVptr* env,const TSPenv* tsp_env){
     if ( CPXsetlogfilename(*env, cplex_log_file, "w") ) print_error("CPXsetlogfilename error.\n");
 }
 
-
 /// @brief Set CPLEX log on
 /// @param env CPLEX environment pointer
 /// @param lp CPLEX model pointer
@@ -385,7 +384,10 @@ void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp)
 
 	if(lb < inst->cost){
 		int* sol  = calloc(inst->nnodes,sizeof(int));
-		if(ncomp != 1) patching(inst, succ, comp, ncomp);
+		if(ncomp != 1){
+			strcpy(tsp_env->method,"B&C-PATCHING");
+			patching(inst, succ, comp, ncomp);
+		} 
 
 		double cost = compute_cost(inst,cth_convert(sol, succ, inst->nnodes));
 		instance_set_solution(inst,sol,cost);

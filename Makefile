@@ -26,7 +26,6 @@ main.o: main.c
 test.o: test.c
 	$(CC) $(CPLEXINC) $(CPLEXINC) $(CPLEXLIB) -c test.c -o test.o
 
-
 %.o: $(SRCDIR)/%.c $(DEPS)
 	$(CC) $(CFLAGS) $(CPLEXINC) $(CPLEXLIB) -c $< -o $@
 
