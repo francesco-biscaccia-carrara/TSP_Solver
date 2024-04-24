@@ -31,6 +31,10 @@ extern double   check_cross(const TSPinst*,const int*, const unsigned int, const
 extern cross    find_first_cross(const TSPinst*, const int*);
 extern cross    find_best_cross(const TSPinst*, const int*);
 
+//TABU functions
+extern char     is_in_tabu(int, int, const cross*, const int);
+extern cross    find_best_t_cross(const TSPinst*, const int*, const cross*, const int);
+
 //VNS functions
 extern void     kick(int*, const unsigned int);
 

@@ -158,6 +158,47 @@ cross find_best_cross(const TSPinst* inst, const int* tour) {
 }
 
 
+/// @brief check if a cross is in tabu
+/// @param i node i
+/// @param j node j
+/// @param tabu array of cross
+/// @param tabu_size size of cross array
+/// @return 0 if is not in tabu, 1 otherwise
+char is_in_tabu(int i, int j, const cross* tabu, const int tabu_size) {
+
+    for(int k = 0; k < tabu_size; k++) {
+        if(tabu[k].i == i && tabu[k].j == j) return 1;
+    }  
+
+    return 0;
+}
+
+
+/// @brief pick best cross not in tabu
+/// @param inst instance of TSPinst
+/// @param tour Hamiltonian circuit
+/// @param tabu array of cross
+/// @param tabu_size size of cross array
+/// @return best cross not inside tabu
+cross find_best_t_cross(const TSPinst* inst, const int* tour, const cross* tabu, const int tabu_size) {
+    cross best_cross = {-1,-1,INFINITY};
+
+    for(int i=0;i<inst->nnodes-2;i++){
+        for(int j=i+2;j<inst->nnodes;j++){
+            if(i==0 && j+1==inst->nnodes) continue;
+            
+            double delta_cost = check_cross(inst,tour,i,j);
+            if(delta_cost < best_cross.delta_cost + EPSILON && !is_in_tabu(i,j, tabu, tabu_size)){
+                best_cross.i = i;
+                best_cross.j = j;
+                best_cross.delta_cost = delta_cost;
+            }
+        }
+    }
+    return best_cross;
+}
+
+
 /// @brief create random changes into a solution
 /// @param tour hamiltonian circuit
 /// @param size number of nodes inside path

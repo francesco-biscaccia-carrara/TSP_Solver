@@ -22,7 +22,9 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     }
     
     char* vns_func[] = {"VNS"};
+    char* tabu_func[] = {"TABU_R", "TABU_B"};
     if(strnin(env->method, vns_func, 1)) { TSPvns(inst, env, init_time); }
+    else if(strnin(env->method, tabu_func, 1)) { TSPtabu(inst, env, init_time); }
 
     double final_time = get_time();
 
@@ -111,10 +113,51 @@ void TSPg2optb(TSPinst* inst, int* tour, double* cost) {
 }
 
 
+
+/// @brief Use tabu seach to solve TSP in heuristic way
+/// @param inst instance of TSPinst
+/// @param env instance of TSPenv
+/// @param init_time initial time
+void TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
+
+    int tabu_index = 0; 
+    int tabu_size = inst->nnodes / 2;
+    cross tabu[tabu_size];
+
+    double cost = inst->cost;
+    int tmp_sol[inst->nnodes];
+    memcpy(tmp_sol, inst->solution, inst->nnodes * sizeof(inst->solution[0]));
+
+    while (time_elapsed(init_time) <= env->time_limit)
+    {
+        cross move = find_best_t_cross(inst, tmp_sol, tabu, tabu_size);
+        cost += move.delta_cost;
+        reverse(tmp_sol, move.i + 1, move.j);
+
+        if(move.delta_cost >= EPSILON) {
+            tabu[tabu_index % tabu_size] = move;
+            tabu_index++;
+        }
+        else if(cost <= inst->cost) {
+            instance_set_solution(inst, tmp_sol, cost);
+
+            #if VERBOSE > 0
+            printf("new best cost:\t%10.4f\n", inst->cost);
+            #endif
+
+            #if VERBOSE > 2
+            check_tour_cost(inst, tmp_sol, cost);
+            #endif
+        }
+    }   
+
+}
+
+
 /// @brief execute VNS algorithm to improve TSP instance
 /// @param inst instance of TSPinst 
 /// @param env instance of TSPenv
-/// @param init_time intiial times
+/// @param init_time initial time
 void TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
     double cost = inst->cost;
     int tmp_sol[inst->nnodes];
@@ -133,10 +176,6 @@ void TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
 
         for(int i = 0; i < 4; i++) kick(tmp_sol, inst->nnodes);
         
-        cost = 0;
-        for (size_t i = 0; i < inst->nnodes - 1; i++) {
-            cost += get_arc(inst, tmp_sol[i],tmp_sol[i+1]);
-        }
-        cost +=get_arc(inst, tmp_sol[inst->nnodes-1], tmp_sol[0]);
+        cost = compute_cost(inst, tmp_sol);
     }
 }
