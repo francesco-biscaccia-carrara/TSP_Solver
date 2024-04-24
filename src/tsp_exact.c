@@ -236,17 +236,8 @@ static int CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, do
 	return STATE; //0 all good, 1 time_exceeding, but exist sol
 }
 
-
-/// @brief Callback function to add sec to cut pool
-/// @param context callback context pointer
-/// @param contextid context id
-/// @param userhandle data passed to callback
-static int CPXPUBLIC add_SEC_callback(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* userhandle) { 
-
-	if(contextid != CPX_CALLBACKCONTEXT_CANDIDATE) print_error("wrong callback");
-
-	unsigned int nnodes = * (unsigned int*) userhandle;  
-	
+static int add_SEC_int(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes){
+	  	
 	int ncols = nnodes*(nnodes-1)/2;
 	double* xstar = (double*) malloc(ncols * sizeof(double));  
 	double objval = CPX_INFBOUND; 
@@ -269,7 +260,7 @@ static int CPXPUBLIC add_SEC_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 			double l_bound = CPX_INFBOUND;
 			CPXcallbackgetinfodbl(context,CPXCALLBACKINFO_BEST_SOL,&incumbent);
 			CPXcallbackgetinfodbl(context,CPXCALLBACKINFO_BEST_BND,&l_bound);
-			printf("\e[1mBRANCH & CUT\e[m found new feasible solution - Incumbent: %20.4f\tLower-Bound: %20.4f\tInt.Gap: %1.2f%% \n",incumbent,l_bound,(1-l_bound/incumbent)*100);
+			printf("\e[1mBRANCH & CUT\e[m new Feasible Solution - Incumbent: %20.4f\tLower-Bound: %20.4f\tInt.Gap: %1.2f%% \n",incumbent,l_bound,(1-l_bound/incumbent)*100);
 		#endif
 
 		return 0;
@@ -305,7 +296,69 @@ static int CPXPUBLIC add_SEC_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 
 	free(succ);
 	free(comp);
-	return 0; 
+	return 0;
+}
+static void elist_gen(int* elist, const int nnodes){
+	int k=0;
+	for(int i = 0;i<nnodes;i++){
+		for(int j=i+1;j<nnodes;j++){
+			elist[k]=i;
+			elist[++k]=j;
+			k++;
+		}
+	}
+}
+
+static int add_SEC_fract(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes){
+
+	int nodeid = -1; CPXcallbackgetinfoint(context,CPXCALLBACKINFO_NODEUID,&nodeid);
+	if(nodeid%10) return 0; //Relaxation with prob 0.1
+
+	int ncols = nnodes*(nnodes-1)/2;
+	double* xstar = (double*) malloc(ncols * sizeof(double));  
+	double objval = CPX_INFBOUND; 
+
+	if (CPXcallbackgetrelaxationpoint(context, xstar, 0, ncols-1, &objval)) print_error("CPXcallbackgetcandidatepoint error");
+
+	int ncomp = -1;
+	int* compscount = (int*) malloc(nnodes * sizeof(int));
+	int* elist = (int*) malloc(2*ncols*sizeof(int));  
+	int* comps = (int*) malloc(2*ncols*sizeof(int));
+
+	elist_gen(elist,nnodes);
+	//[ ]: Review this code
+	CCcut_connect_components(nnodes,ncols,elist,xstar,&ncomp,compscount,comps);
+	//FIXME : understand a little more of CC
+	if(ncomp==1){
+		//CCcut_violated_cuts(nnodes,ncols,elist,xstar,1.99,(,));
+		;
+	}else{
+		;
+	}
+
+	free(xstar);
+	free(compscount);
+	free(elist);
+	free(comps);
+	return 0;
+}
+
+/// @brief Callback function to add sec to cut pool
+/// @param context callback context pointer
+/// @param contextid context id
+/// @param userhandle data passed to callback
+static int CPXPUBLIC add_SEC_callback(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* userhandle) { 
+
+	unsigned int nnodes = * (unsigned int*) userhandle;
+
+	switch(contextid){
+		case CPX_CALLBACKCONTEXT_CANDIDATE: return add_SEC_int(context,nnodes);
+			break;
+		case CPX_CALLBACKCONTEXT_RELAXATION:
+		break; //return add_SEC_fract(context,nnodes); 
+			break;
+		default: print_error("contextid unknownn in add_SEC_callback"); return 1;
+	} 
 }
 
 #pragma endregion
@@ -365,7 +418,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 
 	//Model has add_SEC_callback installed
-	CPXLONG contextid = CPX_CALLBACKCONTEXT_CANDIDATE;
+	CPXLONG contextid = CPX_CALLBACKCONTEXT_CANDIDATE;//| CPX_CALLBACKCONTEXT_RELAXATION;
 	int nnodes = inst->nnodes;
 	if (CPXcallbacksetfunc(*env, *lp, contextid, add_SEC_callback, &nnodes)) print_error("CPXcallbacksetfunc() error");
 

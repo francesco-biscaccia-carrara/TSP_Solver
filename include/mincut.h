@@ -6,11 +6,11 @@
 *   @author Francesco Biscaccia Carrara
 *   for the course of Operation Research 2, AY 2023/24
 * 
-*   Source code extracted from the 03.12.19 release of the Concorde TSP solver
+*   Source code extracted from the @version 03.12.19 release of the Concorde TSP solver
 *   developed by William Cook and available for academic research use at
 *   math.uwaterloo.ca/tsp/concorde/index.html
-*   
-*   Please, track any changes and update this file
+*  
+*   Last update: 24/04/2024
 */
 
 #include <stdlib.h>
