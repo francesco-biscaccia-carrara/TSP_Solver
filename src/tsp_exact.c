@@ -320,14 +320,13 @@ static int add_SEC_fract(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes
 
 	if (CPXcallbackgetrelaxationpoint(context, xstar, 0, ncols-1, &objval)) print_error("CPXcallbackgetcandidatepoint error");
 
-	int ncomp = -1;
-	int* compscount = (int*) malloc(nnodes * sizeof(int));
 	int* elist = (int*) malloc(2*ncols*sizeof(int));  
-	int* comps = (int*) malloc(2*ncols*sizeof(int));
+	int ncomp = -1;
+	int* compscount = (int*) NULL;
+	int* comps = (int*) NULL;
 
 	elist_gen(elist,nnodes);
-	//[ ]: Review this code
-	CCcut_connect_components(nnodes,ncols,elist,xstar,&ncomp,compscount,comps);
+	CCcut_connect_components(nnodes,ncols,elist,xstar,&ncomp,&compscount,&comps);
 	//FIXME : understand a little more of CC
 	if(ncomp==1){
 		//CCcut_violated_cuts(nnodes,ncols,elist,xstar,1.99,(,));
@@ -353,10 +352,7 @@ static int CPXPUBLIC add_SEC_callback(CPXCALLBACKCONTEXTptr context, CPXLONG con
 
 	switch(contextid){
 		case CPX_CALLBACKCONTEXT_CANDIDATE: return add_SEC_int(context,nnodes);
-			break;
-		case CPX_CALLBACKCONTEXT_RELAXATION:
-		break; //return add_SEC_fract(context,nnodes); 
-			break;
+		case CPX_CALLBACKCONTEXT_RELAXATION: return add_SEC_fract(context,nnodes); 
 		default: print_error("contextid unknownn in add_SEC_callback"); return 1;
 	} 
 }
@@ -418,7 +414,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 
 	//Model has add_SEC_callback installed
-	CPXLONG contextid = CPX_CALLBACKCONTEXT_CANDIDATE;//| CPX_CALLBACKCONTEXT_RELAXATION;
+	CPXLONG contextid = CPX_CALLBACKCONTEXT_CANDIDATE| CPX_CALLBACKCONTEXT_RELAXATION;
 	int nnodes = inst->nnodes;
 	if (CPXcallbacksetfunc(*env, *lp, contextid, add_SEC_callback, &nnodes)) print_error("CPXcallbacksetfunc() error");
 

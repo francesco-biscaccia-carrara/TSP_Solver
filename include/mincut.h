@@ -270,7 +270,8 @@ static int mincut_work(int ncount, int ecount, int* elist, double* dlen,
 static void
 free_graph(graph* G),
 connect_search(graph* G, int n, int marker, int* dstack),
-init_graph(graph* G);
+init_graph(graph* G),
+free_graph_(graph* G);
 
 void *CCutil_allocrus(size_t size);
 void CCutil_freerus(void* p);

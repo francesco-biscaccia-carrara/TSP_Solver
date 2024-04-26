@@ -40,6 +40,7 @@ int CCcut_connect_components(int ncount, int ecount, int* elist, double* x, int*
 
     *compscount = CC_SAFE_MALLOC(*ncomp, int);
     nmarks = CC_SAFE_MALLOC(*ncomp, int);
+
     if (!(*compscount) || !nmarks) {
         fprintf(stderr, "out of memory in CCcut_connect_components\n");
         CC_FREE(*comps, int);
@@ -207,16 +208,10 @@ CLEANUP:
 static void free_graph(graph* G)
 {
     CC_IFFREE(G->nodelist, node);
-    CC_IFFREE(G->edgelist, edge);
-#ifdef USE_GAP
-    CC_IFFREE(G->level, node*);
-#endif
-#ifdef HIGHEST_LABEL_PRF
-    CC_IFFREE(G->high, node*);
-#endif
+    CC_IFFREE(G->adjspace, int);
 }
 
-static void connect_search(graph* G, int n, int marker, int* dstack)
+static void connect_search (graph* G, int n, int marker, int* dstack)
 {
     int i, k, head = 0;
     node* nodelist = G->nodelist;
@@ -914,7 +909,7 @@ int CCcut_mincut_st(int ncount, int ecount, int* elist, double* ecap,
 
 CLEANUP:
 
-    free_graph(&G);
+    free_graph_(&G);
     return rval;
 }
 
@@ -1692,4 +1687,16 @@ DO_ME_IN:
 }
 
 return t->excess;
+}
+
+static void free_graph_(graph* G)
+{
+    CC_IFFREE(G->nodelist, node);
+    CC_IFFREE(G->edgelist, edge);
+#ifdef USE_GAP
+    CC_IFFREE(G->level, node*);
+#endif
+#ifdef HIGHEST_LABEL_PRF
+    CC_IFFREE(G->high, node*);
+#endif
 }
