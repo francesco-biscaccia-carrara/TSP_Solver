@@ -17,7 +17,7 @@ static void CPLEX_log(CPXENVptr* env,const TSPenv* tsp_env){
     if ( CPXsetlogfilename(*env, cplex_log_file, "w") ) print_error("CPXsetlogfilename error.\n");
 }
 
-/// @brief Set CPLEX log on
+/// @brief Add SECs as new constraints in the CPLEX model
 /// @param env CPLEX environment pointer
 /// @param lp CPLEX model pointer
 /// @param nnodes number of nodes
@@ -334,6 +334,8 @@ static int add_SEC_fract(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes
 	}else{
 		;
 	}
+
+	//CPXcallbackaddusercuts(context, 1, nnz, &rhs, &sense, &izero, cutind, cutval,&purgeable, &local) ) print_error("CPXcallbackaddusercuts() error"); 
 
 	free(xstar);
 	free(compscount);
