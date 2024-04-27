@@ -309,6 +309,21 @@ static void elist_gen(int* elist, const int nnodes){
 	}
 }
 
+static int add_cut_CPLEX(double cut_value, int cut_nnodes, int* cut_index_nodes, void* userhandle){
+	CPXCALLBACKCONTEXTptr context = *(CPXCALLBACKCONTEXTptr*) userhandle;
+
+	int izero = 0;
+	int purgeable = CPX_USECUT_FILTER;
+	int local = 0;
+	double rhs = 2.0;
+	char sense = 'L';
+	int nnz = cut_nnodes;
+
+	//[ ] seems wrong check this
+	if(CPXcallbackaddusercuts(context, 1, nnz, &rhs, &sense, &izero, cut_index_nodes, &cut_value, &purgeable, &local)) return 1; //Something wrong happens
+	return 0; //All good;
+}
+
 static int add_SEC_fract(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes){
 
 	int nodeid = -1; CPXcallbackgetinfoint(context,CPXCALLBACKINFO_NODEUID,&nodeid);
@@ -327,14 +342,21 @@ static int add_SEC_fract(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes
 
 	elist_gen(elist,nnodes);
 	CCcut_connect_components(nnodes,ncols,elist,xstar,&ncomp,&compscount,&comps);
-	//FIXME : understand a little more of CC
+	CPXCALLBACKCONTEXTptr aux_context = context;
 	if(ncomp==1){
-		//CCcut_violated_cuts(nnodes,ncols,elist,xstar,1.99,(,));
-		;
+		//CCcut_violated_cuts(nnodes,ncols,elist,xstar,1.9,add_cut_CPLEX,(void*) &aux_context);
 	}else{
-		;
+		for(int i=0;i<ncomp;i++){
+			int ncols = compscount[i+1]*(compscount[i+1]-1)/2;		
+		///	CCcut_violated_cuts(compscount[i+1],ncols,comps[compscount[i+1]],xstar,1.9,add_cut_CPLEX,(void*) &aux_context);
+		}
 	}
 
+	/*
+		int izero = 0;
+		int purgeable = CPX_USECUT_FILTER;
+		int local = 0;
+	*/
 	//CPXcallbackaddusercuts(context, 1, nnz, &rhs, &sense, &izero, cutind, cutval,&purgeable, &local) ) print_error("CPXcallbackaddusercuts() error"); 
 
 	free(xstar);
