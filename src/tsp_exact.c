@@ -310,18 +310,37 @@ static void elist_gen(int* elist, const int nnodes){
 }
 
 static int add_cut_CPLEX(double cut_value, int cut_nnodes, int* cut_index_nodes, void* userhandle){
-	CPXCALLBACKCONTEXTptr context = *(CPXCALLBACKCONTEXTptr*) userhandle;
+	
+	cut_par cut_pars = *(cut_par*) userhandle;
+
+	int* index = calloc(cut_nnodes*(cut_nnodes-1)/2,sizeof(int));
+	double* value = calloc(cut_nnodes*(cut_nnodes-1)/2,sizeof(double));
 
 	int izero = 0;
 	int purgeable = CPX_USECUT_FILTER;
 	int local = 0;
-	double rhs = 2.0;
+	double rhs = -1.0;
 	char sense = 'L';
-	int nnz = cut_nnodes;
+	int nnz = 0;
 
-	//[ ] seems wrong check this
-	if(CPXcallbackaddusercuts(context, 1, nnz, &rhs, &sense, &izero, cut_index_nodes, &cut_value, &purgeable, &local)) return 1; //Something wrong happens
-	return 0; //All good;
+	for(int i = 0; i<cut_nnodes;i++){
+		rhs++;
+		for(int j =i+1;j < cut_nnodes; j++){
+			index[nnz]=coords_to_index(cut_pars.nnodes,cut_index_nodes[i],cut_index_nodes[j]);
+			value[nnz]=1.0;
+			nnz++;
+		}
+	}	
+	
+	if(CPXcallbackaddusercuts(cut_pars.context, 1, nnz, &rhs, &sense, &izero, index, value, &purgeable, &local)) print_error("CPXcallbackaddusercuts() error");
+	
+	#if VERBOSE > 1
+		printf("\e[1mBRANCH & CUT\e[m new SEC cut added\n");
+	#endif
+
+	free(index);
+	free(value);
+	return 0; 
 }
 
 static int add_SEC_fract(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes){
@@ -342,22 +361,9 @@ static int add_SEC_fract(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes
 
 	elist_gen(elist,nnodes);
 	CCcut_connect_components(nnodes,ncols,elist,xstar,&ncomp,&compscount,&comps);
-	CPXCALLBACKCONTEXTptr aux_context = context;
-	if(ncomp==1){
-		//CCcut_violated_cuts(nnodes,ncols,elist,xstar,1.9,add_cut_CPLEX,(void*) &aux_context);
-	}else{
-		for(int i=0;i<ncomp;i++){
-			int ncols = compscount[i+1]*(compscount[i+1]-1)/2;		
-		///	CCcut_violated_cuts(compscount[i+1],ncols,comps[compscount[i+1]],xstar,1.9,add_cut_CPLEX,(void*) &aux_context);
-		}
-	}
 
-	/*
-		int izero = 0;
-		int purgeable = CPX_USECUT_FILTER;
-		int local = 0;
-	*/
-	//CPXcallbackaddusercuts(context, 1, nnz, &rhs, &sense, &izero, cutind, cutval,&purgeable, &local) ) print_error("CPXcallbackaddusercuts() error"); 
+	cut_par user_handle= {context,nnodes};
+	CCcut_violated_cuts(nnodes,ncols,elist,xstar,1.9,add_cut_CPLEX,(void*) &user_handle);
 
 	free(xstar);
 	free(compscount);

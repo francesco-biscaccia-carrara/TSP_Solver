@@ -5,6 +5,10 @@
 #include "tsp_utils.h"
 #include <ilcplex/cplex.h>
 
+typedef struct {
+    CPXCALLBACKCONTEXTptr  context;
+    unsigned int    nnodes;
+} cut_par;
 
 extern void     TSPCsolve(TSPinst*, TSPenv*);
 
