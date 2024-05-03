@@ -356,19 +356,19 @@ static int add_SEC_fract(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes
 
 	int* elist = (int*) malloc(2*ncols*sizeof(int));  
 	int ncomp = -1;
-	int* compscount = (int*) NULL;
-	int* comps = (int*) NULL;
+	//int* compscount = (int*) NULL;
+	//int* comps = (int*) NULL;
 
 	elist_gen(elist,nnodes);
-	CCcut_connect_components(nnodes,ncols,elist,xstar,&ncomp,&compscount,&comps);
+	//CCcut_connect_components(nnodes,ncols,elist,xstar,&ncomp,&compscount,&comps);
 
 	cut_par user_handle= {context,nnodes};
 	CCcut_violated_cuts(nnodes,ncols,elist,xstar,1.9,add_cut_CPLEX,(void*) &user_handle);
 
 	free(xstar);
-	free(compscount);
 	free(elist);
-	free(comps);
+	//free(compscount);
+	//free(comps);
 	return 0;
 }
 
