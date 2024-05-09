@@ -274,6 +274,10 @@ static int add_SEC_int(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes){
 	char sense ='L';
 	int start_index = 0;
 
+	#if VERBOSE > 1
+		printf("\e[1mBRANCH & CUT\e[m \t%4d \e[3mCANDIDATE cuts\e[m found\n",ncomp);
+	#endif
+
 	for(int k=1;k<=ncomp;k++) {
 		int nnz=0;
 		double rhs = -1.0;
@@ -333,10 +337,6 @@ static int add_cut_CPLEX(double cut_value, int cut_nnodes, int* cut_index_nodes,
 	}	
 	
 	if(CPXcallbackaddusercuts(cut_pars.context, 1, nnz, &rhs, &sense, &izero, index, value, &purgeable, &local)) print_error("CPXcallbackaddusercuts() error");
-	
-	#if VERBOSE > 1
-		printf("\e[1mBRANCH & CUT\e[m new SEC cut added\n");
-	#endif
 
 	free(index);
 	free(value);
@@ -356,19 +356,42 @@ static int add_SEC_fract(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes
 
 	int* elist = (int*) malloc(2*ncols*sizeof(int));  
 	int ncomp = -1;
-	//int* compscount = (int*) NULL;
-	//int* comps = (int*) NULL;
+	int* compscount = (int*) NULL;
+	int* comps = (int*) NULL;
 
 	elist_gen(elist,nnodes);
-	//CCcut_connect_components(nnodes,ncols,elist,xstar,&ncomp,&compscount,&comps);
+	CCcut_connect_components(nnodes,ncols,elist,xstar,&ncomp,&compscount,&comps);
 
 	cut_par user_handle= {context,nnodes};
-	CCcut_violated_cuts(nnodes,ncols,elist,xstar,1.9,add_cut_CPLEX,(void*) &user_handle);
+	if(ncomp ==1) {
+		#if VERBOSE > 1
+			printf("\e[1mBRANCH & CUT\e[m \t%4d \e[3mFLOW cut\e[m found\n",ncomp);
+		#endif
+
+		CCcut_violated_cuts(nnodes,ncols,elist,xstar,1.9,add_cut_CPLEX,(void*) &user_handle);
+	}
+	else {
+		#if VERBOSE > 1
+			printf("\e[1mBRANCH & CUT\e[m \t%4d \e[3mRELAXATION cuts\e[m found\n",ncomp);
+		#endif
+
+		int start = 0;
+		for(int k=0;k<ncomp;k++){
+			int* node_indeces = (int*) malloc(compscount[k]*sizeof(int));
+
+			for(int i=0;i<compscount[k];i++) 
+				node_indeces[i]=comps[i+start];
+			start += compscount[k];
+
+			add_cut_CPLEX(0.0,compscount[k],node_indeces,(void*) &user_handle);
+			free(node_indeces);
+		}
+	}
 
 	free(xstar);
 	free(elist);
-	//free(compscount);
-	//free(comps);
+	free(compscount);
+	free(comps);
 	return 0;
 }
 
