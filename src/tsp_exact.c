@@ -47,14 +47,6 @@ static void add_SEC(CPXCENVptr env, CPXLPptr lp,const unsigned int nnodes,const 
 			}
 		}
 		if( CPXaddrows(env,lp,0,1,nnz,&rhs,&sense,&start_index,index,value,NULL,NULL)) print_error("CPXaddrows() error");
-		/*FIXME: Maybe I find a way: pointer to function
-		...CPXCALLBACKCONTEXTptr contextid, CPXCENVptr env, CPXLPptr lp
-		if(env != NULL && lp !=NULL) 
-			if( CPXaddrows(env,lp,0,1,nnz,&rhs,&sense,&start_index,index,value,NULL,NULL)) print_error("CPXaddrows() error");
-		else if(contextid != NULL) 
-			if ( CPXcallbackrejectcandidate(contextid, 1, nnz, &rhs, &sense, &start_index, index, value) ) print_error("CPXcallbackrejectcandidate() error"); 
-		else print_error("wrong use of function");
-		*/
 	}
 	free(index);
 	free(value);
@@ -122,16 +114,16 @@ static void decompose_sol(const double *xstar, const unsigned int nnodes, int *s
 /// @param inst TSPinst pointer
 /// @param index array of indeces
 /// @param value array of non-zeros
-static void CPLEX_sol_from_inst(const TSPinst* inst,int* index, double* value){
+static void CPLEX_sol_from_inst(const unsigned int nnodes, const int* solution,int* index, double* value){
 		int nnz=0;
 		int i;
 
-		for(i = 0;i<inst->nnodes-1;i++){
-				index[nnz]=coords_to_index(inst->nnodes,inst->solution[i],inst->solution[i+1]);
+		for(i = 0;i<nnodes-1;i++){
+				index[nnz]=coords_to_index(nnodes,solution[i],solution[i+1]);
 				value[nnz]=1.0;
 				nnz++;
 		}
-		index[nnz]=coords_to_index(inst->nnodes,inst->solution[i],inst->solution[0]);
+		index[nnz]=coords_to_index(nnodes,solution[i],solution[0]);
 		value[nnz]=1.0;
 }
 
@@ -302,6 +294,7 @@ static int add_SEC_int(CPXCALLBACKCONTEXTptr context,const unsigned int nnodes){
 	free(comp);
 	return 0;
 }
+
 static void elist_gen(int* elist, const int nnodes){
 	int k=0;
 	for(int i = 0;i<nnodes;i++){
@@ -439,7 +432,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 		int* index = (int*) calloc(ncols,sizeof(int));
 		double* value = (double*) calloc(ncols,sizeof(double));
 
-		CPLEX_sol_from_inst(inst,index,value);
+		CPLEX_sol_from_inst(inst->nnodes,inst->solution,index,value);
 		if (CPXaddmipstarts(CPLEX_env, CPLEX_lp, 1,ncols, &start_index, index, value, &effort_level, NULL)) print_error("CPXaddmipstarts() error");	
 		free(index);
 		free(value);
@@ -500,6 +493,29 @@ void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp)
 
 }
 
+static int CPLEX_post_heu(int* succ, const int nnodes,CPXENVptr* env, CPXLPptr* lp){
+	int* sol  = calloc (nnodes,sizeof(int));
+	cth_convert(sol, succ, nnodes);
+
+	int ncols = (nnodes*(nnodes-1))/2;
+	int start_index = 0; 	
+	int effort_level = CPX_MIPSTART_NOCHECK;
+	int* index = (int*) calloc(ncols,sizeof(int));
+	double* value = (double*) calloc(ncols,sizeof(double));
+
+	CPLEX_sol_from_inst(nnodes,sol,index,value);
+	#if VERBOSE > 0
+		printf("MIPSTART on new BENDER'S LOOP iteration\n");
+	#endif
+
+	if (CPXaddmipstarts(*env, *lp, 1,ncols, &start_index, index, value, &effort_level, NULL)) print_error("CPXaddmipstarts() error");	
+		
+	free(index);
+	free(value);
+	free(sol);
+	return 0;	
+}
+
 
 /// @brief use bender's loop to solve a solution from LP solution
 /// @param inst instance of TSPinst
@@ -539,6 +555,7 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 		//We always apply patching on Benders, in order to have solution if we exceed tl
 		add_SEC(*env,*lp,inst->nnodes,ncomp,comp);
 		patching(inst,succ,comp,ncomp);
+		CPLEX_post_heu(succ,inst->nnodes,env,lp);
 	}
 
 	if(lb < inst->cost){
