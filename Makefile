@@ -40,5 +40,8 @@ $(CCDIR)/mincut.o: $(CCDIR)/mincut.c $(INCDIR)/mincut.h
 tsp_exact.o: $(SRCDIR)/tsp_exact.c $(INCDIR)/tsp_exact.h
 	$(CC) $(CFLAGS) $(CPLEXINC) $(CPLEXLIB) $(CCLIB) -c $< -o $@
 
+tsp_eutils.o: $(SRCDIR)/tsp_eutils.c $(INCDIR)/tsp_eutils.h
+	$(CC) $(CFLAGS) $(CPLEXINC) $(CPLEXLIB) $(CCLIB) -c $< -o $@
+
 clean:
 	rm -f $(OBJS)

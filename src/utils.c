@@ -135,6 +135,19 @@ int* cth_convert(int* hsol, int* csol, const unsigned int array_size) {
 }
 
 
+int get_subset_array(int* output, int* succ, int start_point) {
+    int i = start_point;
+    output[0] = start_point;
+    int k = 1;
+    while (succ[i] != start_point) { 
+        output[k++] = succ[i];
+        i = succ[i];
+    }
+
+    return k;
+}
+
+
 /// @brief write an array into csv file
 /// @param dest destination file 
 /// @param content array to write inside csv file

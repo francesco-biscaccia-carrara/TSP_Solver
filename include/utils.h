@@ -20,10 +20,11 @@ extern void     reverse(int*,unsigned int,unsigned int);
 extern int      arrunique(const int*, const unsigned int);
 extern int      ascending(const void*, const void*);
 extern void     init_random();
-
-//log utils
 extern char     strnin(const char*, char**, const size_t);
 extern int*     cth_convert(int*, int*, const unsigned int);
+extern int      get_subset_array(int*, int*, int);
+
+//log utils
 extern void     format_csv_line(FILE*, const double*, const unsigned int);
 extern void     print_lifespan(const double, const double);
 #endif

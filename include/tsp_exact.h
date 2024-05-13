@@ -2,13 +2,7 @@
 
 #define __TSP_EXACT_H
 
-#include "tsp_utils.h"
-#include <ilcplex/cplex.h>
-
-typedef struct {
-    CPXCALLBACKCONTEXTptr  context;
-    unsigned int    nnodes;
-} cut_par;
+#include "tsp_eutils.h"
 
 extern void     TSPCsolve(TSPinst*, TSPenv*);
 
