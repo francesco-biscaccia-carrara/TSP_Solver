@@ -102,7 +102,7 @@ void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp)
 	double* x_star = (double*) calloc((inst->nnodes*(inst->nnodes-1))/2, sizeof(double));
 	CPLEX_solve(env,lp,tsp_env->time_limit-time_elapsed(start_time),&lb,x_star);
 			
-	decompose_solution(x_star,inst->nnodes,succ,comp,&ncomp);
+	decompose_solution(x_star,inst->nnodes,succ,comp,&ncomp, NULL);
 	free(x_star);
 
 	if(lb < inst->cost){
@@ -130,6 +130,7 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 
 	int* succ = calloc(inst->nnodes,sizeof(int));
 	int* comp = calloc(inst->nnodes,sizeof(int)); 
+	int* nstart = calloc(inst->nnodes, sizeof(int));
 	int ncomp;
 	int iter=0;
 
@@ -146,7 +147,7 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 			printf("Lower-Bound \e[1mBENDER'S LOOP\e[m itereation [%i]: \t%10.4f\n", iter, lb);
 		#endif
 
-		decompose_solution(x_star,inst->nnodes,succ,comp,&ncomp);
+		decompose_solution(x_star,inst->nnodes,succ,comp,&ncomp, nstart);
 		free(x_star);
 
 		//Iter = 0 --> BENDERS reaches the end
@@ -156,7 +157,7 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 		}
 
 		//We always apply patching on Benders, in order to have solution if we exceed tl
-		add_SEC_mdl(*env,*lp,comp,ncomp,inst->nnodes);
+		add_SEC_mdl(*env,*lp,comp,ncomp,inst->nnodes, succ, nstart);
 		patching(inst,succ,comp,ncomp);
 		int* sol  = calloc (inst->nnodes,sizeof(int));
 		cth_convert(sol, succ, inst->nnodes);

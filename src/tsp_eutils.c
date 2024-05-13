@@ -97,7 +97,7 @@ static inline void CPLEX_sol_from_inst(const unsigned int nnodes, const int* sol
 /// @param succ array of successor necessary to store the solution
 /// @param comp array that associate a number from 1 to n-component for each node
 /// @param ncomp number of component pointer
-void decompose_solution(const double *xstar, const unsigned int nnodes, int *succ, int *comp, int *ncomp){   
+void decompose_solution(const double *xstar, const unsigned int nnodes, int *succ, int *comp, int *ncomp, int* compstarts){   
 	#if VERBOSE > 2
 		int *degree = (int *) calloc(nnodes, sizeof(int));
 		for ( int i = 0; i < nnodes; i++ )
@@ -120,6 +120,8 @@ void decompose_solution(const double *xstar, const unsigned int nnodes, int *suc
 		free(degree);
 	#endif
 
+    int nstart = 0;
+
 	*ncomp = 0;
 	for ( int i = 0; i < nnodes; i++ ) {
 		succ[i] = -1;
@@ -130,6 +132,9 @@ void decompose_solution(const double *xstar, const unsigned int nnodes, int *suc
 		if ( comp[start] >= 0 ) continue;  // node "start" was already visited, just skip it
 		(*ncomp)++;
 		int i = start;
+
+        if(compstarts != NULL)  compstarts[nstart++] = i;
+
 		int done = 0;
 		while ( !done ){
 			comp[i] = *ncomp;
@@ -183,13 +188,14 @@ static inline void add_SEC_cut(int k,int* nz, double* rh, int* index, double* va
 	}
 }
 
+
 /// @brief Add SECs as new constraints in the CPLEX model
 /// @param env CPLEX environment pointer
 /// @param lp CPLEX model pointer
 /// @param nnodes number of nodes
 /// @param ncomp number of component
 /// @param comp array that associate a number from 1 to n-component for each node
-void add_SEC_mdl(CPXCENVptr env, CPXLPptr lp,const int* comp, const unsigned int ncomp, const unsigned int nnodes){
+void add_SEC_mdl(CPXCENVptr env, CPXLPptr lp,const int* comp, const unsigned int ncomp, const unsigned int nnodes, int* succ, int* nstarts){
 
 	if(ncomp==1) print_error("no sec needed for 1 comp!");
 
@@ -199,10 +205,22 @@ void add_SEC_mdl(CPXCENVptr env, CPXLPptr lp,const int* comp, const unsigned int
 	int start_index = 0;
 	
 
+	int* out = calloc(nnodes, sizeof(int));
 	for(int k=1;k<=ncomp;k++) {
 		int nnz=0;
 		double rhs=-1.0;
-		add_SEC_cut(k, &nnz, &rhs, index, value, comp, nnodes);
+		int ssize = get_subset_array(out, succ, nstarts[k-1]);
+
+        for(int i = 0; i < ssize; i++) {
+			rhs++;
+			for(int j = i+1; j < ssize; j++) {
+				index[nnz]=coords_to_index(nnodes,out[i],out[j]);
+				value[nnz]=1.0;
+				nnz++;
+			}
+		}
+	
+		//add_SEC_cut(k, &nnz, &rhs, index, value, comp, nnodes);
 		if( CPXaddrows(env,lp,0,1,nnz,&rhs,&sense,&start_index,index,value,NULL,NULL)) print_error("CPXaddrows() error");
 	}
 	free(index);
@@ -219,10 +237,11 @@ int add_SEC_int(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 	if (CPXcallbackgetcandidatepoint(context, xstar, 0, ncols-1, &objval)) print_error("CPXcallbackgetcandidatepoint error");
 
 	int *succ = calloc(inst.nnodes,sizeof(int));
-	int *comp = calloc(inst.nnodes,sizeof(int)); 
+	int *comp = calloc(inst.nnodes,sizeof(int));
+    int *nstart = calloc(inst.nnodes/2, sizeof(int)); 
 	int ncomp;
 
-	decompose_solution(xstar,inst.nnodes,succ,comp,&ncomp);
+	decompose_solution(xstar,inst.nnodes,succ,comp,&ncomp, nstart);
 	free(xstar);
 
 	if (ncomp == 1) {
@@ -252,31 +271,23 @@ int add_SEC_int(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 		printf("\e[1mBRANCH & CUT\e[m \t%4d \e[3mCANDIDATE cuts\e[m found\n",ncomp);
 	#endif
 
-	/*int kgroupp[ncomp];
-	memset(kgroupp, 0, ncomp * sizeof(int));
-	int h = 0;
-	for(int l = 0; h < ncomp; l++) {
-		if(kgroupp[comp[l]-1] != 0) continue;
-		kgroupp[comp[l]-1] = succ[l];
-		h++;
-	}*/
 
-	//int* out = calloc(nnodes, sizeof(int));
+	int* out = calloc(inst.nnodes, sizeof(int));
 	for(int k=1;k<=ncomp;k++) {
 		int nnz=0;
 		double rhs = -1.0;
-		add_SEC_cut(k, &nnz, &rhs, index, value, comp, inst.nnodes); 
+		//add_SEC_cut(k, &nnz, &rhs, index, value, comp, inst.nnodes); 
 
-		/*int ssize = get_subset_array(out, succ, kgroupp[k-1]);
+		int ssize = get_subset_array(out, succ, nstart[k-1]);
 
 		for(int i = 0; i < ssize; i++) {
 			rhs++;
 			for(int j = i+1; j < ssize; j++) {
-				index[nnz]=coords_to_index(nnodes,out[i],out[j]);
+				index[nnz]=coords_to_index(inst.nnodes,out[i],out[j]);
 				value[nnz]=1.0;
 				nnz++;
 			}
-		}*/
+		}
 	
 		if (CPXcallbackrejectcandidate(context, 1, nnz, &rhs, &sense, &start_index, index, value) ) print_error("CPXcallbackrejectcandidate() error"); 
 	
@@ -287,18 +298,6 @@ int add_SEC_int(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 	free(succ);
 	free(comp);
 	return 0;
-}
-
-
-static inline void elist_gen(int* elist, const int nnodes) {
-	int k=0;
-	for(int i = 0;i<nnodes;i++){
-		for(int j=i+1;j<nnodes;j++){
-			elist[k]=i;
-			elist[++k]=j;
-			k++;
-		}
-	}
 }
 
 
@@ -340,7 +339,8 @@ int add_SEC_flt(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 	if(nodeid%10) return 0; //Relaxation with prob 0.1
 
 	int ncols = inst.nnodes*(inst.nnodes-1)/2;
-	double* xstar = (double*) malloc(ncols * sizeof(double));  
+	double* xstar = (double*) malloc(ncols * sizeof(double));
+    double* xstar2 = (double*) calloc(ncols, sizeof(double));  
 	double objval = CPX_INFBOUND; 
 
 	if (CPXcallbackgetrelaxationpoint(context, xstar, 0, ncols-1, &objval)) print_error("CPXcallbackgetcandidatepoint error");
@@ -350,9 +350,21 @@ int add_SEC_flt(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 	int* compscount = (int*) NULL;
 	int* comps = (int*) NULL;
 
-	elist_gen(elist,inst.nnodes);
-	CCcut_connect_components(inst.nnodes,ncols,elist,xstar,&ncomp,&compscount,&comps);
-	
+
+    int k=0;
+    int n = 0;
+	for(int i = 0; i<inst.nnodes; i++){
+		for(int j=i+1;j<inst.nnodes;j++){
+            int f = coords_to_index(inst.nnodes, i, j);
+            if(xstar[f] <= EPSILON) continue; 
+			elist[k]=i;
+			elist[++k]=j;
+			k++;
+            xstar2[n++]  = xstar[f];
+		}
+	}
+
+	CCcut_connect_components(inst.nnodes,n,elist,xstar2,&ncomp,&compscount,&comps);
 
 	cut_par user_handle= {context,inst.nnodes};
 	if(ncomp ==1) {
@@ -360,7 +372,7 @@ int add_SEC_flt(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 			printf("\e[1mBRANCH & CUT\e[m \t%4d \e[3mFLOW cut\e[m found\n",ncomp);
 		#endif
 
-		CCcut_violated_cuts(inst.nnodes,ncols,elist,xstar,1.9,add_cut_CPLEX,(void*) &user_handle);
+		CCcut_violated_cuts(inst.nnodes,ncols,elist,xstar2,1.9,add_cut_CPLEX,(void*) &user_handle);
 	}
 	else {
 		#if VERBOSE > 1
@@ -383,6 +395,7 @@ int add_SEC_flt(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 	}
 
 	free(xstar);
+    free(xstar2);
 	free(elist);
 	free(compscount);
 	free(comps);
