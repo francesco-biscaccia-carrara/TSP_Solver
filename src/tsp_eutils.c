@@ -9,7 +9,7 @@ void CPLEX_model_new(TSPinst* inst, CPXENVptr* env, CPXLPptr* lp) {
 	int error;
 	*env = CPXopenCPLEX(&error);
 	*lp  = CPXcreateprob(*env, &error, "TSP"); 
-	if(error) print_error("model not created");
+	if(error) print_state(Error, "model not created");
 
 	int izero = 0;
 	char binary = 'B'; 
@@ -26,8 +26,8 @@ void CPLEX_model_new(TSPinst* inst, CPXENVptr* env, CPXLPptr* lp) {
 			sprintf(cname[0], "x(%d,%d)", i+1,j+1);  
 			double obj = get_arc(inst,i,j);
 
-			if ( CPXnewcols(*env, *lp, 1, &obj, &lb, &ub, &binary, cname) ) print_error("wrong CPXnewcols on x var.s");
-        	if ( CPXgetnumcols(*env,*lp)-1 != coords_to_index(inst->nnodes,i,j) ) print_error("wrong position for x var.s");
+			if ( CPXnewcols(*env, *lp, 1, &obj, &lb, &ub, &binary, cname) ) print_state(Error, "wrong CPXnewcols on x var.s");
+        	if ( CPXgetnumcols(*env,*lp)-1 != coords_to_index(inst->nnodes,i,j) ) print_state(Error, "wrong position for x var.s");
 		}
 	} 
 
@@ -47,7 +47,7 @@ void CPLEX_model_new(TSPinst* inst, CPXENVptr* env, CPXLPptr* lp) {
 			nnz++;
 		}
 		
-		if (CPXaddrows(*env, *lp, 0, 1, nnz, &rhs, &sense, &izero, index, value, NULL, &cname[0]) ) print_error(" wrong CPXaddrows [degree]");
+		if (CPXaddrows(*env, *lp, 0, 1, nnz, &rhs, &sense, &izero, index, value, NULL, &cname[0]) ) print_state(Error, " wrong CPXaddrows [degree]");
 	} 
 
     free(value);
@@ -73,7 +73,7 @@ void CPLEX_log(CPXENVptr* env,const TSPenv* tsp_env){
 	CPXsetdblparam(*env, CPX_PARAM_SCRIND, CPX_OFF);
     char cplex_log_file[100];
     sprintf(cplex_log_file, "log/n_%u-%d-%s.log", tsp_env->random_seed, tsp_env->nnodes,tsp_env->method);
-    if ( CPXsetlogfilename(*env, cplex_log_file, "w") ) print_error("CPXsetlogfilename error.\n");
+    if ( CPXsetlogfilename(*env, cplex_log_file, "w") ) print_state(Error, "CPXsetlogfilename error.\n");
 }
 
 
@@ -105,7 +105,7 @@ void decompose_solution(const double *xstar, const unsigned int nnodes, int *suc
 			for ( int j = i+1; j < nnodes; j++ )
 			{
 				int k = coords_to_index(nnodes, i,j);
-				if ( fabs(xstar[k]) > EPSILON && fabs(xstar[k]-1.0) > EPSILON ) print_error(" wrong xstar in decompose_sol()");
+				if ( fabs(xstar[k]) > EPSILON && fabs(xstar[k]-1.0) > EPSILON ) print_state(Error, " wrong xstar in decompose_sol()");
 				if ( xstar[k] > 0.5 ) 
 				{
 					++degree[i];
@@ -115,7 +115,7 @@ void decompose_solution(const double *xstar, const unsigned int nnodes, int *suc
 		}
 		for ( int i = 0; i < nnodes; i++ )
 		{
-			if ( degree[i] != 2 ) print_error("wrong degree in decompose_sol()");
+			if ( degree[i] != 2 ) print_state(Error, "wrong degree in decompose_sol()");
 		}	
 		free(degree);
 	#endif
@@ -166,7 +166,7 @@ void CPLEX_post_heur(CPXENVptr* env, CPXLPptr* lp, int* succ, const unsigned int
 	double* value = (double*) calloc(nnodes,sizeof(double));
 
 	CPLEX_sol_from_inst(nnodes,succ,index,value);
-	if (CPXaddmipstarts(*env, *lp, 1,nnodes, &start_index, index, value, &effort_level, NULL)) print_error("CPXaddmipstarts() error");	
+	if (CPXaddmipstarts(*env, *lp, 1,nnodes, &start_index, index, value, &effort_level, NULL)) print_state(Error, "CPXaddmipstarts() error");	
 		
 	free(index);
 	free(value);
@@ -197,7 +197,7 @@ static inline void add_SEC_cut(int k,int* nz, double* rh, int* index, double* va
 /// @param comp array that associate a number from 1 to n-component for each node
 void add_SEC_mdl(CPXCENVptr env, CPXLPptr lp,const int* comp, const unsigned int ncomp, const unsigned int nnodes, int* succ, int* nstarts){
 
-	if(ncomp==1) print_error("no sec needed for 1 comp!");
+	if(ncomp==1) print_state(Error, "no sec needed for 1 comp!");
 
 	int* index = (int*) calloc((nnodes*(nnodes-1))/2,sizeof(int));
 	double* value = (double*) calloc((nnodes*(nnodes-1))/2,sizeof(double));
@@ -221,7 +221,7 @@ void add_SEC_mdl(CPXCENVptr env, CPXLPptr lp,const int* comp, const unsigned int
 		}
 	
 		//add_SEC_cut(k, &nnz, &rhs, index, value, comp, nnodes);
-		if( CPXaddrows(env,lp,0,1,nnz,&rhs,&sense,&start_index,index,value,NULL,NULL)) print_error("CPXaddrows() error");
+		if( CPXaddrows(env,lp,0,1,nnz,&rhs,&sense,&start_index,index,value,NULL,NULL)) print_state(Error, "CPXaddrows() error");
 	}
 	free(index);
 	free(value);
@@ -234,7 +234,7 @@ int add_SEC_int(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 	double* xstar = (double*) malloc(ncols * sizeof(double));  
 	double objval = CPX_INFBOUND; 
 
-	if (CPXcallbackgetcandidatepoint(context, xstar, 0, ncols-1, &objval)) print_error("CPXcallbackgetcandidatepoint error");
+	if (CPXcallbackgetcandidatepoint(context, xstar, 0, ncols-1, &objval)) print_state(Error, "CPXcallbackgetcandidatepoint error");
 
 	int *succ = calloc(inst.nnodes,sizeof(int));
 	int *comp = calloc(inst.nnodes,sizeof(int));
@@ -289,7 +289,7 @@ int add_SEC_int(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 			}
 		}
 	
-		if (CPXcallbackrejectcandidate(context, 1, nnz, &rhs, &sense, &start_index, index, value) ) print_error("CPXcallbackrejectcandidate() error"); 
+		if (CPXcallbackrejectcandidate(context, 1, nnz, &rhs, &sense, &start_index, index, value) ) print_state(Error, "CPXcallbackrejectcandidate() error"); 
 	
 	}
 	free(index);
@@ -324,7 +324,7 @@ int add_cut_CPLEX(double cut_value, int cut_nnodes, int* cut_index_nodes, void* 
 		}
 	}	
 	
-	if(CPXcallbackaddusercuts(cut_pars.context, 1, nnz, &rhs, &sense, &izero, index, value, &purgeable, &local)) print_error("CPXcallbackaddusercuts() error");
+	if(CPXcallbackaddusercuts(cut_pars.context, 1, nnz, &rhs, &sense, &izero, index, value, &purgeable, &local)) print_state(Error, "CPXcallbackaddusercuts() error");
 
 	free(index);
 	free(value);
@@ -343,7 +343,7 @@ int add_SEC_flt(CPXCALLBACKCONTEXTptr context,TSPinst inst){
     double* xstar2 = (double*) calloc(ncols, sizeof(double));  
 	double objval = CPX_INFBOUND; 
 
-	if (CPXcallbackgetrelaxationpoint(context, xstar, 0, ncols-1, &objval)) print_error("CPXcallbackgetcandidatepoint error");
+	if (CPXcallbackgetrelaxationpoint(context, xstar, 0, ncols-1, &objval)) print_state(Error, "CPXcallbackgetcandidatepoint error");
 
 	int* elist = (int*) malloc(2*ncols*sizeof(int));  
 	int ncomp = -1;
@@ -412,6 +412,6 @@ int CPXPUBLIC mount_CUT(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* 
 	switch(contextid){
 		case CPX_CALLBACKCONTEXT_CANDIDATE:  return add_SEC_int(context,inst);
 		case CPX_CALLBACKCONTEXT_RELAXATION: return add_SEC_flt(context,inst); 
-		default: print_error("contextid unknownn in add_SEC_callback"); return 1;
+		default: print_state(Error, "contextid unknownn in add_SEC_callback"); return 1;
 	} 
 }

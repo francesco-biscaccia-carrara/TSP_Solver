@@ -43,5 +43,8 @@ tsp_exact.o: $(SRCDIR)/tsp_exact.c $(INCDIR)/tsp_exact.h
 tsp_eutils.o: $(SRCDIR)/tsp_eutils.c $(INCDIR)/tsp_eutils.h
 	$(CC) $(CFLAGS) $(CPLEXINC) $(CPLEXLIB) $(CCLIB) -c $< -o $@
 
+matheuristic.o: $(SRCDIR)/matheuristic.c $(INCDIR)/matheuristic.h
+	$(CC) $(CFLAGS) $(CPLEXINC) $(CPLEXLIB) $(CCLIB) -c $< -o $@
+
 clean:
 	rm -f $(OBJS)

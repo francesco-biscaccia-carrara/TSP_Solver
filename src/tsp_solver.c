@@ -10,10 +10,12 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     char* optf_func[] = {"G2OPT_F"};
     void* opt_func;
 
+
+    //set_improvement function
     if(strnin(env->method, null_func, 3)) { opt_func = NULL; }
     else if(strnin(env->method, optf_func, 1)) { opt_func = TSPg2opt; }
     else if(strnin(env->method, optb_func, 2)) { opt_func = TSPg2optb; }
-    else { print_error("No function with alias"); }
+    else { print_state(Error, "No function with alias"); }
 
 
     double init_time = get_time();
@@ -70,7 +72,7 @@ void TSPgreedy(TSPinst* inst, const unsigned int intial_node, void(tsp_func)(TSP
         #endif
     }
     
-    if(cost >= inst->cost) return;    
+    if(cost >= inst->cost) return;
     instance_set_solution(inst, result, cost);
 }
 
@@ -99,6 +101,7 @@ void TSPg2opt(TSPinst* inst, int* tour, double* cost) {
 /// @param tour hamiltionian circuit
 /// @param cost cost of path
 void TSPg2optb(TSPinst* inst, int* tour, double* cost) {
+
     while (1) {
         cross curr_cross = find_best_cross(inst, tour);
         if(curr_cross.delta_cost >= -EPSILON) return;
@@ -170,7 +173,7 @@ void TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
             instance_set_solution(inst, tmp_sol, cost);
             
             #if VERBOSE > 0
-            printf("new best cost:\t%10.4f\n", inst->cost);
+            print_state(Info, "new best cost:\t%10.4f\n", inst->cost);
             #endif
         }
 

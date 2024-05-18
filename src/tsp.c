@@ -34,6 +34,8 @@ static void tsp_rnd_inst(TSPinst* inst, unsigned int nnodes, const unsigned int 
 
     srand(seed);
 
+    if(nnodes <= 1) { print_state(Error, "Impossible to generate problem with less than 2 nodes\n"); } 
+
     #if VERBOSE > 0
     printf("\e[1mGENERATE RANDOM POINT...\e[m\n");
     #endif
@@ -60,7 +62,7 @@ static void tsp_read_file(TSPinst* inst, const char* file) {
 
     if ( f == NULL ){
         instance_delete(inst);
-        print_error("input file not found!");
+        print_state(Error, "input file not found!");
     }
 
     char line[201];
@@ -77,14 +79,14 @@ static void tsp_read_file(TSPinst* inst, const char* file) {
         if (!strncmp(par_name, "TYPE", 4)) {
             if (strncmp(strtok(NULL, " :"), "TSP",3)){
                 instance_delete(inst);
-                print_error(" format error: only TYPE: TSP implemented!"); 
+                print_state(Error, " format error: only TYPE: TSP implemented!"); 
             }
         }
         
         if (!strncmp(par_name, "DIMENSION", 9)){
             if (inst->nnodes > 0){
                 instance_delete(inst);
-                print_error(" repeated DIMENSION section in input file!");
+                print_state(Error, " repeated DIMENSION section in input file!");
             }
             
             inst->nnodes = atoi(strtok(NULL, " :"));
@@ -92,15 +94,15 @@ static void tsp_read_file(TSPinst* inst, const char* file) {
             edge_weights = (double *) calloc(((inst->nnodes*(inst->nnodes-1)/2)), sizeof(double));
             inst->solution = malloc(inst->nnodes * sizeof(int));
 
-            if (inst->points == NULL) print_error(" failed to allocate memory for points vector!");
-            if (edge_weights == NULL) print_error(" failed to allocate memory for edge_weights vector!");
+            if (inst->points == NULL) print_state(Error, " failed to allocate memory for points vector!");
+            if (edge_weights == NULL) print_state(Error, " failed to allocate memory for edge_weights vector!");
 
         }
 
         if (!strncmp(par_name, "EDGE_WEIGHT_TYPE", 16)){
             if (strncmp(strtok(NULL, " :"), "ATT",3)){
                 instance_delete(inst);
-                print_error(" format error: only EDGE_WEIGHT_TYPE: ATT implemented!"); 
+                print_state(Error, " format error: only EDGE_WEIGHT_TYPE: ATT implemented!"); 
             }
         }
 

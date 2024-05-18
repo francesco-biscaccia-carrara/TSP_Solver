@@ -57,7 +57,7 @@ void check_tour_cost(const TSPinst* inst, const int* tour, const double expected
     actual_cost += get_arc(inst, tour[0], tour[inst->nnodes-1]);
 
     if (!abs(expected_cost-actual_cost) > EPSILON) return;
-    print_error("cost_saved and cost_computed differ!");
+    print_state(Error, "cost_saved and cost_computed differ!");
 }
 
 
@@ -231,7 +231,7 @@ void kick(int* tour, const unsigned int size) {
             break;
 
         default:
-            print_error("Something wrong happen");
+            print_state(Error, "Something wrong happen");
             break;
     }
     memcpy(tour, infuncsol, size * sizeof(int));
@@ -243,7 +243,6 @@ void kick(int* tour, const unsigned int size) {
 /// @param env instance of TSPenv
 void print_sol(const TSPinst* inst,const TSPenv* env) {
     printf("\n\e[1mBest Solution Found\e[m (by \e[1m%s\e[m)\n",env->method);
-    //printf("Starting node:\t%i\n",inst->solution[0]); TODO: Can be removed?
 	printf("Cost: \t%10.4f\n", inst->cost);
 }
 

@@ -1,5 +1,6 @@
 #include "include/tsp_solver.h"
 #include "include/tsp_exact.h"
+#include "include/matheuristic.h"
 
 #define SET_SIZE     2
 int test(int argc, char** argv) {
@@ -33,7 +34,8 @@ int main(int argc, char **argv) {
 
     char* cplex_func[] = { "BENDER", "PATCHING","BRANCH_CUT"};
     
-    if(strnin(env->method, cplex_func, 3)) {
+    if(!strncmp(env->method,"DIVING", 6)) diving(inst, env);
+    else if(strnin(env->method, cplex_func, 3)) {
         TSPCsolve(inst,env);
         TSPg2optb(inst, inst->solution, &(inst->cost));
     }

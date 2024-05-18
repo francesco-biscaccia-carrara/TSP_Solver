@@ -16,6 +16,45 @@ void print_warn(const char *warning_message){
     fflush(NULL); 
 } 
 
+void print_state(int type, const char* msg, ...) {
+    va_list ap;
+    char* type_msg = calloc(15, sizeof(char));
+    char* type_clr;
+
+    va_start(ap, msg);
+
+    switch (type) {
+        case Error:
+            type_clr = ANSI_COLOR_RED;
+            type_msg = "ERROR";
+            break;
+    
+        case Warn:
+            type_clr = ANSI_COLOR_YELLOW;
+            type_msg = "WARNING";
+            break;
+        
+        case Info:
+            type_clr = ANSI_COLOR_BLUE;
+            type_msg = "INFO";
+            break;
+        default:
+            type_clr = ANSI_COLOR_RESET;
+            type_msg = "";
+            break;
+    }
+
+    
+    printf("%s\e[1m\e[4m%s\e[0m\e[m%s: ", type_clr, type_msg, type_clr);
+    vprintf(msg, ap);
+    printf("\x1b[0m");
+    va_end(ap);
+
+    if(type == Error) exit(1);
+    
+}
+
+
 
 #define INDEX(n,i,j) (i * (n - 0.5*i - 1.5) + j -1)
 /// @brief transform 2d coordinate for a triangular matrix in 1d array
@@ -24,7 +63,7 @@ void print_warn(const char *warning_message){
 /// @param j column index
 /// @return index where the desired value is stored into a 1d array
 int coords_to_index(const unsigned int n,const int i,const int j){
-    if (i == j) print_error("i == j");
+    if (i == j) print_state(Error, "i == j");
     return i<j ? INDEX(n,i,j) : INDEX(n,j,i);
 }
 
@@ -70,7 +109,7 @@ void reverse(int* array, unsigned int from, unsigned int to){
 /// @param size size of array
 /// @return number of unque values
 int arrunique(const int* inst, const unsigned int size) {
-    if(size <= 0) print_error("input not valid");
+    if(size <= 0) print_state(Error, "input not valid");
     int elem[size];
     elem[0] = inst[0];
     int out = 1;
