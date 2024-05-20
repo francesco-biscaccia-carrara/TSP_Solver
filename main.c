@@ -32,9 +32,10 @@ int main(int argc, char **argv) {
     TSPenv* env = environment_new_cli(argv, argc);
     TSPinst* inst = instance_new_env(env);
 
-    char* cplex_func[] = { "BENDER", "PATCHING","BRANCH_CUT"};
+    char* cplex_func[] = { "BENDER", "PATCHING","BRANCH_CUT" };
+    char* mathe_func[] = { "DIVING", "LOCAL BRANCH" };
     
-    if(!strncmp(env->method,"DIVING", 6)) diving(inst, env);
+    if(strnin(env->method, mathe_func, 2)) MATsolve(inst, env);
     else if(strnin(env->method, cplex_func, 3)) {
         TSPCsolve(inst,env);
         TSPg2optb(inst, inst->solution, &(inst->cost));

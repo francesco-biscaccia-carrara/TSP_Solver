@@ -13,6 +13,11 @@ typedef struct {
     double y;
 } point;
 
+typedef struct {
+    double cost;
+    int*   tour;
+} TSPsol;
+
 typedef struct{
     unsigned int    nnodes;
     unsigned int    random_seed;

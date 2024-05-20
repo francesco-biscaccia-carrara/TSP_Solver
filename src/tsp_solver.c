@@ -19,9 +19,15 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
 
 
     double init_time = get_time();
+    TSPsol min = { .cost = 10e+9, .tour = NULL };
+
     for(int i = 0; i < inst->nnodes && time_elapsed(init_time) <= env->time_limit; i++) {
-        TSPgreedy(inst, i, opt_func, env->method);
+        TSPsol tmp = TSPgreedy(inst, i, opt_func, env->method);
+        if(tmp.cost < min.cost) { min = tmp; }
     }
+
+    instance_set_solution(inst, min.tour, min.cost);
+    check_tour_cost(inst, inst->solution, inst->cost);
     
     char* vns_func[] = {"VNS"};
     char* tabu_func[] = {"TABU_R", "TABU_B"};
@@ -40,40 +46,43 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
 /// @param inst instance of TSPinst
 /// @param intial_node intial node
 /// @param tsp_func improvement function
-void TSPgreedy(TSPinst* inst, const unsigned int intial_node, void(tsp_func)(TSPinst*, int*, double*), char* func_name) {
-    double cost = 0.0;
+TSPsol TSPgreedy(const TSPinst* inst, const unsigned int intial_node, void(tsp_func)(const TSPinst*, int*, double*), char* func_name) {
+    
+    TSPsol out_solution = { .cost = 0.0, .tour = malloc(inst->nnodes * sizeof(int)) };
+
     int current_index = intial_node;
 
     int used_node[inst->nnodes];
     bzero(used_node, inst->nnodes * sizeof(used_node[0]));
-    int result[inst->nnodes];
-
-    result[0] = current_index;
     used_node[intial_node] = 1;
 
-    for (int i = 1; i < inst->nnodes; i++) {  
-        near_neighbor new_point = get_nearest_neighbor(inst, result[i-1], used_node);
+    //int result[inst->nnodes];
+    out_solution.tour[0] = current_index;
 
-        cost += new_point.dist;
+    for (int i = 1; i < inst->nnodes; i++) {  
+        near_neighbor new_point = get_nearest_neighbor(inst, out_solution.tour[i-1], used_node);
+
+        out_solution.cost += new_point.dist;
         used_node[new_point.index] = 1;
-        result[i] = new_point.index;
+        out_solution.tour[i] = new_point.index;
     }
-    cost += get_arc(inst, result[inst->nnodes-1], intial_node);
+    out_solution.cost += get_arc(inst, out_solution.tour[inst->nnodes-1], intial_node);
 
     #if VERBOSE > 1
-    printf("Partial \e[1m%7s\e[m solution starting from [%i]: \t%10.4f\n","GREEDY" , intial_node, cost);
+    printf("Partial \e[1m%7s\e[m solution starting from [%i]: \t%10.4f\n","GREEDY" , intial_node, out_solution.cost);
     #endif
 
     if(tsp_func != NULL) {
-        tsp_func(inst, result, &cost);
+        tsp_func(inst, out_solution.tour, &out_solution.cost);
 
         #if VERBOSE > 1
-        printf("Partial \e[1m%7s\e[m solution starting from [%i]: \t%10.4f\n", func_name, intial_node, cost);
+        printf("Partial \e[1m%7s\e[m solution starting from [%i]: \t%10.4f\n", func_name, intial_node, out_solution.cost);
         #endif
     }
-    
-    if(cost >= inst->cost) return;
-    instance_set_solution(inst, result, cost);
+
+    //memcpy(out_solution.tour, result, inst->nnodes * sizeof(inst->solution[0]));    
+    //out_solution.cost = cost;
+    return out_solution;
 }
 
 
@@ -81,7 +90,7 @@ void TSPgreedy(TSPinst* inst, const unsigned int intial_node, void(tsp_func)(TSP
 /// @param inst instance of TSPinst 
 /// @param tour hamiltionian circuit
 /// @param cost cost of path
-void TSPg2opt(TSPinst* inst, int* tour, double* cost) {
+void TSPg2opt(const TSPinst* inst, int* tour, double* cost) {
     while (1) {
         cross curr_cross = find_first_cross(inst, tour);
         if(curr_cross.delta_cost >= -EPSILON) return;
@@ -100,7 +109,7 @@ void TSPg2opt(TSPinst* inst, int* tour, double* cost) {
 /// @param inst instance of TSPinst 
 /// @param tour hamiltionian circuit
 /// @param cost cost of path
-void TSPg2optb(TSPinst* inst, int* tour, double* cost) {
+void TSPg2optb(const TSPinst* inst, int* tour, double* cost) {
 
     while (1) {
         cross curr_cross = find_best_cross(inst, tour);

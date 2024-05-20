@@ -160,14 +160,31 @@ void decompose_solution(const double *xstar, const unsigned int nnodes, int *suc
 /// @param lp CPLEX model pointer
 void CPLEX_post_heur(CPXENVptr* env, CPXLPptr* lp, int* succ, const unsigned int nnodes) {
 
-	int start_index = 0; 	
+	int start_index = 0;
 	int effort_level = CPX_MIPSTART_NOCHECK;
 	int* index = (int*) calloc(nnodes,sizeof(int));
 	double* value = (double*) calloc(nnodes,sizeof(double));
 
 	CPLEX_sol_from_inst(nnodes,succ,index,value);
-	if (CPXaddmipstarts(*env, *lp, 1,nnodes, &start_index, index, value, &effort_level, NULL)) print_state(Error, "CPXaddmipstarts() error");	
-		
+
+	if (CPXaddmipstarts(*env, *lp, 1, nnodes, &start_index, index, value, &effort_level, NULL)) print_state(Error, "CPXaddmipstarts() error");	
+	
+	free(index);
+	free(value);
+}
+
+void CPLEX_edit_post_heur(CPXENVptr* env, CPXLPptr* lp, int* succ, const unsigned int nnodes) {
+	
+	int start_index = 0;
+	int mipindex = 0;
+	int effort_level = CPX_MIPSTART_NOCHECK;
+	int* index = (int*) calloc(nnodes,sizeof(int));
+	double* value = (double*) calloc(nnodes,sizeof(double));
+
+	CPLEX_sol_from_inst(nnodes,succ,index,value);
+
+	if (CPXchgmipstarts(*env, *lp, 1, &mipindex, nnodes, &start_index, index, value, &effort_level)) print_state(Error, "CPXaddmipstarts() error");
+
 	free(index);
 	free(value);
 }

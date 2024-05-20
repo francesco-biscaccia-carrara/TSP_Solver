@@ -3,7 +3,9 @@
 
 #include "tsp_exact.h"
 
-extern void diving(TSPinst* inst, TSPenv* env);
+extern void MATsolve(TSPinst*, TSPenv*);
+
+extern void diving(CPXENVptr*, CPXLPptr*, TSPinst*, TSPenv*);
 //extern void local_branching();
 
 #endif

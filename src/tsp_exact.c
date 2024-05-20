@@ -62,7 +62,8 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 
 	//'Warm-up' CPLEX with a feasibile solution given by G2OPT heu
 	if(env->warm){
-		TSPgreedy(inst, ((double)rand())/RAND_MAX*inst->nnodes, TSPg2optb, env->method);
+		TSPsol sol = TSPgreedy(inst, ((double)rand())/RAND_MAX*inst->nnodes, TSPg2optb, env->method);   
+    	instance_set_solution(inst, sol.tour, sol.cost);
 
 		print_state(Info, "passing an heuristic solution to CPLEX...\n");
 		CPLEX_post_heur(&CPLEX_env, &CPLEX_lp, inst->solution, inst->nnodes);
@@ -115,9 +116,7 @@ void TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp)
 		} 
 
 		double cost = compute_cost(inst,cth_convert(sol, succ, inst->nnodes));
-		if(cost < inst->cost) {
-			instance_set_solution(inst,sol,cost);
-		}
+		instance_set_solution(inst,sol,cost);
 	}
 	free(succ);
 	free(comp);
@@ -165,7 +164,7 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 		patching(inst,succ,comp,ncomp, nstart);
 		int* sol  = calloc (inst->nnodes,sizeof(int));
 		cth_convert(sol, succ, inst->nnodes);
-		CPLEX_post_heur(env,lp,succ,inst->nnodes);
+		CPLEX_edit_post_heur(env,lp,succ,inst->nnodes);
 	}
 
 	if(lb < inst->cost){

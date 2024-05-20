@@ -9,9 +9,9 @@
 
 extern void     TSPsolve(TSPinst*, TSPenv*);
 
-extern void     TSPgreedy(TSPinst*, const unsigned int, void(TSPinst*, int*, double*), char*);
-extern void     TSPg2opt(TSPinst*, int*, double*);
-extern void     TSPg2optb(TSPinst*, int*, double*);
+extern TSPsol   TSPgreedy(const TSPinst*, const unsigned int, void(const TSPinst*, int*, double*), char*);
+extern void     TSPg2opt(const TSPinst*, int*, double*);
+extern void     TSPg2optb(const TSPinst*, int*, double*);
 extern void     TSPtabu(TSPinst*, const TSPenv*, const double);
 extern void     TSPvns(TSPinst*, const TSPenv*, const double);
 
