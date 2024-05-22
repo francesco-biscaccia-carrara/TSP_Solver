@@ -79,6 +79,15 @@ double compute_cost(TSPinst* inst,const int* tmp_sol) {
 }
 
 
+cross* set_cross(cross* dest, unsigned int i, unsigned int j, double delta_cost) {
+    dest->delta_cost = delta_cost;
+    dest->i = i;
+    dest->j = j;
+
+    return dest;
+}
+
+
 /// @brief get the nearest available neighbor form an index 
 /// @param inst instance of TSPinst
 /// @param index starting node

@@ -186,51 +186,43 @@ void TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp) {
 /// @param comp_size number of unique element into comp array
 void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size, int* nstart) {
 
-	int best_i = 0, best_j = 0;
 	int best_set = 0;
-
 	int group_size = comp_size;
 
 	while(group_size > 1) {
 		for(int k1 = 0; k1 < group_size-1; k1++) {
-			double min = DBL_MAX;
-			for(int k2 = k1+1; k2 < group_size; k2++) {
+			cross min_cross = { .delta_cost = DBL_MAX, .i = -1, .j = -1 };
 
-				int i = nstart[k1];
-				int j = nstart[k2];
-				while (succ[i] != nstart[k1]) {
-					while (succ[j] != nstart[k2]) {
+			for(int k2 = 0; k2 < group_size; k2++) {
+				if(k2 == k1) continue;
 
+				for(int i = nstart[k1]; succ[i] != nstart[k1]; i = succ[i]) {
+
+					for(int j = nstart[k2]; succ[j] != nstart[k2]; j = succ[j]) {
 						double del_cost = delta_cost(inst, j, succ[j], i, succ[i]);
-						if(del_cost < min) {
-							min = del_cost;
-							best_i = i;
-							best_j = j;
+						if(del_cost < min_cross.delta_cost) {
+							set_cross(&min_cross, i, j, del_cost);
 							best_set = k2;
 						}
-						j = succ[j];
-					}
-					i = succ[i];
+						
+					} 
 				}
-				
 			}
 
 			#if VERBOSE > 2
 				printf("\n=============INFO=============\n");
 				printf("tour n°: %i\n", comp[nstart[k1]]);
-				printf("min:\t%10.4f\ni:\t\t%i\nsucc[i]:\t%i\nj:\t\t%i\nsucc[j]:\t%i\nbest_set:\t%i\n", min, best_i, succ[best_i], best_j, succ[best_j], comp[nstart[best_set]]);
+				printf("min:\t%10.4f\ni:\t\t%i\nsucc[i]:\t%i\nj:\t\t%i\nsucc[j]:\t%i\nbest_set:\t%i\n", min_cross.delta_cost, min_cross.i, succ[min_cross.i], min_cross.j, succ[min_cross.j], comp[nstart[best_set]]);
 				printf("==============================\n");
 			#endif
+			
+			inst->cost += min_cross.delta_cost;
+			int dummy = succ[min_cross.i];
+			succ[min_cross.i] = succ[min_cross.j];
+			succ[min_cross.j] = dummy;
 
-			inst->cost += min;
-			int dummy = succ[best_i];
-			succ[best_i] = succ[best_j];
-			succ[best_j] = dummy;
-
-			int z = nstart[best_set]; 
-			while(succ[z] != nstart[best_set]) {
+			for(int z = nstart[best_set]; succ[z] != nstart[best_set]; z = succ[z]) {
 				comp[z] = comp[nstart[k1]];
-				z = succ[z];
 			}
 			nstart[best_set] = nstart[--group_size];
 
@@ -242,7 +234,6 @@ void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size,
 				}
 				printf("\n");
 			#endif
-
 		}
 	}
 }

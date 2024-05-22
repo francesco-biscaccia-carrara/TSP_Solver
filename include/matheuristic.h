@@ -5,7 +5,7 @@
 
 extern void MATsolve(TSPinst*, TSPenv*);
 
-extern void diving(CPXENVptr*, CPXLPptr*, TSPinst*, TSPenv*);
-//extern void local_branching();
+extern void diving(TSPinst*, TSPenv*);
+extern void local_branching(TSPinst*, TSPenv*);
 
 #endif

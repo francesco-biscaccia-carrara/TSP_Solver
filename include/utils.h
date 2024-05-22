@@ -26,8 +26,8 @@ extern enum { Error, Warn, Info } TYPE_MESSAGE;
 
 
 extern void     print_state(int, const char*, ...);
-extern void     print_error(const char*);
-extern void     print_warn(const char *);
+//extern void     print_error(const char*);
+//extern void     print_warn(const char *);
 extern int      coords_to_index(const unsigned int, const int, const int);
 extern double   get_time();
 extern double   time_elapsed(const double);

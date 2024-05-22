@@ -22,6 +22,7 @@ extern double   delta_cost(const TSPinst*, const unsigned int, const unsigned in
 extern double   get_arc(const TSPinst*, const unsigned int, const unsigned int);
 extern void     check_tour_cost(const TSPinst*, const int*, const double);
 extern double   compute_cost(TSPinst*,const int*);
+extern cross*   set_cross(cross*, unsigned int, unsigned int, double);
 
 //greedy functions
 extern near_neighbor get_nearest_neighbor(const TSPinst*, const unsigned int, const int*);

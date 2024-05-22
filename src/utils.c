@@ -1,6 +1,6 @@
 #include "../include/utils.h"
 
-
+/*
 /// @brief used to print logical errors whenever they occur
 /// @param error_message text to print
 void print_error(const char *error_message){
@@ -14,7 +14,7 @@ void print_error(const char *error_message){
 void print_warn(const char *warning_message){
     printf("\n\x1b[33m\e[1m\e[4mWARNING\e[0m\e[m\x1b[33m: %s\x1b[0m\n", warning_message);
     fflush(NULL); 
-} 
+}*/ 
 
 void print_state(int type, const char* msg, ...) {
     va_list ap;

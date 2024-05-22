@@ -10,19 +10,15 @@ static inline void CPLEX_sol_from_inst(const unsigned int nnodes, const int* sol
 }
 
 void MATsolve(TSPinst* inst, TSPenv* env) {
-    CPXENVptr CPLEX_env = NULL; 
-	CPXLPptr CPLEX_lp = NULL;
-	CPLEX_model_new(inst, &CPLEX_env, &CPLEX_lp);    
-
-    if(!strncmp(env->method,"DIVING", 6)) { diving(&CPLEX_env, &CPLEX_lp, inst, env); }
-    CPLEX_model_delete(&CPLEX_env,&CPLEX_lp);
+    if(!strncmp(env->method,"DIVING", 6)) { diving(inst, env); }
+    else if(!strncmp(env->method,"LOCALBRANCH", 11)) { local_branching(inst, env); }
 }
 
-int fix_arc(int* block_edge, int* solution, int p, int nnodes) {
+static int fix_arc(int* block_edge, int* solution, int p, int nnodes) {
     int k = 0;
     for(int i = 0; i < nnodes-1; i++) {
         
-        if(rand()%10 < p) continue;
+        if(rand()%10 >= p) continue;
         if(i == nnodes-1) {
             block_edge[k++] = coords_to_index(nnodes, solution[nnodes-1], solution[0]);
         }
@@ -31,23 +27,24 @@ int fix_arc(int* block_edge, int* solution, int p, int nnodes) {
     return k;
 }
 
-void fix_to_model(CPXENVptr* env, CPXLPptr* lp, int* variable_to_fix, int variable_to_fix_size) {
-    char L = 'L';
-    double v = 1.0;
-    for(int i = 0; i < variable_to_fix_size; i++) {
-        CPXchgbds(*env, *lp, 1, variable_to_fix+i, &L, &v);
-    }
+static void fix_to_model(CPXENVptr* env, CPXLPptr* lp, int* variable_to_fix, int variable_to_fix_size) {
+    char* ls = malloc(variable_to_fix_size);
+    double* vs = malloc(variable_to_fix_size * sizeof(double));
+
+    for(int i = 0; i < variable_to_fix_size; i++) { ls[i] = 'L'; }
+    for(int i = 0; i < variable_to_fix_size; i++) { vs[i] = 1.0; }
+    CPXchgbds(*env, *lp, variable_to_fix_size, variable_to_fix, ls, vs);
 }
 
-void remove_fix(CPXENVptr* env, CPXLPptr* lp, int* variable_to_fix, int variable_to_fix_size) {
-    char L = 'L';
-    double v = 0.0;
-    for(int i = 0; i < variable_to_fix_size; i++) {
-        CPXchgbds(*env, *lp, 1, variable_to_fix+i, &L, &v);
-    }
+static void remove_fix(CPXENVptr* env, CPXLPptr* lp, int* variable_to_fix, int variable_to_fix_size) {
+    char* ls = malloc(variable_to_fix_size);
+    double* vs = calloc(variable_to_fix_size, sizeof(double));
+
+    for(int i = 0; i < variable_to_fix_size; i++) { ls[i] = 'L'; }
+    CPXchgbds(*env, *lp, variable_to_fix_size, variable_to_fix, ls, vs);
 }
 
-void diving(CPXENVptr* CPLEX_envs, CPXLPptr* CPLEX_lps, TSPinst* inst, TSPenv* env) {    
+void diving(TSPinst* inst, TSPenv* env) { 
 
     TSPsol sol = TSPgreedy(inst, rand()%inst->nnodes, NULL, "");   
     instance_set_solution(inst, sol.tour, sol.cost);
@@ -62,7 +59,7 @@ void diving(CPXENVptr* CPLEX_envs, CPXLPptr* CPLEX_lps, TSPinst* inst, TSPenv* e
     double start_time = get_time();
 
     while(time_elapsed(start_time) < env->time_limit) {
-        int percfix = (rand()%3)+1;
+        int percfix = (rand()%4)+6;
 
         #if VERBOSE > 0
             print_state(Info, "fix %i%% of the variables\n", percfix*10);
@@ -82,4 +79,46 @@ void diving(CPXENVptr* CPLEX_envs, CPXLPptr* CPLEX_lps, TSPinst* inst, TSPenv* e
     #if VERBOSE > 0
 		print_lifespan(end_time,start_time);
 	#endif
+}
+
+
+void local_branching(TSPinst* inst, TSPenv* env) {
+
+    // \sum xe >= n-k
+    TSPsol sol = TSPgreedy(inst, rand()%inst->nnodes, TSPg2optb, "G2OPT_B");   
+    instance_set_solution(inst, sol.tour, sol.cost);
+
+    CPXENVptr CPLEX_env = NULL; 
+    CPXLPptr CPLEX_lp = NULL;
+    CPLEX_model_new(inst, &CPLEX_env, &CPLEX_lp);
+    CPLEX_post_heur(&CPLEX_env, &CPLEX_lp, inst->solution, inst->nnodes);
+
+    int k = 20;
+    int del_k = 10;
+    int* limit = calloc(inst->nnodes, sizeof( int ));
+    double old_sol = inst->cost;
+    double new_sol = inst->cost;
+
+    //NOTE:
+    //  1. k non troppo grosso = 1mln di variabili
+    //  2  fornire soluzione decente
+    
+    for (int start_time = get_time(); time_elapsed(start_time) < env->time_limit;) {
+        
+        //Aggiungi Vicolo
+        for(int i = 0; i < inst->nnodes-1; i++) {
+            limit[i] = coords_to_index(inst->nnodes, inst->solution[i], inst->solution[i+1]);
+        } 
+        limit[inst->nnodes] = coords_to_index(inst->nnodes, inst->solution[inst->nnodes - 1], inst->solution[0]);
+        
+        //Solve
+        TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp);
+        new_sol = inst->cost;
+
+        //Rimuovi Vincolo
+        //CPX_delete  RO
+
+    }
+    
+
 }

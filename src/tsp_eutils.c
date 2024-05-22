@@ -353,7 +353,7 @@ int add_SEC_flt(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 
 	int nodeid = -1; 
 	CPXcallbackgetinfoint(context,CPXCALLBACKINFO_NODEUID,&nodeid);
-	if(nodeid%10) return 0; //Relaxation with prob 0.1
+	if(nodeid%10) return 0;
 
 	int ncols = inst.nnodes*(inst.nnodes-1)/2;
 	double* xstar = (double*) malloc(ncols * sizeof(double));
