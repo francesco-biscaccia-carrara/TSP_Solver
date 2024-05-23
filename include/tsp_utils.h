@@ -16,6 +16,10 @@ typedef struct {
     unsigned int    index;
 } near_neighbor;
 
+//FIXME: redundant declaration
+//int* glb_tourptr;
+//mt_context global_mt_ctx;
+
 //generic functions
 extern double   euc_2d(const point, const point);
 extern double   delta_cost(const TSPinst*, const unsigned int, const unsigned int, const unsigned int, const unsigned int);

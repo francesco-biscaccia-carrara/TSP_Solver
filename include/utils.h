@@ -24,6 +24,11 @@ extern enum { Error, Warn, Info } TYPE_MESSAGE;
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+typedef struct{
+    int num_threads;
+    pthread_mutex_t mutex;
+    pthread_t* threads;
+} mt_context;
 
 extern void     print_state(int, const char*, ...);
 //extern void     print_error(const char*);
@@ -42,4 +47,7 @@ extern int      get_subset_array(int*, int*, int);
 //log utils
 extern void     format_csv_line(FILE*, const double*, const unsigned int);
 extern void     print_lifespan(const double, const double);
+extern void     init_mt_context(mt_context* ctx,int num_threads);
+extern void     assign_task(mt_context* ctx,int th_i,void* (*funct)(void*) ,void* args);
+extern void     delete_mt_context(mt_context* ctx);
 #endif

@@ -1,6 +1,5 @@
 #include "../include/tsp_utils.h"
 
-
 #define SQUARE(x)       (x*x)
 /// @brief compute euclidian distance for 2d points
 /// @param a instance of point
@@ -163,6 +162,7 @@ cross find_best_cross(const TSPinst* inst, const int* tour) {
             }
         }
     }
+    
     return best_cross;
 }
 

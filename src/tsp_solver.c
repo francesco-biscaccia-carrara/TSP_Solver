@@ -105,9 +105,10 @@ void TSPg2opt(const TSPinst* inst, int* tour, double* cost) {
 /// @param tour hamiltionian circuit
 /// @param cost cost of path
 void TSPg2optb(const TSPinst* inst, int* tour, double* cost) {
-
     while (1) {
+        //init_mt_context(&global_mt_ctx, (int) log2(inst->nnodes*(inst->nnodes-1)/2));
         cross curr_cross = find_best_cross(inst, tour);
+        //delete_mt_context(&global_mt_ctx);
         if(curr_cross.delta_cost >= -EPSILON) return;
         
         reverse(tour,curr_cross.i+1,curr_cross.j);
