@@ -148,10 +148,10 @@ void* find_best_cross_mt(void* userhandle){
 
     mt_pars pars = *(mt_pars*) userhandle;
     cross my_best_cross = {-1,-1,INFINITY};
-    int my_id= ((gettid() - *pars.mt_id)-1)%global_mt_ctx.num_threads;
+    int my_id = ((gettid() - *pars.mt_id)-1) % global_mt_ctx.num_threads;
 
     int start = my_id * pars.mt_inst->nnodes/global_mt_ctx.num_threads - my_id;
-    int end = (my_id+1)* pars.mt_inst->nnodes/global_mt_ctx.num_threads-1;
+    int end = (my_id+1)* pars.mt_inst->nnodes/global_mt_ctx.num_threads - 1;
     end = end < pars.mt_inst->nnodes-2 ? end : pars.mt_inst->nnodes-2;
 
     for(int i=start;i<end;i++){
@@ -189,11 +189,9 @@ cross find_best_cross(const TSPinst* inst, const int* tour) {
     mt_pars best_cross_par = {inst,tour,&best_cross,&id};
 
     init_mt_context(&global_mt_ctx, (int) log2(inst->nnodes*(inst->nnodes-1)/2));
-    
-
-    for(int t =0;t<global_mt_ctx.num_threads;t++){
+    for(int t =0;t<global_mt_ctx.num_threads;t++) 
         assign_task(&global_mt_ctx,t,find_best_cross_mt,&best_cross_par);
-    }
+        
     delete_mt_context(&global_mt_ctx);
 
     return best_cross;

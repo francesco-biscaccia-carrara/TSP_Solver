@@ -105,7 +105,7 @@ void TSPg2opt(const TSPinst* inst, int* tour, double* cost) {
 /// @param tour hamiltionian circuit
 /// @param cost cost of path
 void TSPg2optb(const TSPinst* inst, int* tour, double* cost) {
-
+    
     #if VERBOSE > 2
         print_state(Info,"Multithreading on %d threads\n",(int) log2(inst->nnodes*(inst->nnodes-1)/2));
     #endif
