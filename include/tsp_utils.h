@@ -16,9 +16,12 @@ typedef struct {
     unsigned int    index;
 } near_neighbor;
 
-//FIXME: redundant declaration
-//int* glb_tourptr;
-//mt_context global_mt_ctx;
+typedef struct{
+    TSPinst*    mt_inst;
+    int*        mt_tour;
+    cross*      mt_cross;
+    int*        mt_id;
+} mt_pars;
 
 //generic functions
 extern double   euc_2d(const point, const point);
