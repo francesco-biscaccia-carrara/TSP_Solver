@@ -22,6 +22,8 @@ static int CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, do
 	if (CPXmipopt(*env,*lp)) print_state(Error, "CPXmipopt() error");
 
 	int STATE = CPXgetstat(*env,*lp);
+	
+	#if VERBOSE > 1
 	switch(STATE){
 		case CPXMIP_TIME_LIM_FEAS:  
 			print_state(Warn, "Time limit exceeded, but integer solution exists!\n"); //Time limit exceeded, but integer solution exists 
@@ -34,6 +36,7 @@ static int CPLEX_solve(CPXENVptr* env, CPXLPptr* lp, const double spare_time, do
 			break;
 		default: break;	
 	}
+	#endif
 
 	CPXgetobjval(*env,*lp,lower_bound);
 	if (CPXgetx(*env,*lp, x_star, 0, CPXgetnumcols(*env,*lp)-1)) print_state(Error, "CPXgetx() error");

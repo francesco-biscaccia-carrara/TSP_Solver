@@ -4,7 +4,7 @@
 
 #define MAX_DIST    10000
 #define MAX_TIME    3.6e+6
-#define VERBOSE	    1
+#define VERBOSE	    0
 
 #include "utils.h"
 
@@ -33,7 +33,8 @@ typedef struct{
     char*           method;
     char            mt;
     char            warm;
-    uint64_t        time_exec;
+    char            perf_v;
+    double          time_exec;
     uint64_t        time_limit;
 } TSPenv;
 

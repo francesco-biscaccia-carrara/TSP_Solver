@@ -7,26 +7,31 @@ int main(int argc, char **argv) {
     TSPenv* env = environment_new_cli(argv, argc);
     TSPinst* inst = instance_new_env(env);
 
-    char* cplex_func[] = { "BENDER", "PATCHING","BRANCH_CUT" };
+    char* cplex_func[] = { "BENDER", "BRANCH_CUT" };
     char* mathe_func[] = { "DIVING", "LOCAL BRANCH" };
     
     if(strnin(env->method, mathe_func, 2)) { 
         MATsolve(inst, env);
         TSPg2optb(inst, inst->solution, &(inst->cost));    
     }
-    else if(strnin(env->method, cplex_func, 3)) {
+    else if(strnin(env->method, cplex_func, 2)) {
         TSPCsolve(inst,env);
         check_tour_cost(inst, inst->solution, inst->cost);
     }
 	else TSPsolve(inst, env);
 
-    FILE* f = fopen("plot/input/test.txt", "w");
-    plot_log(inst, f);
-    fclose(f);
-
-    print_sol(inst, env);
+    if(env->perf_v) {
+        printf("%10.4f, %10.4f", env->time_exec, inst->cost);
+    }
+    else {
+        print_sol(inst, env);
+        FILE* f = fopen("plot/input/test.txt", "w");
+        plot_log(inst, f);
+        fclose(f);
+        system("cd plot && python3 plot_solution.py &");
+    }
+    
     instance_delete(inst);
     environment_delete(env);
-    system("cd plot && python3 plot_solution.py &");
     return 0;
 }

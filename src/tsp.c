@@ -198,6 +198,7 @@ TSPenv* environment_new() {
     environment->method = calloc(23, sizeof(char));
     environment->time_limit = MAX_TIME;
     environment->time_exec = 0;
+    environment->perf_v = 0;
 
     #if VERBOSE > 1
     printf("\e[1mGENERATE NEW ENVIRONMENT\e[m\n");
@@ -222,6 +223,7 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
     char* mtth_comm[] = {"-mt", "-multi_th"};
     char* help_comm[] = {"-help", "-h", "--help"};
     char* warm_comm[] = {"-warm", "-w", "--warm"};
+    char* perf_comm[] = {"-test", "-t"};
 
     for (int i = 1; i < argc; i++) { 
         if (strnin(argv[i], time_comm, 2))  env->time_limit = abs(atof(argv[++i]));
@@ -231,6 +233,7 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
         if (strnin(argv[i], seed_comm, 3))  env->random_seed = abs(atoi(argv[++i])); 
         if (strnin(argv[i], mtth_comm, 2))  env->mt = 1;  
         if (strnin(argv[i], warm_comm, 2))  env->warm = 1;  
+        if (strnin(argv[i], perf_comm, 2))  env->perf_v = 1;
         if (strnin(argv[i], help_comm, 3))  { help_info(); exit(0); }  
     }
 
