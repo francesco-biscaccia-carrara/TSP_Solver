@@ -37,7 +37,7 @@ static void tsp_rnd_inst(TSPinst* inst, unsigned int nnodes, const unsigned int 
     if(nnodes <= 1) { print_state(Error, "Impossible to generate problem with less than 2 nodes\n"); } 
 
     #if VERBOSE > 0
-    printf("\e[1mGENERATE RANDOM POINT...\e[m\n");
+        printf("\e[1mGENERATE RANDOM POINT...\e[m\n");
     #endif
 
     for(int i = 0; i < nnodes; i++) {
@@ -145,7 +145,8 @@ TSPinst* instance_new_env(TSPenv* env) {
     TSPinst* inst = instance_new();
 
     init_random();
-    if(!strncmp(env->file_name,"RND",3) || fopen(env->file_name, "r")==NULL){
+
+    if(!strncmp(env->file_name,"RND",3) || fopen(env->file_name, "r") == NULL ){
         tsp_rnd_inst(inst, env->nnodes,env->random_seed);
     }else{
         tsp_read_file(inst,env->file_name);
@@ -196,6 +197,7 @@ TSPenv* environment_new() {
     environment->file_name = calloc(64, sizeof(char));
     environment->method = calloc(23, sizeof(char));
     environment->time_limit = MAX_TIME;
+    environment->time_exec = 0;
 
     #if VERBOSE > 1
     printf("\e[1mGENERATE NEW ENVIRONMENT\e[m\n");

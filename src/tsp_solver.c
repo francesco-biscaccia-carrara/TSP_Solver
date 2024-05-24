@@ -1,8 +1,6 @@
 #include "../include/tsp_solver.h"
 
 
-#define REMAIN_TIME(init_time, env) (time_elapsed(init_time) <= env->time_limit)
-
 /// @brief Solve an instance of TSP with an heuristic approach
 /// @param inst instance of TSPinst
 /// @param env instance of TSPenv
@@ -23,6 +21,7 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     double init_time = get_time();
 
     TSPsol min = { .cost = INFINITY, .tour = NULL };
+
     for(int i = 0; i < inst->nnodes && REMAIN_TIME(init_time,env); i++) {
         TSPsol tmp = TSPgreedy(inst, i, opt_func, env->method);
         if(tmp.cost < min.cost) { min = tmp; }
@@ -31,10 +30,15 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     
     char* vns_func[] = {"VNS"};
     char* tabu_func[] = {"TABU_R", "TABU_B"};
-    if(strnin(env->method, vns_func, 1)) { TSPvns(inst, env, init_time); }
-    else if(strnin(env->method, tabu_func, 1)) { TSPtabu(inst, env, init_time); }
+    if(strnin(env->method, vns_func, 1)) { min = TSPvns(inst, env, init_time); }
+    else if(strnin(env->method, tabu_func, 1)) { min = TSPtabu(inst, env, init_time); }
+
+    if(min.cost < inst->cost) {
+        instance_set_solution(inst, min.tour, min.cost);
+    }
 
     double final_time = get_time();
+    env->time_exec = final_time - init_time;
 
     #if VERBOSE > 0
 		print_lifespan(final_time,init_time);
@@ -124,8 +128,10 @@ void TSPg2optb(const TSPinst* inst, int* tour, double* cost) {
 /// @param inst instance of TSPinst
 /// @param env instance of TSPenv
 /// @param init_time initial time
-void TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
+TSPsol TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
 
+    TSPsol out = { .cost = inst->cost, .tour = malloc(inst->nnodes * sizeof(int)) };
+    
     int tabu_index = 0; 
     int tabu_size = inst->nnodes / 2;
     cross tabu[tabu_size];
@@ -134,21 +140,22 @@ void TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
     int tmp_sol[inst->nnodes];
     memcpy(tmp_sol, inst->solution, inst->nnodes * sizeof(inst->solution[0]));
 
-    while (time_elapsed(init_time) <= env->time_limit)
+    while (REMAIN_TIME(init_time, env))
     {
         cross move = find_best_t_cross(inst, tmp_sol, tabu, tabu_size);
-        cost += move.delta_cost;
         reverse(tmp_sol, move.i + 1, move.j);
+        cost += move.delta_cost;
 
         if(move.delta_cost >= EPSILON) {
             tabu[tabu_index % tabu_size] = move;
             tabu_index++;
         }
-        else if(cost <= inst->cost) {
-            instance_set_solution(inst, tmp_sol, cost);
+        else if(cost <= out.cost) {
+            out.cost = cost;
+            memcpy(out.tour, tmp_sol, inst->nnodes * sizeof(int));
 
             #if VERBOSE > 0
-            printf("new best cost:\t%10.4f\n", inst->cost);
+            printf("new best cost:\t%10.4f\n", out.cost);
             #endif
 
             #if VERBOSE > 2
@@ -157,6 +164,7 @@ void TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
         }
     }   
 
+    return out;
 }
 
 
@@ -164,24 +172,29 @@ void TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
 /// @param inst instance of TSPinst 
 /// @param env instance of TSPenv
 /// @param init_time initial time
-void TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) { 
+TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) { 
+
+    TSPsol out = { .cost = inst->cost, .tour = malloc(inst->nnodes * sizeof(int)) };
+
     double cost = inst->cost;
     int tmp_sol[inst->nnodes];
     memcpy(tmp_sol, inst->solution, inst->nnodes * sizeof(inst->solution[0]));
 
-    while (time_elapsed(init_time) <= env->time_limit) {
+    while (REMAIN_TIME(init_time, env)) {
         TSPg2optb(inst, tmp_sol, &cost);
 
-        if(cost < inst->cost - EPSILON) {
-            instance_set_solution(inst, tmp_sol, cost);
+        if(cost < out.cost - EPSILON) {
+            out.cost = cost;
+            memcpy(out.tour, tmp_sol, inst->nnodes * sizeof(int));
             
             #if VERBOSE > 0
-            print_state(Info, "new best cost:\t%10.4f\n", inst->cost);
+            print_state(Info, "new best cost:\t%10.4f\n", out.cost);
             #endif
         }
 
         for(int i = 0; i < 4; i++) kick(tmp_sol, inst->nnodes);
-        
         cost = compute_cost(inst, tmp_sol);
     }
+
+    return out;
 }

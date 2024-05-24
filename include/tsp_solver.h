@@ -12,7 +12,7 @@ extern void     TSPsolve(TSPinst*, TSPenv*);
 extern TSPsol   TSPgreedy(const TSPinst*, const unsigned int, void(const TSPinst*, int*, double*), char*);
 extern void     TSPg2opt(const TSPinst*, int*, double*);
 extern void     TSPg2optb(const TSPinst*, int*, double*);
-extern void     TSPtabu(TSPinst*, const TSPenv*, const double);
-extern void     TSPvns(TSPinst*, const TSPenv*, const double);
+extern TSPsol   TSPtabu(TSPinst*, const TSPenv*, const double);
+extern TSPsol   TSPvns(TSPinst*, const TSPenv*, const double);
 
 #endif

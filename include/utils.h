@@ -16,6 +16,8 @@
 
 extern enum { Error, Warn, Info } TYPE_MESSAGE;
 
+#define DEBUG_MODE         0
+
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -26,8 +28,6 @@ extern enum { Error, Warn, Info } TYPE_MESSAGE;
 
 
 extern void     print_state(int, const char*, ...);
-//extern void     print_error(const char*);
-//extern void     print_warn(const char *);
 extern int      coords_to_index(const unsigned int, const int, const int);
 extern double   get_time();
 extern double   time_elapsed(const double);

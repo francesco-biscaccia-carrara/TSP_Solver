@@ -2,31 +2,6 @@
 #include "include/tsp_exact.h"
 #include "include/matheuristic.h"
 
-#define SET_SIZE     2
-int test(int argc, char** argv) {
-    
-    char* methods[SET_SIZE] = {"GREEDY", "G2OPT"};
-    double solutions[SET_SIZE + 1];
-    TSPenv* env = environment_new_cli(argv, argc);
-    
-    FILE* f = fopen("data.csv", "w");
-    fprintf(f,"%i", SET_SIZE);
-    for(int k = 0; k < SET_SIZE; k++) { fprintf(f,",%s", methods[k]); }
-    fprintf(f,"\n");
-
-    for(int i = 0; i < 100; i++) {
-        solutions[0] = i;
-        for(int j = 0; j < SET_SIZE; j++) {
-            environment_set_method(env, methods[j]);
-            environment_set_seed(env, i);
-            TSPinst* inst = instance_new_env(env);
-            TSPsolve(inst, env);
-            solutions[j+1] = inst->cost;
-            free(inst);
-        }
-        format_csv_line(f, solutions, SET_SIZE+1);
-    }
-}
 
 int main(int argc, char **argv) {
     TSPenv* env = environment_new_cli(argv, argc);

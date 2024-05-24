@@ -10,9 +10,19 @@ static inline void CPLEX_sol_from_inst(const unsigned int nnodes, const int* sol
 }
 
 void MATsolve(TSPinst* inst, TSPenv* env) {
-    if(!strncmp(env->method,"DIVING", 6)) { diving(inst, env); }
-    else if(!strncmp(env->method,"LOCALBRANCH", 11)) { local_branching(inst, env); }
+
+    double init_time = get_time();
+    if(!strncmp(env->method,"DIVING", 6)) { diving(inst, env, init_time); }
+    else if(!strncmp(env->method,"LOCALBRANCH", 11)) { local_branching(inst, env, init_time); }
+    double final_time = get_time();
+    env->time_exec = final_time - init_time;
+
+    #if VERBOSE > 0
+		print_lifespan(final_time,init_time);
+	#endif
+
 }
+
 
 static int fix_arc(int* block_edge, int* solution, int p, int nnodes) {
     int k = 0;
@@ -44,7 +54,7 @@ static void remove_fix(CPXENVptr* env, CPXLPptr* lp, int* variable_to_fix, int v
     CPXchgbds(*env, *lp, variable_to_fix_size, variable_to_fix, ls, vs);
 }
 
-void diving(TSPinst* inst, TSPenv* env) { 
+void diving(TSPinst* inst, TSPenv* env, const double start_time) { 
 
     TSPsol sol = TSPgreedy(inst, rand()%inst->nnodes, NULL, "");   
     instance_set_solution(inst, sol.tour, sol.cost);
@@ -56,7 +66,6 @@ void diving(TSPinst* inst, TSPenv* env) {
 
     int* x = calloc(inst->nnodes, sizeof(int));
     int x_size = 0;
-    double start_time = get_time();
 
     while(time_elapsed(start_time) < env->time_limit) {
         int percfix = (rand()%4)+6;
@@ -68,21 +77,19 @@ void diving(TSPinst* inst, TSPenv* env) {
         x_size = fix_arc(x, inst->solution, percfix, inst->nnodes);
         fix_to_model(&CPLEX_env, &CPLEX_lp, x, x_size);
 
-        TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp);
+        sol = TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp, start_time);
+
+        if(sol.cost < inst->cost){
+		    instance_set_solution(inst,sol.tour,sol.cost);
+	    }
+
         CPLEX_edit_post_heur(&CPLEX_env, &CPLEX_lp, inst->solution, inst->nnodes);
-
-
         remove_fix(&CPLEX_env, &CPLEX_lp, x, x_size);
     }
-
-    double end_time = get_time();
-    #if VERBOSE > 0
-		print_lifespan(end_time,start_time);
-	#endif
 }
 
 
-void local_branching(TSPinst* inst, TSPenv* env) {
+void local_branching(TSPinst* inst, TSPenv* env, const double start_time) {
 
     // \sum xe >= n-k
     TSPsol sol = TSPgreedy(inst, rand()%inst->nnodes, TSPg2optb, "G2OPT_B");   
@@ -112,7 +119,7 @@ void local_branching(TSPinst* inst, TSPenv* env) {
         limit[inst->nnodes] = coords_to_index(inst->nnodes, inst->solution[inst->nnodes - 1], inst->solution[0]);
         
         //Solve
-        TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp);
+        TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp, start_time);
         new_sol = inst->cost;
 
         //Rimuovi Vincolo

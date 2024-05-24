@@ -33,6 +33,7 @@ typedef struct{
     char*           method;
     char            mt;
     char            warm;
+    uint64_t        time_exec;
     uint64_t        time_limit;
 } TSPenv;
 
