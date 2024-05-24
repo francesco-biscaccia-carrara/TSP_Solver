@@ -51,7 +51,5 @@ extern int      get_subset_array(int*, int*, int);
 //log utils
 extern void     format_csv_line(FILE*, const double*, const unsigned int);
 extern void     print_lifespan(const double, const double);
-extern void     init_mt_context(mt_context* ctx,int num_threads);
-extern void     assign_task(mt_context* ctx,int th_i,void* (*funct)(void*) ,void* args);
-extern void     delete_mt_context(mt_context* ctx);
+extern void     run_mt_context(mt_context* ,int ,void* (*funct)(void*) ,void* );
 #endif

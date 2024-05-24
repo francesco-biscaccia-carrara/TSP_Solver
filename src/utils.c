@@ -224,3 +224,9 @@ void delete_mt_context(mt_context* ctx){
     pthread_mutex_destroy(&ctx->mutex);
     free(ctx->threads);
 }
+
+void run_mt_context(mt_context* ctx,int num_threads,void* (*funct)(void*) ,void* args){
+    init_mt_context(ctx,num_threads);
+    for(int t =0;t<num_threads;t++) assign_task(ctx,t,funct,args);
+    delete_mt_context(ctx);
+}

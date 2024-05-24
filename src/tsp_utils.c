@@ -1,6 +1,6 @@
 #include "../include/tsp_utils.h"
 
-mt_context global_mt_ctx;
+mt_context mt_ctx;
 
 #define SQUARE(x)       (x*x)
 /// @brief compute euclidian distance for 2d points
@@ -144,15 +144,16 @@ cross find_first_cross(const TSPinst* inst, const int* tour) {
     return (cross){-1,-1,EPSILON};
 }
 
-void* find_best_cross_mt(void* userhandle){
+void* find_best_cross_job(void* userhandle){
 
     mt_pars pars = *(mt_pars*) userhandle;
     cross my_best_cross = {-1,-1,INFINITY};
-    int my_id = ((gettid() - *pars.mt_id)-1) % global_mt_ctx.num_threads;
+    int my_id = ((gettid() - *pars.mt_id)-1) % mt_ctx.num_threads;
 
-    int start = my_id * pars.mt_inst->nnodes/global_mt_ctx.num_threads - my_id;
-    int end = (my_id+1)* pars.mt_inst->nnodes/global_mt_ctx.num_threads - 1;
-    end = end < pars.mt_inst->nnodes-2 ? end : pars.mt_inst->nnodes-2;
+    int load = pars.mt_inst->nnodes/mt_ctx.num_threads;
+
+    int start = my_id * load;
+    int end = my_id != mt_ctx.num_threads-1 ? start + load: pars.mt_inst->nnodes-2;
 
     for(int i=start;i<end;i++){
         for(int j=i+2;j<pars.mt_inst->nnodes;j++){
@@ -167,13 +168,13 @@ void* find_best_cross_mt(void* userhandle){
         }
     }
 
-    pthread_mutex_lock(&global_mt_ctx.mutex);
+    pthread_mutex_lock(&mt_ctx.mutex);
     if(my_best_cross.delta_cost < pars.mt_cross->delta_cost+EPSILON){
                 pars.mt_cross->i = my_best_cross.i;
                 pars.mt_cross->j = my_best_cross.j;
                 pars.mt_cross->delta_cost = my_best_cross.delta_cost;
     }
-    pthread_mutex_unlock(&global_mt_ctx.mutex);
+    pthread_mutex_unlock(&mt_ctx.mutex);
 
     return NULL;
 }
@@ -185,15 +186,12 @@ void* find_best_cross_mt(void* userhandle){
 cross find_best_cross(const TSPinst* inst, const int* tour) {
 
     cross best_cross = {-1,-1,INFINITY};
+
     int id = gettid();
     mt_pars best_cross_par = {inst,tour,&best_cross,&id};
 
-    init_mt_context(&global_mt_ctx, (int) log2(inst->nnodes*(inst->nnodes-1)/2));
-    for(int t =0;t<global_mt_ctx.num_threads;t++) 
-        assign_task(&global_mt_ctx,t,find_best_cross_mt,&best_cross_par);
-        
-    delete_mt_context(&global_mt_ctx);
-
+    int num_threads = (int) log2(inst->nnodes*(inst->nnodes-1)/2);
+    run_mt_context(&mt_ctx,num_threads,find_best_cross_job,&best_cross_par);
     return best_cross;
 }
 

@@ -17,10 +17,10 @@ typedef struct {
 } near_neighbor;
 
 typedef struct{
-    TSPinst*    mt_inst;
-    int*        mt_tour;
-    cross*      mt_cross;
-    int*        mt_id;
+    const TSPinst*      mt_inst;
+    const int*          mt_tour;
+    cross*              mt_cross;
+    int*                mt_id;
 } mt_pars;
 
 //generic functions
