@@ -192,7 +192,7 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
             memcpy(out.tour, tmp_sol, inst->nnodes * sizeof(int));
             
             #if VERBOSE > 0
-                print_state(Info, "%3s -- New best cost:\t%10.4f\n",env->method, inst->cost);
+                print_state(Info, "%3s -- New best cost:\t%10.4f\n",env->method, out.cost);
             #endif
         }
 
