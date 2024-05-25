@@ -1,5 +1,6 @@
 #include "../include/tsp_utils.h"
 
+mt_context mt_ctx;
 
 #define SQUARE(x)       (x*x)
 /// @brief compute euclidian distance for 2d points
@@ -143,26 +144,58 @@ cross find_first_cross(const TSPinst* inst, const int* tour) {
     return (cross){-1,-1,EPSILON};
 }
 
+void* find_best_cross_job(void* userhandle){
+
+    mt_pars pars = *(mt_pars*) userhandle;
+    cross my_best_cross = {-1,-1,INFINITY};
+
+    int my_id;
+    for(my_id=0;(pthread_self() != mt_ctx.threads[my_id]) && my_id< mt_ctx.num_threads;my_id++);
+
+    int load = pars.mt_inst->nnodes/mt_ctx.num_threads;
+    int start = my_id * load;
+    int end = my_id != mt_ctx.num_threads-1 ? start + load: pars.mt_inst->nnodes-2;
+
+    for(int i=start;i<end;i++){
+        for(int j=i+2;j<pars.mt_inst->nnodes;j++){
+            if(i==0 && j+1==pars.mt_inst->nnodes) continue;
+            
+            double delta_cost = check_cross(pars.mt_inst,pars.mt_tour,i,j);
+
+            if(delta_cost < my_best_cross.delta_cost + EPSILON && (pars.mt_tabu == NULL || !is_in_tabu(i, j, pars.mt_tabu, pars.mt_tabu_size))){
+                my_best_cross.i = i;
+                my_best_cross.j = j;
+                my_best_cross.delta_cost = delta_cost;
+            }
+        }
+    }
+
+    pthread_mutex_lock(&mt_ctx.mutex);
+    if(my_best_cross.delta_cost < pars.mt_cross->delta_cost+EPSILON){
+                pars.mt_cross->i = my_best_cross.i;
+                pars.mt_cross->j = my_best_cross.j;
+                pars.mt_cross->delta_cost = my_best_cross.delta_cost;
+    }
+    pthread_mutex_unlock(&mt_ctx.mutex);
+
+    return NULL;
+}
 
 /// @brief provide cross with max delta cost inside tour 
 /// @param inst instance of TSPinst
 /// @param tour hamiltonian circuit
 /// @return best cross found, if exists, otherwise a cross {-1,-1, EPSILON}
 cross find_best_cross(const TSPinst* inst, const int* tour) {
+
     cross best_cross = {-1,-1,INFINITY};
 
-    for(int i=0;i<inst->nnodes-2;i++){
-        for(int j=i+2;j<inst->nnodes;j++){
-            if(i==0 && j+1==inst->nnodes) continue;
-            
-            double delta_cost = check_cross(inst,tour,i,j);
-            if(delta_cost < best_cross.delta_cost + EPSILON){
-                best_cross.i = i;
-                best_cross.j = j;
-                best_cross.delta_cost = delta_cost;
-            }
-        }
-    }
+    mt_pars best_cross_par ={.mt_inst=inst,
+                            .mt_tour=tour,
+                            .mt_cross=&best_cross,
+                            .mt_tabu=NULL,.mt_tabu_size=0};
+
+    int num_threads = (int) log2(inst->nnodes*(inst->nnodes-1)/2);
+    run_mt_context(&mt_ctx,num_threads,find_best_cross_job,&best_cross_par);
     return best_cross;
 }
 
@@ -190,6 +223,19 @@ char is_in_tabu(int i, int j, const cross* tabu, const int tabu_size) {
 /// @param tabu_size size of cross array
 /// @return best cross not inside tabu
 cross find_best_t_cross(const TSPinst* inst, const int* tour, const cross* tabu, const int tabu_size) {
+
+    cross best_cross = {-1,-1,INFINITY};
+
+    mt_pars best_cross_par ={.mt_inst=inst,
+                            .mt_tour=tour,
+                            .mt_cross=&best_cross,
+                            .mt_tabu=tabu,.mt_tabu_size=tabu_size};
+
+    int num_threads = (int) log2(inst->nnodes*(inst->nnodes-1)/2);
+    run_mt_context(&mt_ctx,num_threads,find_best_cross_job,&best_cross_par);
+    return best_cross;
+
+    /*SINGLE THREAD Version
     cross best_cross = {-1,-1,INFINITY};
 
     for(int i=0;i<inst->nnodes-2;i++){
@@ -204,7 +250,7 @@ cross find_best_t_cross(const TSPinst* inst, const int* tour, const cross* tabu,
             }
         }
     }
-    return best_cross;
+    return best_cross;*/
 }
 
 

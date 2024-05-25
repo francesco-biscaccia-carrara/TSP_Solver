@@ -18,6 +18,10 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     else { print_state(Error, "No function with alias"); }
 
 
+    #if VERBOSE > 1
+        print_state(Info,"Multithreading on %d threads\n",(int) log2(inst->nnodes*(inst->nnodes-1)/2));
+    #endif
+    
     double init_time = get_time();
 
     TSPsol min = { .cost = INFINITY, .tour = NULL };
@@ -31,7 +35,7 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     char* vns_func[] = {"VNS"};
     char* tabu_func[] = {"TABU_R", "TABU_B"};
     if(strnin(env->method, vns_func, 1)) { min = TSPvns(inst, env, init_time); }
-    else if(strnin(env->method, tabu_func, 1)) { min = TSPtabu(inst, env, init_time); }
+    else if(strnin(env->method, tabu_func, 2)) { min = TSPtabu(inst, env, init_time); }
 
     if(min.cost < inst->cost) {
         instance_set_solution(inst, min.tour, min.cost);
@@ -51,7 +55,7 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
 /// @param intial_node intial node
 /// @param tsp_func improvement function
 TSPsol TSPgreedy(const TSPinst* inst, const unsigned int intial_node, void(tsp_func)(const TSPinst*, int*, double*), char* func_name) {
-    
+
     TSPsol out = { .cost = 0.0, .tour = malloc(inst->nnodes * sizeof(int)) };
 
     int current_index = intial_node;
@@ -150,12 +154,12 @@ TSPsol TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
             tabu[tabu_index % tabu_size] = move;
             tabu_index++;
         }
-        else if(cost <= out.cost) {
+        else if(cost < out.cost - EPSILON) {
             out.cost = cost;
             memcpy(out.tour, tmp_sol, inst->nnodes * sizeof(int));
 
             #if VERBOSE > 0
-            printf("new best cost:\t%10.4f\n", out.cost);
+                print_state(Info, "%3s -- New best cost:\t%10.4f\n",env->method, out.cost);
             #endif
 
             #if VERBOSE > 2
@@ -188,7 +192,7 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
             memcpy(out.tour, tmp_sol, inst->nnodes * sizeof(int));
             
             #if VERBOSE > 0
-            print_state(Info, "new best cost:\t%10.4f\n", out.cost);
+                print_state(Info, "%3s -- New best cost:\t%10.4f\n",env->method, inst->cost);
             #endif
         }
 

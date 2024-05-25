@@ -18,6 +18,14 @@ typedef struct {
     unsigned int    index;
 } near_neighbor;
 
+typedef struct{
+    const TSPinst*      mt_inst;
+    const int*          mt_tour;
+    cross*              mt_cross;
+    const cross*        mt_tabu; 
+    const int           mt_tabu_size; 
+} mt_pars;
+
 //generic functions
 extern double   euc_2d(const point, const point);
 extern double   delta_cost(const TSPinst*, const unsigned int, const unsigned int, const unsigned int, const unsigned int);

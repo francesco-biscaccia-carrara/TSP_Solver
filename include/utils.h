@@ -12,7 +12,7 @@
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <pthread.h> 
-#include <unistd.h> 
+#include <unistd.h>
 
 extern enum { Error, Warn, Info } TYPE_MESSAGE;
 
@@ -26,6 +26,11 @@ extern enum { Error, Warn, Info } TYPE_MESSAGE;
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+typedef struct{
+    int num_threads;
+    pthread_mutex_t mutex;
+    pthread_t* threads;
+} mt_context;
 
 extern void     print_state(int, const char*, ...);
 extern int      coords_to_index(const unsigned int, const int, const int);
@@ -42,4 +47,5 @@ extern int      get_subset_array(int*, int*, int);
 //log utils
 extern void     format_csv_line(FILE*, const double*, const unsigned int);
 extern void     print_lifespan(const double, const double);
+extern void     run_mt_context(mt_context* ,int ,void* (*funct)(void*) ,void* );
 #endif
