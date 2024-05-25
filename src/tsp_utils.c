@@ -148,10 +148,11 @@ void* find_best_cross_job(void* userhandle){
 
     mt_pars pars = *(mt_pars*) userhandle;
     cross my_best_cross = {-1,-1,INFINITY};
-    int my_id = ((gettid() - *pars.mt_id)-1) % mt_ctx.num_threads;
+
+    int my_id;
+    for(my_id=0;(pthread_self() != mt_ctx.threads[my_id]) && my_id< mt_ctx.num_threads;my_id++);
 
     int load = pars.mt_inst->nnodes/mt_ctx.num_threads;
-
     int start = my_id * load;
     int end = my_id != mt_ctx.num_threads-1 ? start + load: pars.mt_inst->nnodes-2;
 
@@ -160,7 +161,8 @@ void* find_best_cross_job(void* userhandle){
             if(i==0 && j+1==pars.mt_inst->nnodes) continue;
             
             double delta_cost = check_cross(pars.mt_inst,pars.mt_tour,i,j);
-            if(delta_cost < my_best_cross.delta_cost + EPSILON){
+
+            if(delta_cost < my_best_cross.delta_cost + EPSILON && (pars.mt_tabu == NULL || !is_in_tabu(i, j, pars.mt_tabu, pars.mt_tabu_size))){
                 my_best_cross.i = i;
                 my_best_cross.j = j;
                 my_best_cross.delta_cost = delta_cost;
@@ -187,8 +189,10 @@ cross find_best_cross(const TSPinst* inst, const int* tour) {
 
     cross best_cross = {-1,-1,INFINITY};
 
-    int id = gettid();
-    mt_pars best_cross_par = {inst,tour,&best_cross,&id};
+    mt_pars best_cross_par ={.mt_inst=inst,
+                            .mt_tour=tour,
+                            .mt_cross=&best_cross,
+                            .mt_tabu=NULL,.mt_tabu_size=0};
 
     int num_threads = (int) log2(inst->nnodes*(inst->nnodes-1)/2);
     run_mt_context(&mt_ctx,num_threads,find_best_cross_job,&best_cross_par);
@@ -219,6 +223,19 @@ char is_in_tabu(int i, int j, const cross* tabu, const int tabu_size) {
 /// @param tabu_size size of cross array
 /// @return best cross not inside tabu
 cross find_best_t_cross(const TSPinst* inst, const int* tour, const cross* tabu, const int tabu_size) {
+
+    cross best_cross = {-1,-1,INFINITY};
+
+    mt_pars best_cross_par ={.mt_inst=inst,
+                            .mt_tour=tour,
+                            .mt_cross=&best_cross,
+                            .mt_tabu=tabu,.mt_tabu_size=tabu_size};
+
+    int num_threads = (int) log2(inst->nnodes*(inst->nnodes-1)/2);
+    run_mt_context(&mt_ctx,num_threads,find_best_cross_job,&best_cross_par);
+    return best_cross;
+
+    /*SINGLE THREAD Version
     cross best_cross = {-1,-1,INFINITY};
 
     for(int i=0;i<inst->nnodes-2;i++){
@@ -233,7 +250,7 @@ cross find_best_t_cross(const TSPinst* inst, const int* tour, const cross* tabu,
             }
         }
     }
-    return best_cross;
+    return best_cross;*/
 }
 
 

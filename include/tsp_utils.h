@@ -20,7 +20,8 @@ typedef struct{
     const TSPinst*      mt_inst;
     const int*          mt_tour;
     cross*              mt_cross;
-    int*                mt_id;
+    const cross*        mt_tabu; 
+    const int           mt_tabu_size; 
 } mt_pars;
 
 //generic functions

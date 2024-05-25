@@ -12,9 +12,7 @@
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <pthread.h> 
-#include <unistd.h> 
-#include <sys/syscall.h>
-#include <sys/types.h>
+#include <unistd.h>
 
 extern enum { Error, Warn, Info } TYPE_MESSAGE;
 
@@ -25,8 +23,6 @@ extern enum { Error, Warn, Info } TYPE_MESSAGE;
 #define ANSI_COLOR_MAGENTA "\x1b[35m"
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
-
-#define gettid() syscall(SYS_gettid)
 
 typedef struct{
     int num_threads;
