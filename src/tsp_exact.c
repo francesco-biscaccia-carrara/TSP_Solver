@@ -69,7 +69,9 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 		TSPsol sol = TSPgreedy(inst, ((double)rand())/RAND_MAX*inst->nnodes, TSPg2optb, env->method);   
     	instance_set_solution(inst, sol.tour, sol.cost);
 
-		print_state(Info, "passing an heuristic solution to CPLEX...\n");
+		#if VERBOSE > 0
+			print_state(Info, "passing an heuristic solution to CPLEX...\n");
+		#endif
 		CPLEX_post_heur(&CPLEX_env, &CPLEX_lp, inst->solution, inst->nnodes);
 	}
 

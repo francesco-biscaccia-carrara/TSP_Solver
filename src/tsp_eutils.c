@@ -71,6 +71,7 @@ void CPLEX_model_delete(CPXENVptr* env, CPXLPptr* lp) {
 /// @param env TSPenv instance pointer
 void CPLEX_log(CPXENVptr* env,const TSPenv* tsp_env){
 	CPXsetdblparam(*env, CPX_PARAM_SCRIND, CPX_OFF);
+	CPXsetintparam(*env, CPX_PARAM_CLONELOG, -1);
     char cplex_log_file[100];
     sprintf(cplex_log_file, "log/n_%u-%d-%s.log", tsp_env->random_seed, tsp_env->nnodes,tsp_env->method);
     if ( CPXsetlogfilename(*env, cplex_log_file, "w") ) print_state(Error, "CPXsetlogfilename error.\n");

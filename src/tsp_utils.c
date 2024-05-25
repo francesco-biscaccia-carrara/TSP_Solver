@@ -145,7 +145,6 @@ cross find_first_cross(const TSPinst* inst, const int* tour) {
 }
 
 void* find_best_cross_job(void* userhandle){
-
     mt_pars pars = *(mt_pars*) userhandle;
     cross my_best_cross = {-1,-1,INFINITY};
 

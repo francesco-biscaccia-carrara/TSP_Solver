@@ -20,4 +20,4 @@ for line in lines:
 plt.title("TSP solution")
 #plt.savefig("out/test.pgf", backend='pgf')
 plt.savefig("out/test.png") #Could be useful
-plt.show();   
+#plt.show();   
