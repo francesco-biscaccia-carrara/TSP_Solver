@@ -46,5 +46,9 @@ tsp_eutils.o: $(SRCDIR)/tsp_eutils.c $(INCDIR)/tsp_eutils.h
 matheuristic.o: $(SRCDIR)/matheuristic.c $(INCDIR)/matheuristic.h
 	$(CC) $(CFLAGS) $(CPLEXINC) $(CPLEXLIB) $(CCLIB) -c $< -o $@
 
+tsp_mathutils.o: $(SRCDIR)/tsp_mathutils.c $(INCDIR)/tsp_mathutils.h
+	$(CC) $(CFLAGS) $(CPLEXINC) $(CPLEXLIB) $(CCLIB) -c $< -o $@
+
+
 clean:
 	rm -f $(OBJS)

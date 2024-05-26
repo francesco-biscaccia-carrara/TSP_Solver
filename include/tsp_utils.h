@@ -6,8 +6,6 @@
 
 #include "tsp.h"
 
-#define REMAIN_TIME(init_time, env) (time_elapsed(init_time) <= env->time_limit)
-
 typedef struct{
     unsigned int    i,j;
     double          delta_cost;

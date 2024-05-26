@@ -186,6 +186,12 @@ void instance_set_solution(TSPinst* inst, const int* tour, const double cost) {
     memcpy(inst->solution, tour, inst->nnodes * sizeof(inst->solution[0]));
 }
 
+void instance_set_best_sol(TSPinst* inst, const TSPsol sol) {
+    if(sol.cost < inst->cost){
+        instance_set_solution(inst,sol.tour,sol.cost);
+    }
+}
+
 
 /*===============================================================================*/
 

@@ -8,9 +8,9 @@ int main(int argc, char **argv) {
     TSPinst* inst = instance_new_env(env);
 
     char* cplex_func[] = { "BENDER", "BRANCH_CUT" };
-    char* mathe_func[] = { "DIVING", "LOCAL BRANCH" };
+    char* mathe_func[] = { "DIVING_R", /*"DIVING_P",*/ "DIVING_W", "LOCAL BRANCH" };
     
-    if(strnin(env->method, mathe_func, 2)) { 
+    if(strnin(env->method, mathe_func, 3)) { 
         MATsolve(inst, env);
         TSPg2optb(inst, inst->solution, &(inst->cost));    
     }
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
         FILE* f = fopen("plot/input/test.txt", "w");
         plot_log(inst, f);
         fclose(f);
-        system("cd plot && python3 plot_solution.py &");
+        system("cd plot && python3 plot_solution.py");
     }
     
     instance_delete(inst);

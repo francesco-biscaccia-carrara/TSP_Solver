@@ -7,6 +7,7 @@
 #define VERBOSE	    1
 
 #include "utils.h"
+#define REMAIN_TIME(init_time, env) (time_elapsed(init_time) <= env->time_limit)
 
 typedef struct {
     double x;
@@ -45,6 +46,7 @@ extern TSPinst* instance_new();
 extern TSPinst* instance_new_env(TSPenv*);
 extern void     instance_delete(TSPinst*);
 extern void     instance_set_solution(TSPinst*, const int*, const double);
+extern void     instance_set_best_sol(TSPinst*, const TSPsol);
 
 //TSPenv functions
 extern TSPenv*  environment_new();
