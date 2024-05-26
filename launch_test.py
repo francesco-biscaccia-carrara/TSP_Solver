@@ -1,25 +1,25 @@
 import subprocess
+import argparse
 import csv
 
-time = 0;
-cost = 1;
-
-
-
+parser = argparse.ArgumentParser(description='TEST LAUNCHER')
+parser.add_argument("nnodes", type=int, help="Number of nodes")
+parser.add_argument("tl",type=int, help="Time limit for each execution")
+parser.add_argument("algos",type=str,nargs="+",help="Algorithm to test, divided by space")
+args = parser.parse_args()
 
 #EDITABLE PARAMETER
-time_limit = 30;
-node_size = 400;
-wantCost = True;
-seeds = [23, 24, 25];
-algos = ["DIVING", "GREEDY"];
-
+node_size = args.nnodes
+time_limit = args.tl
+algos = args.algos
 warm = "-warm" ##remove to remove warm
+
+#FIXED PARS
+time = 0
+cost = 1
+wantCost = True
+seeds = [1,2,3,4,5,6,7,8,9,10]
 filename = 'out.csv'
-
-
-
-
 
 results = []
 row = 0
