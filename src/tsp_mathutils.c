@@ -66,6 +66,7 @@ void fix_to_model(CPXENVptr env, CPXLPptr lp, int* arcs_to_fix, int narcs) {
     CPXchgbds(env, lp, narcs, arcs_to_fix, ls, vs);
 }
 
+
 void unfix_to_model(CPXENVptr env, CPXLPptr lp, int* arcs_to_fix, int narcs) {
     char* ls = malloc(narcs);
     memset(ls, 'L', narcs);
@@ -73,4 +74,25 @@ void unfix_to_model(CPXENVptr env, CPXLPptr lp, int* arcs_to_fix, int narcs) {
     double* vs = calloc( narcs , sizeof(double) );
 
     CPXchgbds(env, lp, narcs, arcs_to_fix, ls, vs);
+}
+
+
+void local_tour_costraint(CPXENVptr env, CPXLPptr lp, TSPinst* inst, int k) {
+
+    int* limit = calloc(inst->nnodes, sizeof( int ));
+    double* value = calloc(inst->nnodes, sizeof( double ));
+
+    for(int i = 0; i < inst->nnodes-1; i++) {
+        limit[i] = coords_to_index(inst->nnodes, inst->solution[i], inst->solution[i+1]);
+        value[i] = 1.0;
+    } 
+    limit[inst->nnodes-1] = coords_to_index(inst->nnodes, inst->solution[inst->nnodes - 1], inst->solution[0]);
+    value[inst->nnodes-1] = 1.0;
+
+    double rhs = inst->nnodes - k;
+    char sense = 'G';
+    int start_index = 0;
+    
+    if ( CPXaddrows(env,lp, 0,1, inst->nnodes,&rhs,&sense,&start_index,limit,value,NULL,NULL) ) 
+        print_state(Error, "CPXaddrows() error");
 }

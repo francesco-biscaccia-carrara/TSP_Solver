@@ -10,4 +10,6 @@ extern int      arc_to_fix(int, int*, TSPinst*, int, int);
 extern void     fix_to_model(CPXENVptr, CPXLPptr, int*, int);
 extern void     unfix_to_model(CPXENVptr, CPXLPptr, int*, int);
 
+extern void     local_tour_costraint();
+
 #endif

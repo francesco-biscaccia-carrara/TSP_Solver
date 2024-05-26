@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
     TSPinst* inst = instance_new_env(env);
 
     char* cplex_func[] = { "BENDER", "BRANCH_CUT" };
-    char* mathe_func[] = { "DIVING_R", /*"DIVING_P",*/ "DIVING_W", "LOCAL BRANCH" };
+    char* mathe_func[] = { "DIVING_R", /*"DIVING_P",*/ "DIVING_W", "LOCAL_BRANCH" };
     
     if(strnin(env->method, mathe_func, 3)) { 
         MATsolve(inst, env);
