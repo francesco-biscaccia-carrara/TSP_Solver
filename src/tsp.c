@@ -15,7 +15,6 @@ static void help_info(){
     printf("\n\tImplemented method: \n\t\t- GREEDY = greedy search,\n\t\t- G2OPT_F = greedy + 2opt w. first swaps,\n\t\t- G2OPT_B = greedy + 2opt w. best swaps");
     //TODO: add warm flag
     printf("\n '-seed / -rnd_seed <seed>' to specity the random seed (int value);");
-    printf("\n '-multi_th / -mt' to use multithreading computation;");
     printf("\n '-help / --help / -h' to get help.");
     printf("\n\nNOTICE: you can insert only .tsp file or random seed and number of nodes, NOT BOTH!\n");
 }
@@ -226,7 +225,6 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
     char* node_comm[] = {"-n", "-n_nodes"};
     char* algo_comm[] = {"-algo", "-method", "-alg"};
     char* seed_comm[] = {"-seed", "-rnd_seed", "-s"};
-    char* mtth_comm[] = {"-mt", "-multi_th"};
     char* help_comm[] = {"-help", "-h", "--help"};
     char* warm_comm[] = {"-warm", "-w", "--warm"};
     char* perf_comm[] = {"-test", "-t"};
@@ -237,7 +235,6 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
         if (strnin(argv[i], node_comm, 2))  env->nnodes = abs(atoi(argv[++i]));
         if (strnin(argv[i], algo_comm, 3))  strcpy(env->method,argv[++i]);
         if (strnin(argv[i], seed_comm, 3))  env->random_seed = abs(atoi(argv[++i])); 
-        if (strnin(argv[i], mtth_comm, 2))  env->mt = 1;  
         if (strnin(argv[i], warm_comm, 2))  env->warm = 1;  
         if (strnin(argv[i], perf_comm, 2))  env->perf_v = 1;
         if (strnin(argv[i], help_comm, 3))  { help_info(); exit(0); }  
