@@ -7,6 +7,11 @@
 
 #include "tsp_utils.h"
 
+typedef struct{
+    const TSPinst*      mt_inst;
+    const int           mt_tabu_size; 
+} mt_greedy_pars;
+
 extern void     TSPsolve(TSPinst*, TSPenv*);
 
 extern TSPsol   TSPgreedy(const TSPinst*, const unsigned int, void(const TSPinst*, int*, double*), char*);

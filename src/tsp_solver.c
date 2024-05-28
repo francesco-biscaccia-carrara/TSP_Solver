@@ -1,5 +1,6 @@
 #include "../include/tsp_solver.h"
 
+static mt_context GREEDY_MT_CTX;
 
 /// @brief Solve an instance of TSP with an heuristic approach
 /// @param inst instance of TSPinst
@@ -30,6 +31,7 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
         TSPsol tmp = TSPgreedy(inst, i, opt_func, env->method);
         if(tmp.cost < min.cost) { min = tmp; }
     }
+
     instance_set_solution(inst, min.tour, min.cost);
     
     char* vns_func[] = {"VNS"};

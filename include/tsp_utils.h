@@ -16,17 +16,14 @@ typedef struct {
     unsigned int    index;
 } near_neighbor;
 
-typedef struct{
+typedef struct {
     const TSPinst*      mt_inst;
     const int*          mt_tour;
     cross*              mt_cross;
     const cross*        mt_tabu; 
     const int           mt_tabu_size; 
-} mt_pars;
+} mt_g2o_pars;
 
-//Multi-threading contexts
-mt_context GREEDY_MT_CTX;
-mt_context G2OPT_MT_CTX;
 
 //generic functions
 extern double   euc_2d(const point, const point);

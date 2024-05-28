@@ -1,5 +1,6 @@
 #include "../include/tsp_utils.h"
 
+static mt_context G2OPT_MT_CTX;
 
 #define SQUARE(x)       (x*x)
 /// @brief compute euclidian distance for 2d points
@@ -133,7 +134,7 @@ cross find_first_cross(const TSPinst* inst, const int* tour) {
 }
 
 void* find_best_cross_job(void* userhandle){
-    mt_pars pars = *(mt_pars*) userhandle;
+    mt_g2o_pars pars = *(mt_g2o_pars*) userhandle;
     cross my_best_cross = {-1,-1,INFINITY};
 
     int my_id;
@@ -170,7 +171,7 @@ cross find_best_cross(const TSPinst* inst, const int* tour) {
 
     cross best_cross = {-1,-1,INFINITY};
 
-    mt_pars best_cross_par ={.mt_inst=inst,
+    mt_g2o_pars best_cross_par ={.mt_inst=inst,
                             .mt_tour=tour,
                             .mt_cross=&best_cross,
                             .mt_tabu=NULL,.mt_tabu_size=0};
@@ -207,7 +208,7 @@ cross find_best_t_cross(const TSPinst* inst, const int* tour, const cross* tabu,
 
     cross best_cross = {-1,-1,INFINITY};
 
-    mt_pars best_cross_par ={.mt_inst=inst,
+    mt_g2o_pars best_cross_par ={.mt_inst=inst,
                             .mt_tour=tour,
                             .mt_cross=&best_cross,
                             .mt_tabu=tabu,.mt_tabu_size=tabu_size};
