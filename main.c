@@ -16,9 +16,14 @@ int main(int argc, char **argv) {
     }
     else if(strnin(env->method, cplex_func, 2)) {
         TSPCsolve(inst,env);
-        check_tour_cost(inst, inst->solution, inst->cost);
+        TSPg2optb(inst, inst->solution, &(inst->cost));
     }
 	else TSPsolve(inst, env);
+
+    #if VERBOSE > 2
+        check_tour_cost(inst, inst->solution, inst->cost);
+    #endif
+
 
     if(env->perf_v) {
         printf("%10.4f, %10.4f", env->time_exec, inst->cost);

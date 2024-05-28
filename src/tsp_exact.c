@@ -65,23 +65,12 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
     TSPsol min = { .cost = INFINITY, .tour = NULL };
 
 	//'Warm-up' CPLEX with a feasibile solution given by G2OPT heu
-	if(env->warm){
-		TSPsol sol = TSPgreedy(inst, ((double)rand())/RAND_MAX*inst->nnodes, TSPg2optb, env->method);   
-    	instance_set_solution(inst, sol.tour, sol.cost);
-
-		#if VERBOSE > 0
-			print_state(Info, "passing an heuristic solution to CPLEX...\n");
-		#endif
-		CPLEX_post_heur(&CPLEX_env, &CPLEX_lp, inst->solution, inst->nnodes);
-	}
-
+	if(env->warm) add_warm_start(CPLEX_env, CPLEX_lp, inst, env, "GREEDY");
 	if(!strncmp(env->method,"BENDER", 6)) min = TSPCbenders(inst, env, &CPLEX_env,&CPLEX_lp, init_time);
 	else if(!strncmp(env->method,"BRANCH_CUT", 12)) min = TSPCbranchcut(inst, env, &CPLEX_env,&CPLEX_lp, init_time);
 	else { print_state(Error, "No function with alias"); }
+	instance_set_best_sol(inst, min);
 
-	if(min.cost < inst->cost){
-		instance_set_solution(inst,min.tour,min.cost);
-	}
 
 	double final_time = get_time();
 	env->time_exec = final_time - init_time;

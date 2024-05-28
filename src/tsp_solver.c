@@ -26,23 +26,20 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     double init_time = get_time();
 
     TSPsol min = { .cost = INFINITY, .tour = NULL };
-
     for(int i = 0; i < inst->nnodes && REMAIN_TIME(init_time,env); i++) {
         TSPsol tmp = TSPgreedy(inst, i, opt_func, env->method);
         if(tmp.cost < min.cost) { min = tmp; }
     }
-
     instance_set_solution(inst, min.tour, min.cost);
+
     
     char* vns_func[] = {"VNS"};
     char* tabu_func[] = {"TABU_R", "TABU_B"};
     if(strnin(env->method, vns_func, 1)) { min = TSPvns(inst, env, init_time); }
     else if(strnin(env->method, tabu_func, 2)) { min = TSPtabu(inst, env, init_time); }
+    instance_set_best_sol(inst, min);
 
-    if(min.cost < inst->cost) {
-        instance_set_solution(inst, min.tour, min.cost);
-    }
-
+    
     double final_time = get_time();
     env->time_exec = final_time - init_time;
 
@@ -64,8 +61,8 @@ TSPsol TSPgreedy(const TSPinst* inst, const unsigned int intial_node, void(tsp_f
     char used_node[inst->nnodes];
     bzero( used_node, inst->nnodes * sizeof(char) );
     used_node[intial_node] = 1;
-
     out.tour[0] = current_index;
+
     for (int i = 1; i < inst->nnodes; i++) {  
         near_neighbor new_point = get_nearest_neighbor(inst, out.tour[i-1], used_node);
 
@@ -164,7 +161,6 @@ TSPsol TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
             #if VERBOSE > 0
                 print_state(Info, "%3s -- New best cost:\t%10.4f\n",env->method, out.cost);
             #endif
-
             #if VERBOSE > 2
             check_tour_cost(inst, tmp_sol, cost);
             #endif
@@ -186,6 +182,7 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
     double cost = inst->cost;
     int tmp_sol[inst->nnodes];
     memcpy(tmp_sol, inst->solution, inst->nnodes * sizeof(inst->solution[0]));
+    int kick_size = 3;
 
     while (REMAIN_TIME(init_time, env)) {
         TSPg2optb(inst, tmp_sol, &cost);
@@ -193,15 +190,15 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
         if(cost < out.cost - EPSILON) {
             out.cost = cost;
             memcpy(out.tour, tmp_sol, inst->nnodes * sizeof(int));
+            kick_size = (kick_size <= 3) ? 3 : kick_size--;
             
             #if VERBOSE > 0
                 print_state(Info, "%3s -- New best cost:\t%10.4f\n",env->method, out.cost);
             #endif
         }
+        else kick_size = (kick_size <= 7) ? 7 : kick_size++;
 
-        for(int i = 0; i < 4; i++) cost += kick(inst, tmp_sol, inst->nnodes);
-        //cost = compute_cost(inst, tmp_sol);
-
+        for(int i = 0; i < kick_size; i++) cost += kick(inst, tmp_sol, inst->nnodes);
         #if VERBOSE > 2
             check_tour_cost(inst, tmp_sol, cost);
         #endif

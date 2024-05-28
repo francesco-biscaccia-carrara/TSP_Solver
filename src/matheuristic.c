@@ -27,7 +27,7 @@ void diving(int strategy, CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst,
     TSPsol sol = TSPgreedy(inst, rand()%inst->nnodes, NULL, "");   
     TSPsol oldsol = sol;
     instance_set_solution(inst, sol.tour, sol.cost);
-    CPLEX_post_heur(&CPLEX_env, &CPLEX_lp, inst->solution, inst->nnodes);
+    CPLEX_post_heur(CPLEX_env, CPLEX_lp, inst->solution, inst->nnodes);
 
     int* x = calloc(inst->nnodes, sizeof(int));
     int x_size = 0;
@@ -61,10 +61,12 @@ void diving(int strategy, CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst,
 
 void local_branching(CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst, TSPenv* env, const double start_time) {
 
-    TSPsol sol = TSPgreedy(inst, rand()%inst->nnodes, TSPg2optb, "G2OPT_B");   
+    TSPsol sol = TSPgreedy(inst, rand()%inst->nnodes, TSPg2optb, "G2OPT_B");  
+    TSPsol oldsol = sol; 
     instance_set_solution(inst, sol.tour, sol.cost);
-    CPLEX_post_heur(&CPLEX_env, &CPLEX_lp, inst->solution, inst->nnodes);
-    int k = 20;
+    CPLEX_post_heur(CPLEX_env, CPLEX_lp, inst->solution, inst->nnodes);
+    int k = 80;
+    int deltak = 10;
 
     
     while (REMAIN_TIME(start_time, env)) {
@@ -74,6 +76,13 @@ void local_branching(CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst, TSPe
 
         sol = TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp, start_time);
         instance_set_best_sol(inst, sol);
+
+        if(abs(sol.cost - oldsol.cost) <= EPSILON) {
+            k+= deltak;
+        }
+        else {
+            if(k > 150 ) { k-=deltak; }
+        }
 
 
         int nrows = CPXgetnumrows(CPLEX_env, CPLEX_lp);

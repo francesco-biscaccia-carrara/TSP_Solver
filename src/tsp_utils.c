@@ -22,7 +22,7 @@ double euc_2d(const point a, const point b) {
 /// @param j node j
 /// @param jn next of j
 /// @return result of (c_ij + c_injn) - (c_iin + c_jjn)
-double inline delta_cost(const TSPinst* inst, const unsigned int i, const unsigned int in, const unsigned int j, const unsigned int jn) {
+inline double delta_cost(const TSPinst* inst, const unsigned int i, const unsigned int in, const unsigned int j, const unsigned int jn) {
 
     return  (get_arc(inst, i, j) + get_arc(inst, in, jn)) - 
             (get_arc(inst, i, in) + get_arc(inst, j, jn));
@@ -93,11 +93,9 @@ near_neighbor get_nearest_neighbor(const TSPinst* inst, const unsigned int index
         
         double dist = get_arc(inst,index,i);
         if (dist < out.dist && dist != 0) {
-            out.dist = dist;
-            out.index = i;
+            out = (near_neighbor) {.dist = dist, .index = i};
         }
     }
-
     return out;
 }
 
@@ -108,7 +106,7 @@ near_neighbor get_nearest_neighbor(const TSPinst* inst, const unsigned int index
 /// @param i node of index i
 /// @param j node of index j
 /// @return difference betweem c_ij + c_(i+1)k and c_ik + c_i(i+1)
-double check_cross(const TSPinst* inst, const int* tour, const unsigned int i, const unsigned int j) {
+inline double check_cross(const TSPinst* inst, const int* tour, const unsigned int i, const unsigned int j) {
     if (i>j) return check_cross(inst, tour, j, i);
     int k = (j+1 == inst->nnodes) ? 0 : j+1;
 
@@ -133,6 +131,7 @@ cross find_first_cross(const TSPinst* inst, const int* tour) {
     return (cross){-1,-1,EPSILON};
 }
 
+
 void* find_best_cross_job(void* userhandle){
     mt_g2o_pars pars = *(mt_g2o_pars*) userhandle;
     cross my_best_cross = {-1,-1,INFINITY};
@@ -143,7 +142,7 @@ void* find_best_cross_job(void* userhandle){
     int load = pars.mt_inst->nnodes/G2OPT_MT_CTX.num_threads;
     int end = (my_id != G2OPT_MT_CTX.num_threads-1) ? (my_id+1) * load: pars.mt_inst->nnodes-2;
 
-    for(int i=my_id * load; i<end; i++){
+    for(int i = my_id * load; i < end; i++){
         for(int j=i+2;j<pars.mt_inst->nnodes;j++){
             if(i==0 && j+1==pars.mt_inst->nnodes) continue;
             
@@ -162,6 +161,7 @@ void* find_best_cross_job(void* userhandle){
 
     return NULL;
 }
+
 
 /// @brief provide cross with max delta cost inside tour 
 /// @param inst instance of TSPinst
@@ -192,8 +192,7 @@ char is_in_tabu(int i, int j, const cross* tabu, const int tabu_size) {
 
     for(int k = 0; k < tabu_size; k++) {
         if(tabu[k].i == i && tabu[k].j == j) return 1;
-    }  
-
+    }
     return 0;
 }
 
@@ -220,8 +219,10 @@ cross find_best_t_cross(const TSPinst* inst, const int* tour, const cross* tabu,
 
 
 /// @brief create random changes into a solution
+/// @param inst instance of TSPinst
 /// @param tour hamiltonian circuit
 /// @param size number of nodes inside path
+/// @return delta cost of changes
 double kick(TSPinst* inst, int* tour, const unsigned int size) {
     int ternary[3] = {-1, -1, -1};
     
@@ -230,9 +231,11 @@ double kick(TSPinst* inst, int* tour, const unsigned int size) {
     while ((ternary[2] = rand()%size) == ternary[0] || ternary[2] == ternary[1]);
     qsort(ternary, 3, sizeof(int), ascending);
 
+
+    int k2 = (ternary[2] == size-1) ? tour[0] : tour[ternary[2] + 1];
     double delta_cost = - ( get_arc(inst, tour[ternary[0]], tour[ternary[0] + 1]) +
                             get_arc(inst, tour[ternary[1]], tour[ternary[1] + 1]) +
-                            get_arc(inst, tour[ternary[2]], tour[ternary[2] + 1]));
+                            get_arc(inst, tour[ternary[2]], k2));
 
     int infuncsol[size];
     memcpy(infuncsol, tour, size * sizeof(int));
@@ -242,9 +245,10 @@ double kick(TSPinst* inst, int* tour, const unsigned int size) {
             for(int c = 0; c < ternary[2] - ternary[1]; c++) infuncsol[ternary[0]+1+c] = tour[ternary[2] - c];
             for(int c = 0; c < ternary[1] - ternary[0]; c++) infuncsol[ternary[0]+ ternary[2] - ternary[1]+1+c] = tour[ternary[0] + 1 + c];
             
+            
             delta_cost += ( get_arc(inst, tour[ternary[0]], tour[ternary[2]]) + 
                             get_arc(inst, tour[ternary[1] + 1], tour[ternary[0] + 1]) +
-                            get_arc(inst, tour[ternary[1]], tour[ternary[2] + 1]) );
+                            get_arc(inst, tour[ternary[1]], k2) );
             break;
     
         case 1:
@@ -253,7 +257,7 @@ double kick(TSPinst* inst, int* tour, const unsigned int size) {
             
             delta_cost += ( get_arc(inst, tour[ternary[0]], tour[ternary[1] + 1]) + 
                             get_arc(inst, tour[ternary[2]], tour[ternary[0] + 1]) +
-                            get_arc(inst, tour[ternary[1]], tour[ternary[2] + 1]) );
+                            get_arc(inst, tour[ternary[1]], k2) );
             break;
 
         case 2:
@@ -262,7 +266,7 @@ double kick(TSPinst* inst, int* tour, const unsigned int size) {
             
             delta_cost += ( get_arc(inst, tour[ternary[0]], tour[ternary[1]]) + 
                             get_arc(inst, tour[ternary[0] + 1], tour[ternary[2]]) +
-                            get_arc(inst, tour[ternary[1] + 1], tour[ternary[2] + 1]) );
+                            get_arc(inst, tour[ternary[1] + 1], k2) );
             break;
 
         default:

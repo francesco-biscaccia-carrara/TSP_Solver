@@ -159,7 +159,7 @@ void decompose_solution(const double *xstar, const unsigned int nnodes, int *suc
 /// @param nnodes number of nodes
 /// @param env CPLEX environment pointer
 /// @param lp CPLEX model pointer
-void CPLEX_post_heur(CPXENVptr* env, CPXLPptr* lp, int* succ, const unsigned int nnodes) {
+void CPLEX_post_heur(CPXENVptr env, CPXLPptr lp, int* succ, const unsigned int nnodes) {
 
 	int start_index = 0;
 	int effort_level = CPX_MIPSTART_NOCHECK;
@@ -168,7 +168,7 @@ void CPLEX_post_heur(CPXENVptr* env, CPXLPptr* lp, int* succ, const unsigned int
 
 	CPLEX_sol_from_inst(nnodes,succ,index,value);
 
-	if (CPXaddmipstarts(*env, *lp, 1, nnodes, &start_index, index, value, &effort_level, NULL)) print_state(Error, "CPXaddmipstarts() error");	
+	if (CPXaddmipstarts(env, lp, 1, nnodes, &start_index, index, value, &effort_level, NULL)) print_state(Error, "CPXaddmipstarts() error");	
 	
 	free(index);
 	free(value);
@@ -432,4 +432,20 @@ int CPXPUBLIC mount_CUT(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* 
 		case CPX_CALLBACKCONTEXT_RELAXATION: return add_SEC_flt(context,inst); 
 		default: print_state(Error, "contextid unknownn in add_SEC_callback"); return 1;
 	} 
+}
+
+
+extern void add_warm_start(CPXENVptr CPX_env, CPXLPptr CPX_lp, TSPinst* inst, TSPenv* env, char* method) {
+	char* curr_meth = malloc(strlen(env->method));
+	memcpy(curr_meth, env->method, strlen(env->method));
+	env->method = method;
+
+	TSPsolve(inst, env);
+
+	env->method = curr_meth;
+	CPLEX_post_heur(CPX_env, CPX_lp, inst->solution, inst->nnodes);
+
+	#if VERBOSE > 0
+		print_state(Info, "passing an heuristic solution to CPLEX...\n");
+	#endif
 }
