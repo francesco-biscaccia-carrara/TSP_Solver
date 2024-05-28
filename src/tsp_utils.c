@@ -141,7 +141,7 @@ void* find_best_cross_job(void* userhandle){
     for(my_id=0;(pthread_self() != G2OPT_MT_CTX.threads[my_id]) && my_id< G2OPT_MT_CTX.num_threads;my_id++);
 
     int load = pars.mt_inst->nnodes/G2OPT_MT_CTX.num_threads;
-    int end = (my_id != G2OPT_MT_CTX.num_threads-1) ? (my_id+1) + load: pars.mt_inst->nnodes-2;
+    int end = (my_id != G2OPT_MT_CTX.num_threads-1) ? (my_id+1) * load: pars.mt_inst->nnodes-2;
 
     for(int i=my_id * load; i<end; i++){
         for(int j=i+2;j<pars.mt_inst->nnodes;j++){
