@@ -1,7 +1,6 @@
 #include "../include/tsp_utils.h"
 
 
-
 #define SQUARE(x)       (x*x)
 /// @brief compute euclidian distance for 2d points
 /// @param a instance of point
@@ -22,7 +21,7 @@ double euc_2d(const point a, const point b) {
 /// @param j node j
 /// @param jn next of j
 /// @return result of (c_ij + c_injn) - (c_iin + c_jjn)
-double delta_cost(const TSPinst* inst, const unsigned int i, const unsigned int in, const unsigned int j, const unsigned int jn) {
+double inline delta_cost(const TSPinst* inst, const unsigned int i, const unsigned int in, const unsigned int j, const unsigned int jn) {
 
     return  (get_arc(inst, i, j) + get_arc(inst, in, jn)) - 
             (get_arc(inst, i, in) + get_arc(inst, j, jn));
@@ -80,32 +79,21 @@ double compute_cost(TSPinst* inst,const int* tmp_sol) {
 }
 
 
-cross* set_cross(cross* dest, unsigned int i, unsigned int j, double delta_cost) {
-    dest->delta_cost = delta_cost;
-    dest->i = i;
-    dest->j = j;
-
-    return dest;
-}
-
-
 /// @brief get the nearest available neighbor form an index 
 /// @param inst instance of TSPinst
 /// @param index starting node
 /// @param res list of already viewed points
 /// @return return point and distance
-near_neighbor get_nearest_neighbor(const TSPinst* inst, const unsigned int index, const int* res) {
-    double min = DBL_MAX;
-    near_neighbor out = { .dist = 0.0, .index = 0};
+near_neighbor get_nearest_neighbor(const TSPinst* inst, const unsigned int index, const char* res) {
+    near_neighbor out = { .dist = INFINITY, .index = 0};
 
     for(int i = 0; i < inst->nnodes; i++) {
         if(res[i] != 0 || i == index) continue;
         
         double dist = get_arc(inst,index,i);
-        if (dist < min && dist != 0) {
+        if (dist < out.dist && dist != 0) {
             out.dist = dist;
             out.index = i;
-            min = dist;
         }
     }
 
@@ -160,22 +148,15 @@ void* find_best_cross_job(void* userhandle){
             
             double delta_cost = check_cross(pars.mt_inst,pars.mt_tour,i,j);
 
-            if(delta_cost < my_best_cross.delta_cost + EPSILON && (pars.mt_tabu == NULL || !is_in_tabu(i, j, pars.mt_tabu, pars.mt_tabu_size))){
-                //TODO: my_best_cross = (cross){.i=i,.j=j,.delta_cost=delta_cost};
-                my_best_cross.i = i;
-                my_best_cross.j = j;
-                my_best_cross.delta_cost = delta_cost;
-            }
+            if(delta_cost < my_best_cross.delta_cost + EPSILON && (pars.mt_tabu == NULL || !is_in_tabu(i, j, pars.mt_tabu, pars.mt_tabu_size)))
+                my_best_cross = (cross){.i=i,.j=j,.delta_cost=delta_cost};
+            
         }
     }
 
     pthread_mutex_lock(&G2OPT_MT_CTX.mutex);
-    if(my_best_cross.delta_cost < pars.mt_cross->delta_cost+EPSILON){
-                //TODO *pars.mt_cross = (cross){.i=my_best_cross.i,.j=my_best_cross.j,.delta_cost=my_best_cross.delta_cost};
-                pars.mt_cross->i = my_best_cross.i;
-                pars.mt_cross->j = my_best_cross.j;
-                pars.mt_cross->delta_cost = my_best_cross.delta_cost;
-    }
+    if(my_best_cross.delta_cost < pars.mt_cross->delta_cost+EPSILON)
+        *pars.mt_cross = (cross){.i=my_best_cross.i,.j=my_best_cross.j,.delta_cost=my_best_cross.delta_cost};
     pthread_mutex_unlock(&G2OPT_MT_CTX.mutex);
 
     return NULL;
@@ -240,7 +221,7 @@ cross find_best_t_cross(const TSPinst* inst, const int* tour, const cross* tabu,
 /// @brief create random changes into a solution
 /// @param tour hamiltonian circuit
 /// @param size number of nodes inside path
-void kick(int* tour, const unsigned int size) {
+double kick(TSPinst* inst, int* tour, const unsigned int size) {
     int ternary[3] = {-1, -1, -1};
     
     ternary[0] = rand()%size;
@@ -248,24 +229,39 @@ void kick(int* tour, const unsigned int size) {
     while ((ternary[2] = rand()%size) == ternary[0] || ternary[2] == ternary[1]);
     qsort(ternary, 3, sizeof(int), ascending);
 
+    double delta_cost = - ( get_arc(inst, tour[ternary[0]], tour[ternary[0] + 1]) +
+                            get_arc(inst, tour[ternary[1]], tour[ternary[1] + 1]) +
+                            get_arc(inst, tour[ternary[2]], tour[ternary[2] + 1]));
 
     int infuncsol[size];
     memcpy(infuncsol, tour, size * sizeof(int));
-    switch (rand()%3)
+    switch(rand()%3)
     {
         case 0:
             for(int c = 0; c < ternary[2] - ternary[1]; c++) infuncsol[ternary[0]+1+c] = tour[ternary[2] - c];
             for(int c = 0; c < ternary[1] - ternary[0]; c++) infuncsol[ternary[0]+ ternary[2] - ternary[1]+1+c] = tour[ternary[0] + 1 + c];
+            
+            delta_cost += ( get_arc(inst, tour[ternary[0]], tour[ternary[2]]) + 
+                            get_arc(inst, tour[ternary[1] + 1], tour[ternary[0] + 1]) +
+                            get_arc(inst, tour[ternary[1]], tour[ternary[2] + 1]) );
             break;
     
         case 1:
             for(int c = 0; c < ternary[2] - ternary[1]; c++) infuncsol[ternary[0] + 1 + c] = tour[ternary[1] + 1 + c];
             for(int c = 0; c < ternary[1] - ternary[0]; c++) infuncsol[ternary[0] + ternary[2] - ternary[1] + 1 + c] = tour[ternary[0] + 1 + c];
+            
+            delta_cost += ( get_arc(inst, tour[ternary[0]], tour[ternary[1] + 1]) + 
+                            get_arc(inst, tour[ternary[2]], tour[ternary[0] + 1]) +
+                            get_arc(inst, tour[ternary[1]], tour[ternary[2] + 1]) );
             break;
 
         case 2:
             for(int c = 0; c < ternary[1] - ternary[0]; c++) infuncsol[ternary[0] + 1 + c] = tour[ternary[1] - c];
             for(int c = 0; c < ternary[2] - ternary[1]; c++) infuncsol[ternary[1] + 1 + c] = tour[ternary[2] - c];
+            
+            delta_cost += ( get_arc(inst, tour[ternary[0]], tour[ternary[1]]) + 
+                            get_arc(inst, tour[ternary[0] + 1], tour[ternary[2]]) +
+                            get_arc(inst, tour[ternary[1] + 1], tour[ternary[2] + 1]) );
             break;
 
         default:
@@ -273,6 +269,7 @@ void kick(int* tour, const unsigned int size) {
             break;
     }
     memcpy(tour, infuncsol, size * sizeof(int));
+    return delta_cost;
 }
 
 

@@ -45,7 +45,7 @@ void print_state(int type, const char* msg, ...) {
 /// @param i row index
 /// @param j column index
 /// @return index where the desired value is stored into a 1d array
-int coords_to_index(const unsigned int n,const int i,const int j){
+inline int coords_to_index(const unsigned int n,const int i,const int j){
     if (i == j) print_state(Error, "i == j");
     return i<j ? INDEX(n,i,j) : INDEX(n,j,i);
 }

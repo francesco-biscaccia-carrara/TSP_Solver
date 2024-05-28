@@ -59,8 +59,8 @@ TSPsol TSPgreedy(const TSPinst* inst, const unsigned int intial_node, void(tsp_f
     TSPsol out = { .cost = 0.0, .tour = malloc(inst->nnodes * sizeof(int)) };
 
     int current_index = intial_node;
-    int used_node[inst->nnodes];
-    bzero( used_node, inst->nnodes * sizeof(int) );
+    char used_node[inst->nnodes];
+    bzero( used_node, inst->nnodes * sizeof(char) );
     used_node[intial_node] = 1;
 
     out.tour[0] = current_index;
@@ -94,6 +94,7 @@ TSPsol TSPgreedy(const TSPinst* inst, const unsigned int intial_node, void(tsp_f
 /// @param tour hamiltionian circuit
 /// @param cost cost of path
 void TSPg2opt(const TSPinst* inst, int* tour, double* cost) {
+
     while (1) {
         cross curr_cross = find_first_cross(inst, tour);
         if(curr_cross.delta_cost >= -EPSILON) return;
@@ -196,8 +197,12 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
             #endif
         }
 
-        for(int i = 0; i < 4; i++) kick(tmp_sol, inst->nnodes);
-        cost = compute_cost(inst, tmp_sol);
+        for(int i = 0; i < 4; i++) cost += kick(inst, tmp_sol, inst->nnodes);
+        //cost = compute_cost(inst, tmp_sol);
+
+        #if VERBOSE > 2
+            check_tour_cost(inst, tmp_sol, cost);
+        #endif
     }
 
     return out;

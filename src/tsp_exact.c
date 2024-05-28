@@ -203,7 +203,7 @@ void patching(TSPinst* inst, int* succ, int* comp, const unsigned int comp_size,
 					for(int j = nstart[k2]; succ[j] != nstart[k2]; j = succ[j]) {
 						double del_cost = delta_cost(inst, j, succ[j], i, succ[i]);
 						if(del_cost < min_cross.delta_cost) {
-							set_cross(&min_cross, i, j, del_cost);
+							min_cross = (cross) {.i = i, .j = j, .delta_cost = del_cost};
 							best_set = k2;
 						}
 						

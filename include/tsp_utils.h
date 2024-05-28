@@ -34,10 +34,9 @@ extern double   delta_cost(const TSPinst*, const unsigned int, const unsigned in
 extern double   get_arc(const TSPinst*, const unsigned int, const unsigned int);
 extern void     check_tour_cost(const TSPinst*, const int*, const double);
 extern double   compute_cost(TSPinst*,const int*);
-extern cross*   set_cross(cross*, unsigned int, unsigned int, double);
 
 //greedy functions
-extern near_neighbor get_nearest_neighbor(const TSPinst*, const unsigned int, const int*);
+extern near_neighbor get_nearest_neighbor(const TSPinst*, const unsigned int, const char*);
 
 //G2opt functions
 extern double   check_cross(const TSPinst*,const int*, const unsigned int, const unsigned int);
@@ -49,7 +48,7 @@ extern char     is_in_tabu(int, int, const cross*, const int);
 extern cross    find_best_t_cross(const TSPinst*, const int*, const cross*, const int);
 
 //VNS functions
-extern void     kick(int*, const unsigned int);
+extern double     kick(TSPinst*, int*, const unsigned int);
 
 //Display function
 extern void     print_sol(const TSPinst*, const TSPenv*);
