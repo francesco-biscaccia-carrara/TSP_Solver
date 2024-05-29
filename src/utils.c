@@ -157,14 +157,18 @@ int* cth_convert(int* hsol, int* csol, const unsigned int array_size) {
 }
 
 
+
+/// @brief get a subtour from cplex format array sequential
+/// @param output destination array
+/// @param succ array succ format
+/// @param start_point beginning of succ array
+/// @return size of tour
 int get_subset_array(int* output, int* succ, int start_point) {
-    int i = start_point;
-    output[0] = start_point;
+    
     int k = 1;
-    while (succ[i] != start_point) { 
-        output[k++] = succ[i];
-        i = succ[i];
-    }
+    output[0] = start_point;
+    for (int i = start_point; succ[i] != start_point; i = succ[i])
+        output[k++] = succ[i]; 
 
     return k;
 }
