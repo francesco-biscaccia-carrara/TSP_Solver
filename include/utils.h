@@ -17,6 +17,7 @@
 extern enum { Error, Warn, Info } TYPE_MESSAGE;
 
 #define DEBUG_MODE         0
+#define HANDLE_MTX         1
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -45,7 +46,10 @@ extern int*     cth_convert(int*, int*, const unsigned int);
 extern int      get_subset_array(int*, int*, int);
 
 //log utils
-extern void     format_csv_line(FILE*, const double*, const unsigned int);
-extern void     print_lifespan(const double, const double);
-extern void     run_mt_context(mt_context* ,int ,void* (*funct)(void*) ,void* );
+extern void             format_csv_line(FILE*, const double*, const unsigned int);
+extern void             print_lifespan(const double, const double);
+extern mt_context*      new_mt_context(int,char);
+extern void             run_job(mt_context*,void* (*funct)(void*) ,void* );
+extern void             delete_mt_context(mt_context*,char);
+extern void             run_mt_context(mt_context* ,int ,void* (*funct)(void*) ,void* );
 #endif

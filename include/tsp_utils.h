@@ -17,6 +17,7 @@ typedef struct {
 } near_neighbor;
 
 typedef struct {
+    mt_context*         mt_ctx;
     const TSPinst*      mt_inst;
     const int*          mt_tour;
     cross*              mt_cross;

@@ -194,7 +194,25 @@ void print_lifespan(const double final_time, const double init_time){
 }
 
 /// @brief initialize random seed to prevent strange behaviour
-void init_random()  { for(int i=0;i<100;i++) rand();}
+void init_random()  { for(int _=0;_<100;_++) rand();}
+
+mt_context* new_mt_context(int num_threads, char mutex){
+    mt_context* ctx = (mt_context*) calloc(1,sizeof(mt_context));
+    
+    ctx->num_threads=num_threads;
+    ctx->threads = (pthread_t*) malloc(num_threads*sizeof(pthread_t));
+    if(mutex) pthread_mutex_init(&ctx->mutex, NULL);
+    return ctx;
+}
+
+void run_job(mt_context* ctx,void* (*funct)(void*) ,void* args){
+    for(int t =0;t<ctx->num_threads;t++)
+        if(pthread_create(&ctx->threads[t],NULL,funct,args)) print_state(Error,"Bad tasks assignement!\n");
+
+    for(int t =0;t<ctx->num_threads;t++)
+        if(pthread_join(ctx->threads[t],NULL)) print_state(Error,"Bad tasks assignement!\n");
+
+}
 
 void init_mt_context(mt_context* ctx,int num_threads){
     ctx->num_threads=num_threads;
@@ -202,18 +220,8 @@ void init_mt_context(mt_context* ctx,int num_threads){
     pthread_mutex_init(&ctx->mutex, NULL);
 }
 
-void assign_task(mt_context* ctx,int th_i,void* (*funct)(void*) ,void* args){
-    if(pthread_create(&ctx->threads[th_i],NULL,funct,args)) print_state(Error,"bad tasks assignement!");
-}
-
-void delete_mt_context(mt_context* ctx){
-    for(int k=0;k<ctx->num_threads;k++) if(pthread_join(ctx->threads[k],NULL))  print_state(Error,"bad join of threads!");
-    pthread_mutex_destroy(&ctx->mutex);
+void delete_mt_context(mt_context* ctx,char mutex){
+    if(mutex) pthread_mutex_destroy(&ctx->mutex);
     free(ctx->threads);
-}
-
-void run_mt_context(mt_context* ctx,int num_threads,void* (*funct)(void*) ,void* args){
-    init_mt_context(ctx,num_threads);
-    for(int t =0;t<num_threads;t++) assign_task(ctx,t,funct,args);
-    delete_mt_context(ctx);
+    free(ctx);
 }

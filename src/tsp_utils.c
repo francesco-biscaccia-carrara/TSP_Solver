@@ -1,6 +1,6 @@
 #include "../include/tsp_utils.h"
 
-static mt_context G2OPT_MT_CTX;
+static pthread_mutex_t G2OPT_MTX;
 
 #define SQUARE(x)       (x*x)
 /// @brief compute euclidian distance for 2d points
@@ -132,15 +132,15 @@ cross find_first_cross(const TSPinst* inst, const int* tour) {
 }
 
 
-void* find_best_cross_job(void* userhandle){
+static void* find_best_cross_job(void* userhandle){
     mt_g2o_pars pars = *(mt_g2o_pars*) userhandle;
     cross my_best_cross = {-1,-1,INFINITY};
 
     int my_id;
-    for(my_id=0;(pthread_self() != G2OPT_MT_CTX.threads[my_id]) && my_id< G2OPT_MT_CTX.num_threads;my_id++);
+    for(my_id=0;(pthread_self() != pars.mt_ctx->threads[my_id]) && my_id< pars.mt_ctx->num_threads;my_id++);
 
-    int load = pars.mt_inst->nnodes/G2OPT_MT_CTX.num_threads;
-    int end = (my_id != G2OPT_MT_CTX.num_threads-1) ? (my_id+1) * load: pars.mt_inst->nnodes-2;
+    int load = pars.mt_inst->nnodes/pars.mt_ctx->num_threads;
+    int end = (my_id != pars.mt_ctx->num_threads-1) ? (my_id+1) * load: pars.mt_inst->nnodes-2;
 
     for(int i = my_id * load; i < end; i++){
         for(int j=i+2;j<pars.mt_inst->nnodes;j++){
@@ -154,10 +154,10 @@ void* find_best_cross_job(void* userhandle){
         }
     }
 
-    pthread_mutex_lock(&G2OPT_MT_CTX.mutex);
+    pthread_mutex_lock(&G2OPT_MTX);
     if(my_best_cross.delta_cost < pars.mt_cross->delta_cost+EPSILON)
         *pars.mt_cross = (cross){.i=my_best_cross.i,.j=my_best_cross.j,.delta_cost=my_best_cross.delta_cost};
-    pthread_mutex_unlock(&G2OPT_MT_CTX.mutex);
+    pthread_mutex_unlock(&G2OPT_MTX);
 
     return NULL;
 }
@@ -171,13 +171,19 @@ cross find_best_cross(const TSPinst* inst, const int* tour) {
 
     cross best_cross = {-1,-1,INFINITY};
 
-    mt_g2o_pars best_cross_par ={.mt_inst=inst,
+    mt_context* g2opt_ctx = new_mt_context((int) log2(inst->nnodes*(inst->nnodes-1)/2),!HANDLE_MTX);
+    pthread_mutex_init(&G2OPT_MTX, NULL);
+
+    mt_g2o_pars best_cross_par ={
+                            .mt_ctx = g2opt_ctx,
+                            .mt_inst=inst,
                             .mt_tour=tour,
                             .mt_cross=&best_cross,
                             .mt_tabu=NULL,.mt_tabu_size=0};
+    run_job(g2opt_ctx,find_best_cross_job,&best_cross_par);
+    delete_mt_context(g2opt_ctx,!HANDLE_MTX);
 
-    int num_threads = (int) log2(inst->nnodes*(inst->nnodes-1)/2);
-    run_mt_context(&G2OPT_MT_CTX,num_threads,find_best_cross_job,&best_cross_par);
+    pthread_mutex_destroy(&G2OPT_MTX);
     return best_cross;
 }
 
@@ -207,13 +213,20 @@ cross find_best_t_cross(const TSPinst* inst, const int* tour, const cross* tabu,
 
     cross best_cross = {-1,-1,INFINITY};
 
-    mt_g2o_pars best_cross_par ={.mt_inst=inst,
+
+    mt_context* g2opt_ctx = new_mt_context((int) log2(inst->nnodes*(inst->nnodes-1)/2),!HANDLE_MTX);
+    pthread_mutex_init(&G2OPT_MTX, NULL);
+
+    mt_g2o_pars best_cross_par ={
+                            .mt_ctx = g2opt_ctx,
+                            .mt_inst=inst,
                             .mt_tour=tour,
                             .mt_cross=&best_cross,
                             .mt_tabu=tabu,.mt_tabu_size=tabu_size};
-
-    int num_threads = (int) log2(inst->nnodes*(inst->nnodes-1)/2);
-    run_mt_context(&G2OPT_MT_CTX,num_threads,find_best_cross_job,&best_cross_par);
+    run_job(g2opt_ctx,find_best_cross_job,&best_cross_par);
+    delete_mt_context(g2opt_ctx,!HANDLE_MTX);
+    
+    pthread_mutex_destroy(&G2OPT_MTX);
     return best_cross;
 }
 

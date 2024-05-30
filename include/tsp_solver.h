@@ -9,7 +9,10 @@
 
 typedef struct{
     const TSPinst*      mt_inst;
-    const int           mt_tabu_size; 
+    void*               mt_opt_fun;
+    double              mt_init_time;
+    TSPenv*             mt_env;
+    TSPsol*             mt_greedy_sol; 
 } mt_greedy_pars;
 
 extern void     TSPsolve(TSPinst*, TSPenv*);

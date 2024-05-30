@@ -1,6 +1,28 @@
 #include "../include/tsp_solver.h"
 
-static mt_context GREEDY_MT_CTX;
+static mt_context* GREEDY_MT_CTX;
+
+static void* greedy_job(void* userhandle){
+    mt_greedy_pars pars = *(mt_greedy_pars*) userhandle;
+
+    TSPsol my_min = { .cost = INFINITY, .tour = NULL };
+
+    int my_id;
+    for(my_id=0;(pthread_self() != GREEDY_MT_CTX->threads[my_id]) && my_id< GREEDY_MT_CTX->num_threads;my_id++);
+
+    int load = pars.mt_inst->nnodes/GREEDY_MT_CTX->num_threads;
+    int end = (my_id != GREEDY_MT_CTX->num_threads-1) ? (my_id+1) * load: pars.mt_inst->nnodes;
+
+    for(int i = my_id * load; i < end && REMAIN_TIME(pars.mt_init_time,pars.mt_env); i++){
+        TSPsol tmp = TSPgreedy(pars.mt_inst, i, pars.mt_opt_fun, pars.mt_env->method);
+        if(tmp.cost < my_min.cost) { my_min = tmp; }
+    }
+
+    pthread_mutex_lock(&GREEDY_MT_CTX->mutex);
+        if(my_min.cost < pars.mt_greedy_sol->cost)  *pars.mt_greedy_sol = my_min;    
+    pthread_mutex_unlock(&GREEDY_MT_CTX->mutex);
+    return NULL;
+}
 
 /// @brief Solve an instance of TSP with an heuristic approach
 /// @param inst instance of TSPinst
@@ -26,10 +48,24 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     double init_time = get_time();
 
     TSPsol min = { .cost = INFINITY, .tour = NULL };
+
+    mt_greedy_pars greedy_par ={.mt_inst=inst,
+                                .mt_opt_fun=opt_func,
+                                .mt_init_time=init_time,
+                                .mt_env=env,
+                                .mt_greedy_sol=&min};
+
+    GREEDY_MT_CTX = new_mt_context((int) log2(inst->nnodes*(inst->nnodes-1)/2),HANDLE_MTX);
+    run_job(GREEDY_MT_CTX,greedy_job,&greedy_par);
+    delete_mt_context(GREEDY_MT_CTX,HANDLE_MTX);
+    
+
+    /* SINGLE-THREAD VER
     for(int i = 0; i < inst->nnodes && REMAIN_TIME(init_time,env); i++) {
         TSPsol tmp = TSPgreedy(inst, i, opt_func, env->method);
         if(tmp.cost < min.cost) { min = tmp; }
     }
+    */
     instance_set_solution(inst, min.tour, min.cost);
 
     
