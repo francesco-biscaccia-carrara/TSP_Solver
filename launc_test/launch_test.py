@@ -22,7 +22,7 @@ wantCost = args.cost
 time = 0
 cost = 1
 seeds = [1,2,3,4,5,6,7,8,9,10]
-filename = '_'.join(algos)+'-n_'+str(node_size)+'.csv'
+filename = '_'.join(algos)+'-n_'+str(node_size)
 #----------------------------#
 
 results = []
@@ -47,10 +47,24 @@ for seed in seeds:
 
 #print(results)
 
-with open('out/'+filename, 'w') as csvfile:
+with open(filename+'.csv', 'w') as csvfile:
     csvwriter = csv.writer(csvfile)
     csvwriter.writerow([len(algos)] + algos)
     csvwriter.writerows(results)
+
+
+if wantCost: 
+    x_lab = 'Cost Ratio'
+else: 
+    x_lab = 'Time Ratio'
+
+#ratio = max(result)/min(result)
+
+subprocess.run(
+        ["python3","perfprof.py","-D ','","-X "+x_lab,"-P ","-S 2",filename+".csv",filename+".pdf"],
+        capture_output = False,
+        text = True 
+        ) 
 
 #TODO:
 #   1. list of strategies,

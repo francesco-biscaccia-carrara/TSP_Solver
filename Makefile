@@ -51,4 +51,4 @@ tsp_mathutils.o: $(SRCDIR)/tsp_mathutils.c $(INCDIR)/tsp_mathutils.h
 
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) 
