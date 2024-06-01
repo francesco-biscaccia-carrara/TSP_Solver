@@ -17,9 +17,9 @@ typedef struct{
 
 extern void     TSPsolve(TSPinst*, TSPenv*);
 
-extern TSPsol   TSPgreedy(const TSPinst*, const unsigned int, void(const TSPinst*, int*, double*), char*);
-extern void     TSPg2opt(const TSPinst*, int*, double*);
-extern void     TSPg2optb(const TSPinst*, int*, double*);
+extern TSPsol   TSPgreedy(const TSPinst*, const TSPenv*, const unsigned int, void(const TSPinst*,const TSPenv*,double, int*, double*), char*, double);
+extern void     TSPg2opt(const TSPinst*,const TSPenv*,double, int*, double*);
+extern void     TSPg2optb(const TSPinst*, const TSPenv*,double, int*, double*);
 extern TSPsol   TSPtabu(TSPinst*, const TSPenv*, const double);
 extern TSPsol   TSPvns(TSPinst*, const TSPenv*, const double);
 

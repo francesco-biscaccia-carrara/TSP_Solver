@@ -14,7 +14,7 @@ static void* greedy_job(void* userhandle){
     int end = (my_id != GREEDY_MT_CTX->num_threads-1) ? (my_id+1) * load: pars.mt_inst->nnodes;
 
     for(int i = my_id * load; i < end && REMAIN_TIME(pars.mt_init_time,pars.mt_env); i++){
-        TSPsol tmp = TSPgreedy(pars.mt_inst, i, pars.mt_opt_fun, pars.mt_env->method);
+        TSPsol tmp = TSPgreedy(pars.mt_inst, pars.mt_env, i, pars.mt_opt_fun, pars.mt_env->method, pars.mt_init_time);
         if(tmp.cost < my_min.cost) { my_min = tmp; }
     }
 
@@ -23,6 +23,7 @@ static void* greedy_job(void* userhandle){
     pthread_mutex_unlock(&GREEDY_MT_CTX->mutex);
     return NULL;
 }
+
 
 /// @brief Solve an instance of TSP with an heuristic approach
 /// @param inst instance of TSPinst
@@ -89,7 +90,7 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
 /// @param inst instance of TSPinst
 /// @param intial_node intial node
 /// @param tsp_func improvement function
-TSPsol TSPgreedy(const TSPinst* inst, const unsigned int intial_node, void(tsp_func)(const TSPinst*, int*, double*), char* func_name) {
+TSPsol TSPgreedy(const TSPinst* inst, const TSPenv* env, const unsigned int intial_node, void(tsp_func)(const TSPinst*, const TSPenv*,double, int*, double*), char* func_name, double init_time) {
 
     TSPsol out = { .cost = 0.0, .tour = malloc(inst->nnodes * sizeof(int)) };
 
@@ -113,7 +114,7 @@ TSPsol TSPgreedy(const TSPinst* inst, const unsigned int intial_node, void(tsp_f
     #endif
 
     if(tsp_func != NULL) {
-        tsp_func(inst, out.tour, &out.cost);
+        tsp_func(inst,env, init_time, out.tour, &out.cost);
 
         #if VERBOSE > 1
         printf("Partial \e[1m%7s\e[m solution starting from [%i]: \t%10.4f\n", func_name, intial_node, out.cost);
@@ -128,9 +129,9 @@ TSPsol TSPgreedy(const TSPinst* inst, const unsigned int intial_node, void(tsp_f
 /// @param inst instance of TSPinst 
 /// @param tour hamiltionian circuit
 /// @param cost cost of path
-void TSPg2opt(const TSPinst* inst, int* tour, double* cost) {
+void TSPg2opt(const TSPinst* inst,const TSPenv* env, double init_time, int* tour, double* cost) {
 
-    while (1) {
+    while (REMAIN_TIME(init_time, env)) {
         cross curr_cross = find_first_cross(inst, tour);
         if(curr_cross.delta_cost >= -EPSILON) return;
         
@@ -148,9 +149,9 @@ void TSPg2opt(const TSPinst* inst, int* tour, double* cost) {
 /// @param inst instance of TSPinst 
 /// @param tour hamiltionian circuit
 /// @param cost cost of path
-void TSPg2optb(const TSPinst* inst, int* tour, double* cost) {
+void TSPg2optb(const TSPinst* inst,const TSPenv* env, double init_time, int* tour, double* cost) {
 
-    while (1) {
+    while (REMAIN_TIME(init_time, env)) {
         cross curr_cross = find_best_cross(inst, tour);
         if(curr_cross.delta_cost >= -EPSILON) return;
         
@@ -221,7 +222,7 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
     int kick_size = 3;
 
     while (REMAIN_TIME(init_time, env)) {
-        TSPg2optb(inst, tmp_sol, &cost);
+        TSPg2optb(inst, env, init_time, tmp_sol, &cost);
 
         if(cost < out.cost - EPSILON) {
             out.cost = cost;

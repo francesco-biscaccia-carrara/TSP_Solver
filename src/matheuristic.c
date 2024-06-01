@@ -24,7 +24,7 @@ void MATsolve(TSPinst* inst, TSPenv* env) {
 
 void diving(int strategy, CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst, TSPenv* env, const double start_time) { 
 
-    TSPsol sol = TSPgreedy(inst, rand()%inst->nnodes, NULL, "");   
+    TSPsol sol = TSPgreedy(inst, env, rand()%inst->nnodes, NULL, "", start_time);   
     TSPsol oldsol = sol;
     instance_set_solution(inst, sol.tour, sol.cost);
     CPLEX_post_heur(CPLEX_env, CPLEX_lp, inst->solution, inst->nnodes);
@@ -61,29 +61,32 @@ void diving(int strategy, CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst,
 
 void local_branching(CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst, TSPenv* env, const double start_time) {
 
-    TSPsol sol = TSPgreedy(inst, rand()%inst->nnodes, TSPg2optb, "G2OPT_B");  
+    TSPsol sol = TSPgreedy(inst, env, rand()%inst->nnodes, TSPg2optb, "G2OPT_B", start_time);  
     TSPsol oldsol = sol; 
     instance_set_solution(inst, sol.tour, sol.cost);
     CPLEX_post_heur(CPLEX_env, CPLEX_lp, inst->solution, inst->nnodes);
-    int k = 80;
+    int k = 150;
     int deltak = 10;
 
     
+    double tl = (env->time_limit - time_elapsed(start_time)) / 10;
     while (REMAIN_TIME(start_time, env)) {
 
         local_tour_costraint(CPLEX_env, CPLEX_lp, inst, k);
+        sol = TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp, tl);
 
-
-        sol = TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp, start_time);
         instance_set_best_sol(inst, sol);
+        print_state(Info, "SOL cost: %10.4f\n", sol.cost);
+        print_state(Info, "INST cost: %10.4f\n", inst->cost);
 
         if(abs(sol.cost - oldsol.cost) <= EPSILON) {
             k+= deltak;
         }
         else {
-            if(k > 150 ) { k-=deltak; }
+            if(k > 300 ) { k-=deltak; }
         }
 
+        print_state(-1, "K:%i\n", k);
 
         int nrows = CPXgetnumrows(CPLEX_env, CPLEX_lp);
         CPXdelrows(CPLEX_env, CPLEX_lp, nrows-1, nrows-1);

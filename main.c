@@ -10,13 +10,14 @@ int main(int argc, char **argv) {
     char* cplex_func[] = { "BENDER", "BRANCH_CUT" };
     char* mathe_func[] = { "DIVING_R", /*"DIVING_P",*/ "DIVING_W", "LOCAL_BRANCH" };
     
+    double init_time = get_time();
     if(strnin(env->method, mathe_func, 3)) { 
         MATsolve(inst, env);
-        TSPg2optb(inst, inst->solution, &(inst->cost));    
+        TSPg2optb(inst, env, init_time, inst->solution, &(inst->cost));    
     }
     else if(strnin(env->method, cplex_func, 2)) {
         TSPCsolve(inst,env);
-        TSPg2optb(inst, inst->solution, &(inst->cost));
+        TSPg2optb(inst, env, init_time, inst->solution, &(inst->cost));
     }
 	else TSPsolve(inst, env);
 

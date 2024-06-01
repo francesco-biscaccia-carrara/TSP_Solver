@@ -67,7 +67,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 	//'Warm-up' CPLEX with a feasibile solution given by G2OPT heu
 	if(env->warm) add_warm_start(CPLEX_env, CPLEX_lp, inst, env, "GREEDY");
 	if(!strncmp(env->method,"BENDER", 6)) min = TSPCbenders(inst, env, &CPLEX_env,&CPLEX_lp, init_time);
-	else if(!strncmp(env->method,"BRANCH_CUT", 12)) min = TSPCbranchcut(inst, env, &CPLEX_env,&CPLEX_lp, init_time);
+	else if(!strncmp(env->method,"BRANCH_CUT", 12)) min = TSPCbranchcut(inst, env, &CPLEX_env,&CPLEX_lp, env->time_limit-time_elapsed(init_time));
 	else { print_state(Error, "No function with alias"); }
 	instance_set_best_sol(inst, min);
 
@@ -88,7 +88,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 /// @param tsp_env instance of TSPenvquando lo passi alla callback
 /// @param env pointer to CPEXENVptr
 /// @param lp pointer to CPEXLPptr
-TSPsol TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp, const double start_time) {
+TSPsol TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp, const double tl) {
 
     TSPsol out = { .cost = inst->cost, .tour = malloc(inst->nnodes * sizeof(int)) };
 	
@@ -103,7 +103,7 @@ TSPsol TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* l
 	int ncomp;
 
 	double* x_star = (double*) calloc((inst->nnodes*(inst->nnodes-1))/2, sizeof(double));
-	CPLEX_solve(env,lp,tsp_env->time_limit-time_elapsed(start_time),&lb,x_star);
+	CPLEX_solve(env,lp,tl,&lb,x_star);
 			
 	decompose_solution(x_star,inst->nnodes,succ,comp,&ncomp, nstart);
 	free(x_star);
@@ -113,7 +113,12 @@ TSPsol TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* l
 		patching(inst, succ, comp, ncomp, nstart);
 	}
 
-	out.cost = compute_cost(inst,cth_convert(out.tour, succ, inst->nnodes));
+	int *sol = calloc(inst->nnodes, sizeof(int) );
+	cth_convert(sol, succ, inst->nnodes);
+	print_state(Warn, "%10.4f\n", compute_cost(inst, sol));
+	check_tour_cost(inst, sol, compute_cost(inst, sol));
+	memcpy(out.tour, sol, inst->nnodes * sizeof(int));
+	out.cost = compute_cost(inst, out.tour);
 	return out;
 }
 
