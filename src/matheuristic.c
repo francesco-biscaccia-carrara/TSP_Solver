@@ -33,6 +33,7 @@ void diving(int strategy, CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst,
     int x_size = 0;
     int percfix = 7;
 
+    double tl = (env->time_limit - time_elapsed(start_time)) / 10;
     while(REMAIN_TIME(start_time, env)) {
 
         #if VERBOSE > 0
@@ -41,7 +42,7 @@ void diving(int strategy, CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst,
         x_size = arc_to_fix(strategy, x, inst, percfix, inst->nnodes/percfix);
         fix_to_model(CPLEX_env, CPLEX_lp, x, x_size);
 
-        sol = TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp, start_time);
+        sol = TSPCbranchcut(inst, env, &CPLEX_env, &CPLEX_lp, tl);
         instance_set_best_sol(inst, sol);
 
 
