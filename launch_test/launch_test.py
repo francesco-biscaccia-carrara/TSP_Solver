@@ -69,12 +69,11 @@ try:
     ratio = (mymax-np.min(results[1:][1:]))/mymax
 
     subprocess.run(
-            ["python3","perfprof.py","-D",",","-X "+x_lab,"-P ","-S 2","-M",str(ratio + 0.25 * ratio),filename+".csv",filename+".pdf"],
+            ["python3","perfprof.py","-D",",","-X "+x_lab,"-P ","-S 2","-M",str(ratio + 0.25 * ratio),filename+".csv",filename+".png"],
             capture_output = False,
             text = True 
             ) 
 
-    notify.bot(profile="gruppo_bmz").send_document_by_path(filename+".pdf", caption=filename, disable_notification=True)
-    notify.bot(profile="gruppo_bmz").send_document_by_path(filename+".pgf", caption="PGF FORMAT", disable_notification=True)
+    notify.bot(profile="gruppo_bmz").send_document_by_path(filename+".png", caption=filename, disable_notification=True)
 except Exception as e:
     bot.send_exception(repr(e))
