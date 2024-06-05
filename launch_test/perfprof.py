@@ -118,6 +118,7 @@ def main():
 		plt.title(opt.plottitle)
 	plt.xlabel(opt.xlabel)
 	plt.savefig(opt.output)
+	plt.savefig(opt.output[:-3]+'pgf',backend='pgf')
 
 if __name__ == '__main__':
 	main()
