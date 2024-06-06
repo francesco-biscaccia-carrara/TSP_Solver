@@ -4,7 +4,7 @@
 
 #define MAX_DIST    10000
 #define MAX_TIME    3.6e+6
-#define VERBOSE	    1
+#define VERBOSE	    0
 
 #include "utils.h"
 #define REMAIN_TIME(init_time, env) (time_elapsed(init_time) <= env->time_limit)

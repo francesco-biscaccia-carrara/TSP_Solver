@@ -22,7 +22,7 @@ TEST = test
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $(TARGET) $(CPLEXLIB) $(CCLIB) -lm -lpthread -g -O3 && rm -f $(OBJS)
+	$(CC) $(OBJS) -o $(TARGET) $(CPLEXLIB) $(CCLIB) -lm -lpthread -O3 && rm -f $(OBJS)
 
 main.o: main.c
 	$(CC) $(CPLEXINC) -c main.c -o main.o

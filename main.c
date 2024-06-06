@@ -9,6 +9,10 @@ int main(int argc, char **argv) {
 
     char* cplex_func[] = { "BENDER", "BRANCH_CUT" };
     char* mathe_func[] = { "DIVING_R", /*"DIVING_P",*/ "DIVING_W", "LOCAL_BRANCH" };
+
+    #if VERBOSE > 0
+        if(env->perf_v) print_state(Error,"Set VERBOSE 0 to run the test\n");
+    #endif
     
     double init_time = get_time();
     if(strnin(env->method, mathe_func, 3)) { 
