@@ -28,7 +28,7 @@ main.o: main.c
 	$(CC) $(CPLEXINC) -c main.c -o main.o
 
 test.o: test.c
-	$(CC) $(CPLEXINC) -c test.c -o test.o
+	$(CC) $(CPLEXINC) -c test.c -lm -o test.o
 
 %.o: $(SRCDIR)/%.c $(DEPS)
 	$(CC) $(CFLAGS) $(CPLEXLIB) -c $< -o $@
