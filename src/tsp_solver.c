@@ -28,7 +28,7 @@ static void* greedy_job(void* userhandle){
 /// @brief Solve an instance of TSP with an heuristic approach
 /// @param inst instance of TSPinst
 /// @param env instance of TSPenv
-void TSPsolve(TSPinst* inst, TSPenv* env) {
+void TSPsolve(TSPinst* inst, TSPenv* env, int param) {
     char* null_func[] = {"GREEDY", "TABU_R", "VNS"};
     char* optb_func[] = {"G2OPT_B", "TABU_B"};
     char* optf_func[] = {"G2OPT_F"};
@@ -61,19 +61,13 @@ void TSPsolve(TSPinst* inst, TSPenv* env) {
     delete_mt_context(GREEDY_MT_CTX,HANDLE_MTX);
     
 
-    /* SINGLE-THREAD VER
-    for(int i = 0; i < inst->nnodes && REMAIN_TIME(init_time,env); i++) {
-        TSPsol tmp = TSPgreedy(inst, i, opt_func, env->method);
-        if(tmp.cost < min.cost) { min = tmp; }
-    }
-    */
     instance_set_solution(inst, min.tour, min.cost);
 
     
     char* vns_func[] = {"VNS"};
     char* tabu_func[] = {"TABU_R", "TABU_B"};
-    if(strnin(env->method, vns_func, 1)) { min = TSPvns(inst, env, init_time); }
-    else if(strnin(env->method, tabu_func, 2)) { min = TSPtabu(inst, env, init_time); }
+    if(strnin(env->method, vns_func, 1)) { min = TSPvns(inst, env, init_time, param); }
+    else if(strnin(env->method, tabu_func, 2)) { min = TSPtabu(inst, env, init_time, param); }
     instance_set_best_sol(inst, min);
 
     
@@ -169,12 +163,12 @@ void TSPg2optb(const TSPinst* inst,const TSPenv* env, double init_time, int* tou
 /// @param inst instance of TSPinst
 /// @param env instance of TSPenv
 /// @param init_time initial time
-TSPsol TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
+TSPsol TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time, int size_ratio) {
 
     TSPsol out = { .cost = inst->cost, .tour = malloc(inst->nnodes * sizeof(int)) };
     
     int tabu_index = 0; 
-    int tabu_size = inst->nnodes / 2;
+    int tabu_size = inst->nnodes / size_ratio;
     cross tabu[tabu_size];
 
     double cost = inst->cost;
@@ -212,14 +206,14 @@ TSPsol TSPtabu(TSPinst* inst, const TSPenv* env, const double init_time) {
 /// @param inst instance of TSPinst 
 /// @param env instance of TSPenv
 /// @param init_time initial time
-TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) { 
+TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time, int _kick_size) { 
 
     TSPsol out = { .cost = inst->cost, .tour = malloc(inst->nnodes * sizeof(int)) };
 
     double cost = inst->cost;
     int tmp_sol[inst->nnodes];
     memcpy(tmp_sol, inst->solution, inst->nnodes * sizeof(inst->solution[0]));
-    int kick_size = 3;
+    int kick_size = (_kick_size >= 0) ? 3 : _kick_size;
 
     while (REMAIN_TIME(init_time, env)) {
         TSPg2optb(inst, env, init_time, tmp_sol, &cost);

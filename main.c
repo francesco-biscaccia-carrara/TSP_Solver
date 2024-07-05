@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
         TSPCsolve(inst,env);
         TSPg2optb(inst, env, init_time, inst->solution, &(inst->cost));
     }
-	else TSPsolve(inst, env);
+	else TSPsolve(inst, env, 0);
 
     #if VERBOSE > 2
         check_tour_cost(inst, inst->solution, inst->cost);
