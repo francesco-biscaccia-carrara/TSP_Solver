@@ -10,13 +10,13 @@ parser = argparse.ArgumentParser(description='TEST LAUNCHER')
 parser.add_argument('nnodes', type=int, help='Number of nodes')
 parser.add_argument('-tl',type=int,default=3.6e+6 ,help='Time limit for each execution')
 parser.add_argument('-cost', dest='cost', action='store_true', help='Set the wantCost value to True.')
-parser.add_argument('algos',type=str,nargs='+',help='Algorithm to test, divided by space')
+#parser.add_argument('algos',type=str,nargs='+',help='Algorithm to test, divided by space')
 args = parser.parse_args()
 
 #----------EDITABLE PARS--------#
 node_size = args.nnodes
 time_limit = args.tl
-algos = args.algos
+#algos = args.algos
 warm = "-warm" ##remove to remove warm
 wantCost = args.cost
 #-------------------------------#
@@ -25,8 +25,9 @@ wantCost = args.cost
 #----------FIXED PARS--------#
 time = 0
 cost = 1
-seeds = np.arange(1,101)
-filename = '_'.join(algos)+'-n_'+str(node_size)
+seeds = np.arange(1,21)
+methods=[15,10,5,2]
+filename = '_'.join("TABU_B")+'-n_'+str(node_size)
 #----------------------------#
 
 results = []
@@ -36,9 +37,9 @@ try:
     for seed in seeds:
         results.append([])
         results[row].append(seed)
-        for algo in algos:
+        for par in methods:
             result = subprocess.run(
-                ["../main", "-tl", str(time_limit), "-n", str(node_size), "-seed", str(seed), "-algo", algo, warm, "-t"],
+                ["../main", "-tl", str(time_limit), "-n", str(node_size), "-seed", str(seed), "-algo","TABU_B", warm, "-t","-tp",str(par)],
                 capture_output = True,
                 text = True 
             ) 
@@ -55,7 +56,7 @@ try:
 
     with open(filename+'.csv', 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
-        csvwriter.writerow([len(algos)] + algos)
+        csvwriter.writerow([len(methods)] + methods)
         csvwriter.writerows(results)
 
 
@@ -64,12 +65,8 @@ try:
     else: 
         x_lab = 'Time Ratio'
 
-    mymax = np.max(results[1:][1:])
-
-    ratio = (mymax-np.min(results[1:][1:]))/mymax
-
     subprocess.run(
-            ["python3","perfprof.py","-D",",","-X "+x_lab,"-P ","-S 2","-M",str(ratio + 0.25 * ratio),filename+".csv",filename+".png"],
+            ["python3","perfprof.py","-D",",","-X "+x_lab,"-P ","-S 2",filename+".csv",filename+".png"],
             capture_output = False,
             text = True 
             ) 

@@ -65,7 +65,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
     TSPsol min = { .cost = INFINITY, .tour = NULL };
 
 	//'Warm-up' CPLEX with a feasibile solution given by G2OPT heu
-	if(env->warm) add_warm_start(CPLEX_env, CPLEX_lp, inst, env, "GREEDY", 0);
+	if(env->warm) add_warm_start(CPLEX_env, CPLEX_lp, inst, env, "GREEDY");
 	if(!strncmp(env->method,"BENDER", 6)) min = TSPCbenders(inst, env, &CPLEX_env,&CPLEX_lp, init_time);
 	else if(!strncmp(env->method,"BRANCH_CUT", 12)) min = TSPCbranchcut(inst, env, &CPLEX_env,&CPLEX_lp, env->time_limit-time_elapsed(init_time));
 	else { print_state(Error, "No function with alias"); }

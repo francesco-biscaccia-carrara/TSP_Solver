@@ -15,12 +15,12 @@ typedef struct{
     TSPsol*             mt_greedy_sol; 
 } mt_greedy_pars;
 
-extern void     TSPsolve(TSPinst*, TSPenv*, int);
+extern void     TSPsolve(TSPinst*, TSPenv*);
 
 extern TSPsol   TSPgreedy(const TSPinst*, const TSPenv*, const unsigned int, void(const TSPinst*,const TSPenv*,double, int*, double*), char*, double);
 extern void     TSPg2opt(const TSPinst*,const TSPenv*,double, int*, double*);
 extern void     TSPg2optb(const TSPinst*, const TSPenv*,double, int*, double*);
-extern TSPsol   TSPtabu(TSPinst*, const TSPenv*, const double, int);
-extern TSPsol   TSPvns(TSPinst*, const TSPenv*, const double, int);
+extern TSPsol   TSPtabu(TSPinst*, const TSPenv*, const double);
+extern TSPsol   TSPvns(TSPinst*, const TSPenv*, const double);
 
 #endif

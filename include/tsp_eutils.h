@@ -27,7 +27,7 @@ extern int              add_SEC_int(CPXCALLBACKCONTEXTptr, TSPinst);
 extern int              add_SEC_flt(CPXCALLBACKCONTEXTptr, TSPinst);
 extern int CPXPUBLIC    mount_CUT(CPXCALLBACKCONTEXTptr, CPXLONG, void*);
 
-extern void             add_warm_start(CPXENVptr, CPXLPptr, TSPinst*, TSPenv*, char*, int);
+extern void             add_warm_start(CPXENVptr, CPXLPptr, TSPinst*, TSPenv*, char*);
 extern void             patching(TSPinst*, int*, int*, const unsigned int, int*);
 
 

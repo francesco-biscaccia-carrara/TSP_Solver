@@ -36,6 +36,8 @@ typedef struct{
     char            perf_v;
     double          time_exec;
     uint64_t        time_limit;
+    int             tabu_par;
+    int             vns_par;
 } TSPenv;
 
 extern double* edge_weights;

@@ -435,12 +435,12 @@ int CPXPUBLIC mount_CUT(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* 
 }
 
 
-extern void add_warm_start(CPXENVptr CPX_env, CPXLPptr CPX_lp, TSPinst* inst, TSPenv* env, char* method, int param) {
+extern void add_warm_start(CPXENVptr CPX_env, CPXLPptr CPX_lp, TSPinst* inst, TSPenv* env, char* method) {
 	char* curr_meth = malloc(strlen(env->method));
 	memcpy(curr_meth, env->method, strlen(env->method));
 	env->method = method;
 
-	TSPsolve(inst, env, param);
+	TSPsolve(inst, env);
 
 	env->method = curr_meth;
 	CPLEX_post_heur(CPX_env, CPX_lp, inst->solution, inst->nnodes);

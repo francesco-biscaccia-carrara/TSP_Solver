@@ -228,6 +228,8 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
     char* help_comm[] = {"-help", "-h", "--help"};
     char* warm_comm[] = {"-warm", "-w", "--warm"};
     char* perf_comm[] = {"-test", "-t"};
+//  char* tabu_comm[] = {"-tabu_par", "-tp"};
+    char* vns_comm[] = {"-vns_par", "-vp"};
 
     for (int i = 1; i < argc; i++) { 
         if (strnin(argv[i], time_comm, 2))  env->time_limit = abs(atof(argv[++i]));
@@ -237,6 +239,8 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
         if (strnin(argv[i], seed_comm, 3))  env->random_seed = abs(atoi(argv[++i])); 
         if (strnin(argv[i], warm_comm, 2))  env->warm = 1;  
         if (strnin(argv[i], perf_comm, 2))  env->perf_v = 1;
+//      if (strnin(argv[i], tabu_comm, 2))  env->tabu_par = abs(atoi(argv[++i]));  
+        if (strnin(argv[i], vns_comm, 2))   env->vns_par = abs(atoi(argv[++i]));
         if (strnin(argv[i], help_comm, 3))  { help_info(); exit(0); }  
     }
 
