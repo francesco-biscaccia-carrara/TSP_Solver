@@ -218,10 +218,9 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
     double cost = inst->cost;
     int tmp_sol[inst->nnodes];
     if(env->vns_par<=0) print_state(Error,"not valid parameter!");
-    int _kick_size = env->vns_par;
     
     memcpy(tmp_sol, inst->solution, inst->nnodes * sizeof(inst->solution[0]));
-    int kick_size = (_kick_size >= 0) ? 3 : _kick_size;
+    int kick_size = 1;
 
     while (REMAIN_TIME(init_time, env)) {
         TSPg2optb(inst, env, init_time, tmp_sol, &cost);
@@ -229,13 +228,13 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
         if(cost < out.cost - EPSILON) {
             out.cost = cost;
             memcpy(out.tour, tmp_sol, inst->nnodes * sizeof(int));
-            kick_size = (kick_size <= 3) ? 3 : kick_size--;
+            kick_size = (kick_size <= 1) ? 1 : kick_size--;
             
             #if VERBOSE > 0
                 print_state(Info, "%3s -- New best cost:\t%10.4f\n",env->method, out.cost);
             #endif
         }
-        else kick_size = (kick_size <= 7) ? 7 : kick_size++;
+        else kick_size = (kick_size <= env->vns_par) ? env->vns_par : kick_size++;
 
         for(int i = 0; i < kick_size; i++) cost += kick(inst, tmp_sol, inst->nnodes);
         #if VERBOSE > 2
