@@ -159,7 +159,7 @@ void decompose_solution(const double *xstar, const unsigned int nnodes, int *suc
 /// @param nnodes number of nodes
 /// @param env CPLEX environment pointer
 /// @param lp CPLEX model pointer
-void CPLEX_post_heur(CPXENVptr env, CPXLPptr lp, int* succ, const unsigned int nnodes) {
+void CPLEX_mip_st(CPXENVptr env, CPXLPptr lp, int* succ, const unsigned int nnodes) {
 
 	int start_index = 0;
 	int effort_level = CPX_MIPSTART_NOCHECK;
@@ -174,7 +174,7 @@ void CPLEX_post_heur(CPXENVptr env, CPXLPptr lp, int* succ, const unsigned int n
 	free(value);
 }
 
-void CPLEX_edit_post_heur(CPXENVptr* env, CPXLPptr* lp, int* succ, const unsigned int nnodes) {
+void CPLEX_edit_mip_st(CPXENVptr* env, CPXLPptr* lp, int* succ, const unsigned int nnodes) {
 	
 	int start_index = 0;
 	int mipindex = 0;
@@ -313,6 +313,9 @@ int add_SEC_int(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 	free(index);
 	free(value);
 
+	/*TODO: Posting patching as heuristic inside CPLEX
+	int nstart[inst.nnodes];
+	patching(inst,succ,comp,ncomp,nstart);*/
 	free(succ);
 	free(comp);
 	return 0;
@@ -443,7 +446,7 @@ extern void add_warm_start(CPXENVptr CPX_env, CPXLPptr CPX_lp, TSPinst* inst, TS
 	TSPsolve(inst, env);
 
 	env->method = curr_meth;
-	CPLEX_post_heur(CPX_env, CPX_lp, inst->solution, inst->nnodes);
+	CPLEX_mip_st(CPX_env, CPX_lp, inst->solution, inst->nnodes);
 
 	#if VERBOSE > 0
 		print_state(Info, "passing an heuristic solution to CPLEX...\n");

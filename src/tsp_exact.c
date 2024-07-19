@@ -57,7 +57,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
 	CPXLPptr CPLEX_lp = NULL;
 	CPLEX_model_new(inst, &CPLEX_env, &CPLEX_lp);
 
-	#if VERBOSE > 1
+	#if VERBOSE > 2
 		CPLEX_log(&CPLEX_env,env);
 	#endif
 
@@ -164,7 +164,7 @@ TSPsol TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp,
 		patching(inst,succ,comp,ncomp, nstart);
 		int* sol  = calloc (inst->nnodes,sizeof(int));
 		cth_convert(sol, succ, inst->nnodes);
-		CPLEX_edit_post_heur(env,lp,sol,inst->nnodes);
+		if(tsp_env->warm) CPLEX_edit_mip_st(env,lp,sol,inst->nnodes);
 		free(sol);
 	}
 
