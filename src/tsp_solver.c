@@ -1,6 +1,7 @@
 #include "../include/tsp_solver.h"
 
 #define BEST_TENURE 2
+#define BEST_KICK 1
 
 static mt_context* GREEDY_MT_CTX;
 
@@ -217,7 +218,7 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
 
     double cost = inst->cost;
     int tmp_sol[inst->nnodes];
-    if(env->vns_par<=0) print_state(Error,"not valid parameter!");
+    //if(env->vns_par<=0) print_state(Error,"not valid parameter!");
     
     memcpy(tmp_sol, inst->solution, inst->nnodes * sizeof(inst->solution[0]));
     int kick_size = 1;
@@ -234,7 +235,7 @@ TSPsol TSPvns(TSPinst* inst, const TSPenv* env, const double init_time) {
                 print_state(Info, "%3s -- New best cost:\t%10.4f\n",env->method, out.cost);
             #endif
         }
-        else kick_size = (kick_size <= env->vns_par) ? env->vns_par : kick_size++;
+        else kick_size = (kick_size <= BEST_KICK) ? BEST_KICK : kick_size++;
 
         for(int i = 0; i < kick_size; i++) cost += kick(inst, tmp_sol, inst->nnodes);
         #if VERBOSE > 2
