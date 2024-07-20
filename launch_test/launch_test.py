@@ -26,7 +26,7 @@ wantCost = args.cost
 time = 0
 cost = 1
 seeds = np.arange(1,21)
-pars=["","-warm"]
+pars=[":","-warm"]
 filename = 'BENDER-WARM-n_'+str(node_size)
 #'_'.join(algos)+'-n_'+str(node_size)
 #----------------------------#
@@ -76,7 +76,7 @@ try:
             capture_output = False,
             text = True 
             ) 
-    notify.bot(profile="gruppo_bmz").send_document_by_path(filename+".png", caption=filename, disable_notification=True)
+    notify.bot(profile="default").send_document_by_path(filename+".png", caption=filename, disable_notification=True)
     notify.bot(profile="default").send_document_by_path(filename+".csv", caption=filename, disable_notification=True)
     notify.bot(profile="default").send_document_by_path(filename+".pgf", caption=filename, disable_notification=True)
 except Exception as e:

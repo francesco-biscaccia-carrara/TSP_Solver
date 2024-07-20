@@ -164,7 +164,7 @@ TSPsol TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp,
 		patching(inst,succ,comp,ncomp, nstart);
 		int* sol  = calloc (inst->nnodes,sizeof(int));
 		cth_convert(sol, succ, inst->nnodes);
-		if(tsp_env->warm) CPLEX_edit_mip_st(env,lp,sol,inst->nnodes);
+		if(tsp_env->warm) CPLEX_mip_st(*env,*lp,sol,inst->nnodes);
 		free(sol);
 	}
 
