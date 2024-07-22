@@ -147,7 +147,7 @@ TSPsol TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp,
 		CPLEX_solve(env,lp,tsp_env->time_limit-time_elapsed(start_time),&lb,x_star);
 
 		#if VERBOSE > 0
-			print_state(Info, "Lower-Bound \e[1mBENDER'S LOOP\e[m itereation [%i]: \t%10.4f\n", iter, lb);
+			print_state(Info, "Lower-Bound \e[1mBENDERS' LOOP\e[m itereation [%i]: \t%10.4f\n", iter, lb);
 		#endif
 
 		decompose_solution(x_star, inst->nnodes, succ, comp, &ncomp, nstart);
@@ -164,7 +164,8 @@ TSPsol TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp,
 		patching(inst,succ,comp,ncomp, nstart);
 		int* sol  = calloc (inst->nnodes,sizeof(int));
 		cth_convert(sol, succ, inst->nnodes);
-		if(tsp_env->warm) CPLEX_mip_st(*env,*lp,sol,inst->nnodes);
+		//if(tsp_env->warm) 
+			CPLEX_mip_st(*env,*lp,sol,inst->nnodes);
 		free(sol);
 	}
 

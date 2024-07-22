@@ -315,7 +315,12 @@ int add_SEC_int(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 
 	/*TODO: Posting patching as heuristic inside CPLEX
 	int nstart[inst.nnodes];
-	patching(inst,succ,comp,ncomp,nstart);*/
+	patching(inst,succ,comp,ncomp,nstart);
+	
+	--- Look at Zanzi repo---
+	cpxerror = CPXcallbackpostheursoln(context, ncols, ind, val, tsp_compute_succ_cost(succ), CPXCALLBACKSOLUTION_NOCHECK);
+        if (cpxerror) raise_error("Error in tsp_cplex_callback_candidate: CPXcallbackpostheursoln error (%d).\n", cpxerror);
+	*/
 	free(succ);
 	free(comp);
 	return 0;
