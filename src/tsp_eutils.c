@@ -312,10 +312,24 @@ int add_SEC_int(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 	}
 	free(index);
 	free(value);
+	
+	patching(&inst,succ,comp,ncomp,nstart);
 
+	double *val = (double *) calloc(ncols, sizeof(double));
+	int *ind = (int *) calloc(ncols, sizeof(int));
+	for (int i = 0; i < ncols; i++) { ind[i] = i; val[i] = 0; }
+
+    for (int i = 0; i < inst.nnodes; i++) {
+        int xpos = coords_to_index(inst.nnodes, succ[i], succ[i+1]);
+        ind[xpos] = xpos;
+        val[xpos] = 1.0;
+    }
+	
+	if(CPXcallbackpostheursoln(context, ncols, ind, val, compute_cost(&inst, succ), CPXCALLBACKSOLUTION_NOCHECK)) print_state(Error, "CPXcallbackpostheursoln() error");
+	free(val);
+	free(ind);
 	/*TODO: Posting patching as heuristic inside CPLEX
 	int nstart[inst.nnodes];
-	patching(inst,succ,comp,ncomp,nstart);
 	
 	--- Look at Zanzi repo---
 	cpxerror = CPXcallbackpostheursoln(context, ncols, ind, val, tsp_compute_succ_cost(succ), CPXCALLBACKSOLUTION_NOCHECK);
