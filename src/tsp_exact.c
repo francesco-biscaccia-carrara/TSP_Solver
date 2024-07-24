@@ -65,7 +65,7 @@ void TSPCsolve(TSPinst* inst, TSPenv* env) {
     TSPsol min = { .cost = INFINITY, .tour = NULL };
 
 	//'Warm-up' CPLEX with a feasibile solution given by G2OPT heu
-	if(env->warm) add_warm_start(CPLEX_env, CPLEX_lp, inst, env, "GREEDY");
+	if(env->warm) add_warm_start(CPLEX_env, CPLEX_lp, inst, env);
 	if(!strncmp(env->method,"BENDER", 6)) min = TSPCbenders(inst, env, &CPLEX_env,&CPLEX_lp, init_time);
 	else if(!strncmp(env->method,"BRANCH_CUT", 12)) min = TSPCbranchcut(inst, env, &CPLEX_env,&CPLEX_lp, env->time_limit-time_elapsed(init_time));
 	else { print_state(Error, "No function with alias"); }
@@ -115,7 +115,9 @@ TSPsol TSPCbranchcut(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* l
 
 	int *sol = calloc(inst->nnodes, sizeof(int) );
 	cth_convert(sol, succ, inst->nnodes);
-	print_state(Warn, "%10.4f\n", compute_cost(inst, sol));
+	#if VERBOSE > 2
+		print_state(Warn, "%10.4f\n", compute_cost(inst, sol));
+	#endif
 	check_tour_cost(inst, sol, compute_cost(inst, sol));
 	memcpy(out.tour, sol, inst->nnodes * sizeof(int));
 	out.cost = compute_cost(inst, out.tour);
@@ -165,7 +167,7 @@ TSPsol TSPCbenders(TSPinst* inst, TSPenv* tsp_env, CPXENVptr* env, CPXLPptr* lp,
 		int* sol  = calloc (inst->nnodes,sizeof(int));
 		cth_convert(sol, succ, inst->nnodes);
 		//if(tsp_env->warm) 
-			CPLEX_mip_st(*env,*lp,sol,inst->nnodes);
+		CPLEX_mip_st(*env,*lp,sol,inst->nnodes);
 		free(sol);
 	}
 

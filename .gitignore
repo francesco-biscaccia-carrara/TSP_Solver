@@ -8,4 +8,3 @@ test
 /plot/n_*.*
 test
 /log/n_*.*
-/launch_test/*.png

@@ -10,14 +10,13 @@ parser = argparse.ArgumentParser(description='TEST LAUNCHER')
 parser.add_argument('nnodes', type=int, help='Number of nodes')
 parser.add_argument('-tl',type=int,default=3.6e+6 ,help='Time limit for each execution')
 parser.add_argument('-cost', dest='cost', action='store_true', help='Set the wantCost value to True.')
-#parser.add_argument('algos',type=str,nargs='+',help='Algorithm to test, divided by space')
+parser.add_argument('algos',type=str,nargs='+',help='Algorithm to test, divided by space')
 args = parser.parse_args()
 
 #----------EDITABLE PARS--------#
 node_size = args.nnodes
 time_limit = args.tl
-#algos = args.algos
-#warm = "-warm" ##remove to remove warm
+algos = args.algos
 wantCost = args.cost
 #-------------------------------#
 
@@ -26,9 +25,7 @@ wantCost = args.cost
 time = 0
 cost = 1
 seeds = np.arange(1,21)
-pars=[":","-warm"]
-filename = 'BENDER-WARM-n_'+str(node_size)
-#'_'.join(algos)+'-n_'+str(node_size)
+filename = '_'.join(algos)+'-n_'+str(node_size)
 #----------------------------#
 
 results = []
@@ -38,9 +35,9 @@ try:
     for seed in seeds:
         results.append([])
         results[row].append(seed)
-        for par in pars:
+        for algo in algos:
             result = subprocess.run(
-                ["../main", "-tl", str(time_limit), "-n", str(node_size), "-seed", str(seed), "-algo","BENDER", par, "-t"],
+                ["../main", "-tl", str(time_limit), "-n", str(node_size), "-seed", str(seed), "-algo", str(algo),"-warm","-t"],
                 capture_output = True,
                 text = True 
             ) 
@@ -57,7 +54,7 @@ try:
 
     with open(filename+'.csv', 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
-        csvwriter.writerow([len(pars)] + pars)
+        csvwriter.writerow([len(algos)] + algos)
         csvwriter.writerows(results)
 
 

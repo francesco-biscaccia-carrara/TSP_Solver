@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
     TSPenv* env = environment_new_cli(argv, argc);
     TSPinst* inst = instance_new_env(env);
 
-    char* cplex_func[] = { "BENDER", "BRANCH_CUT" };
+    char* cplex_func[] = { "BENDERS", "BRANCH_CUT" };
     char* mathe_func[] = { "DIVING_R", /*"DIVING_P",*/ "DIVING_W", "LOCAL_BRANCH" };
 
     #if VERBOSE > 0

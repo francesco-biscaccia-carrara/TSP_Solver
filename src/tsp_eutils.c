@@ -174,6 +174,7 @@ void CPLEX_mip_st(CPXENVptr env, CPXLPptr lp, int* succ, const unsigned int nnod
 	free(value);
 }
 
+/*
 void CPLEX_edit_mip_st(CPXENVptr* env, CPXLPptr* lp, int* succ, const unsigned int nnodes) {
 	
 	int start_index = 0;
@@ -188,7 +189,7 @@ void CPLEX_edit_mip_st(CPXENVptr* env, CPXLPptr* lp, int* succ, const unsigned i
 
 	free(index);
 	free(value);
-}
+}*/
 
 
 /*======================================================================*/
@@ -328,13 +329,7 @@ int add_SEC_int(CPXCALLBACKCONTEXTptr context,TSPinst inst){
 	if(CPXcallbackpostheursoln(context, ncols, ind, val, compute_cost(&inst, succ), CPXCALLBACKSOLUTION_NOCHECK)) print_state(Error, "CPXcallbackpostheursoln() error");
 	free(val);
 	free(ind);
-	/*TODO: Posting patching as heuristic inside CPLEX
-	int nstart[inst.nnodes];
 	
-	--- Look at Zanzi repo---
-	cpxerror = CPXcallbackpostheursoln(context, ncols, ind, val, tsp_compute_succ_cost(succ), CPXCALLBACKSOLUTION_NOCHECK);
-        if (cpxerror) raise_error("Error in tsp_cplex_callback_candidate: CPXcallbackpostheursoln error (%d).\n", cpxerror);
-	*/
 	free(succ);
 	free(comp);
 	return 0;
@@ -457,16 +452,22 @@ int CPXPUBLIC mount_CUT(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* 
 }
 
 
-extern void add_warm_start(CPXENVptr CPX_env, CPXLPptr CPX_lp, TSPinst* inst, TSPenv* env, char* method) {
-	char* curr_meth = malloc(strlen(env->method));
+extern void add_warm_start(CPXENVptr CPX_env, CPXLPptr CPX_lp, TSPinst* inst, TSPenv* env) {
+	/*char* curr_meth = malloc(strlen(env->method));
 	memcpy(curr_meth, env->method, strlen(env->method));
 	env->method = method;
 
 	TSPsolve(inst, env);
 
 	env->method = curr_meth;
-	CPLEX_mip_st(CPX_env, CPX_lp, inst->solution, inst->nnodes);
-
+	
+	CPLEX_mip_st(CPX_env, CPX_lp, inst->solution, inst->nnodes);*/
+	double tot_tl = env->time_limit;
+	env->time_limit = tot_tl/100;
+	TSPsol tmp = TSPgreedy(inst,env,((double)rand())/RAND_MAX*inst->nnodes, TSPg2optb, NULL , get_time());
+	
+	CPLEX_mip_st(CPX_env, CPX_lp, tmp.tour,inst->nnodes);
+	env->time_limit = tot_tl - (tot_tl/100);
 	#if VERBOSE > 0
 		print_state(Info, "passing an heuristic solution to CPLEX...\n");
 	#endif

@@ -9,8 +9,6 @@ void MATsolve(TSPinst* inst, TSPenv* env) {
 
     if(!strncmp(env->method,"DIVING_R", 8)) { diving(Random, CPLEX_env, CPLEX_lp, inst, env, init_time); }
     else if(!strncmp(env->method,"DIVING_W", 8)) { diving(Weighted, CPLEX_env, CPLEX_lp, inst, env, init_time); }
-    //else if(!strncmp(env->method,"DIVING_P", 8)) { diving(Probably, CPLEX_env, CPLEX_lp, inst, env, init_time); }
-    
     else if(!strncmp(env->method,"LOCAL_BRANCH", 12)) { local_branching(CPLEX_env, CPLEX_lp, inst, env, init_time); }
     
     double final_time = get_time();
@@ -54,7 +52,7 @@ void diving(int strategy, CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst,
         }
         oldsol = sol;
 
-        CPLEX_edit_mip_st(&CPLEX_env, &CPLEX_lp, inst->solution, inst->nnodes);
+        CPLEX_mip_st(CPLEX_env, CPLEX_lp, inst->solution, inst->nnodes);
         unfix_to_model(CPLEX_env, CPLEX_lp, x, x_size);
     }
 }
@@ -91,7 +89,7 @@ void local_branching(CPXENVptr CPLEX_env, CPXLPptr CPLEX_lp, TSPinst* inst, TSPe
 
         int nrows = CPXgetnumrows(CPLEX_env, CPLEX_lp);
         CPXdelrows(CPLEX_env, CPLEX_lp, nrows-1, nrows-1);
-        CPLEX_edit_mip_st(&CPLEX_env, &CPLEX_lp, inst->solution, inst->nnodes);
+        CPLEX_mip_st(CPLEX_env, CPLEX_lp, inst->solution, inst->nnodes);
     }
     
 
