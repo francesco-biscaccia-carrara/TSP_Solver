@@ -453,15 +453,6 @@ int CPXPUBLIC mount_CUT(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, void* 
 
 
 extern void add_warm_start(CPXENVptr CPX_env, CPXLPptr CPX_lp, TSPinst* inst, TSPenv* env) {
-	/*char* curr_meth = malloc(strlen(env->method));
-	memcpy(curr_meth, env->method, strlen(env->method));
-	env->method = method;
-
-	TSPsolve(inst, env);
-
-	env->method = curr_meth;
-	
-	CPLEX_mip_st(CPX_env, CPX_lp, inst->solution, inst->nnodes);*/
 	double tot_tl = env->time_limit;
 	env->time_limit = tot_tl/100;
 	TSPsol tmp = TSPgreedy(inst,env,((double)rand())/RAND_MAX*inst->nnodes, TSPg2optb, NULL , get_time());

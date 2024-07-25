@@ -10,13 +10,23 @@ static void help_info(){
     printf("\n '-in / -f / -file <filename.tsp>' to specity the input file; ");
     printf("\n '-tl / -max_time <time_dbl>' to specity the max execution time (int value);");
     printf("\n '-n / -n_nodes <num_nodes_int>' to specify the number of nodes in the TSP instance (int value);");
-    printf("\n '-algo / -method / -alg <method>' to specify the method to solve the TSP instance;");
-    //TODO: add all new method 
-    printf("\n\tImplemented method: \n\t\t- GREEDY = greedy search,\n\t\t- G2OPT_F = greedy + 2opt w. first swaps,\n\t\t- G2OPT_B = greedy + 2opt w. best swaps");
-    //TODO: add warm flag
     printf("\n '-seed / -rnd_seed <seed>' to specity the random seed (int value);");
+    printf("\n '-algo / -method / -alg <method>' to specify the method to solve the TSP instance;");
+    printf("\n Implemented method:\
+    \n\t- GREEDY = greedy search\
+    \n\t- G2OPT_F = greedy + 2opt w. first swaps\
+    \n\t- G2OPT_B = greedy + 2opt w. best swaps\
+    \n\t- TABU_R = tabu search w. greedy as starting solution\
+    \n\t- TABU_B = tabu search w. greedy + 2opt as starting solution\
+    \n\t- VNS = vns search w. 2opt best swaps\
+    \n\t- BENDERS = benders' loop\
+    \n\t- BRANCH_CUT = branch-and-cut\
+    \n\t- DIVING_R = diving w. random fixed edges\
+    \n\t- DIVING_W = diving w. weighted fixed edges\
+    \n\t- LOCAL_BRANCH = diving w. random fixed edges\
+    ");
     printf("\n '-help / --help / -h' to get help.");
-    printf("\n\nNOTICE: you can insert only .tsp file or random seed and number of nodes, NOT BOTH!\n");
+    printf("\n\n\e[1m\e[4mNOTICE\e[0m: you can insert only .tsp file or random seed and number of nodes, \e[4mNOT BOTH\e[0m!\n");
 }
 
 
@@ -226,7 +236,7 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
     char* algo_comm[] = {"-algo", "-method", "-alg"};
     char* seed_comm[] = {"-seed", "-rnd_seed", "-s"};
     char* help_comm[] = {"-help", "-h", "--help"};
-    char* warm_comm[] = {"-warm", "-w", "--warm"};
+//  char* warm_comm[] = {"-warm", "-w", "--warm"};
     char* perf_comm[] = {"-test", "-t"};
 //  char* tabu_comm[] = {"-tabu_par", "-tp"};
 //  char* vns_comm[] = {"-vns_par", "-vp"};
@@ -237,7 +247,7 @@ TSPenv* environment_new_cli(char** argv, const int argc) {
         if (strnin(argv[i], node_comm, 2))  env->nnodes = abs(atoi(argv[++i]));
         if (strnin(argv[i], algo_comm, 3))  strcpy(env->method,argv[++i]);
         if (strnin(argv[i], seed_comm, 3))  env->random_seed = abs(atoi(argv[++i])); 
-        if (strnin(argv[i], warm_comm, 2))  env->warm = 1;  
+//      if (strnin(argv[i], warm_comm, 2))  env->warm = 1;  
         if (strnin(argv[i], perf_comm, 2))  env->perf_v = 1;
 //      if (strnin(argv[i], tabu_comm, 2))  env->tabu_par = abs(atoi(argv[++i]));  
 //      if (strnin(argv[i], vns_comm, 2))   env->vns_par = abs(atoi(argv[++i]));

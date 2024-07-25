@@ -32,7 +32,7 @@ typedef struct{
     unsigned int    random_seed;
     char*           file_name;
     char*           method;
-    char            warm;
+//  char            warm;
     char            perf_v;
     double          time_exec;
     uint64_t        time_limit;
