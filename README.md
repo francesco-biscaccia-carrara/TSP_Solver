@@ -100,7 +100,7 @@ python3 launch_test/perfprof.py <input_path> <output_path>.<extension>
 
 This project is licensed under the MIT License with a Non-Commercial Clause - see the [LICENSE](LICENSE) file for details.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT with Non-Commercial Clause](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
