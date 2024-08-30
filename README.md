@@ -14,7 +14,7 @@ This project explores various approaches to solve the Traveling Salesman Problem
 
 ## 🧠 Problem Definition
 
-The TSP is defined on a graph $G = (V,E)$ with a cost function $c: E \to \mathbb{R}^{+}. The goal is to find a Hamiltonian cycle of minimum cost.
+The TSP is defined on a graph $G = (V,E)$ with a cost function $c: E \to \mathbb{R}^{+}$. The goal is to find a Hamiltonian cycle of minimum cost.
 
 ## 🚀 Implemented Approaches
 
