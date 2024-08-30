@@ -14,7 +14,7 @@ This project explores various approaches to solve the Traveling Salesman Problem
 
 ## 🧠 Problem Definition
 
-The TSP is defined on a graph $G = (V,E)$ with a cost function $c: E \to \mathbb{R}^{+}$. The goal is to find a Hamiltonian cycle of minimum cost.
+The TSP is defined on a graph $G = (V,E)$ with a cost function $c:\;E \to \mathbb{R}^{+}$. The goal is to find a Hamiltonian cycle of minimum cost.
 
 ## 🚀 Implemented Approaches
 
@@ -67,11 +67,11 @@ This generates the `main` executable.
 ./main -n <nodes> -s <seed> -t <time_limit> -a <algorithm>
 ```
 
-Where:
-- `<nodes>` is the number of nodes of the graph
-- `<seed>` is the random seed used to generate a random TSP instance
-- `<time_limit>` is the maximum execution time in seconds
-- `<algorithm>` is one of the implemented algorithms (e.g., nn, 2opt, tabu, vns, diving, localbranching)
+where:
+- `<nodes>`: The number of nodes in the graph.
+- `<seed>`: The random seed used to generate a random TSP instance.
+- `<time_limit>`: The maximum execution time in seconds.
+- `<algorithm>`: The algorithm to be used, such as nn, 2opt, tabu, vns, diving, or localbranching.
 
 ### Analysis
 
