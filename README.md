@@ -9,7 +9,7 @@ This project explores various approaches to solve the Traveling Salesman Problem
 - Francesco Biscaccia Carrara 
 - Riccardo Modolo
 
-*Department of Information Engineering, University of Padua*
+*Department of Information Engineering, University of Padua*  
 *Academic Year: 2023/2024*
 
 ## 🧠 Problem Definition
@@ -96,9 +96,11 @@ python3 launch_test/perfprof.py <input_path> <output_path>.<extension>
 3. Apply Machine Learning to optimize the application of the g2opt routine
 4. Explore the effectiveness of these algorithms on various TSP variants
 
-## 📜 Project Status
+## 📄 License
 
-This project is part of an academic course at the University of Padua. It is not licensed for commercial use but serves as a comprehensive study of TSP solving techniques.
+This project is licensed under the MIT License with a Non-Commercial Clause - see the [LICENSE](LICENSE) file for details.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
