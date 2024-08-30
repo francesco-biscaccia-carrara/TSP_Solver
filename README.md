@@ -78,7 +78,7 @@ where:
 Use the Python scripts for visualization and analysis:
 
 ```bash
-python3 plot/plot_solution.py inpyut/<input_file>
+python3 plot/plot_solution.py input/<input_file>
 python3 launch_test/perfprof.py <input_path> <output_path>.<extension>
 ```
 
