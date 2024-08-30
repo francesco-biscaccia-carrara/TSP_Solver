@@ -7,7 +7,7 @@ This project explores various approaches to solve the Traveling Salesman Problem
 
 ### 🎓 Authors
 - Francesco Biscaccia Carrara 
-- Riccardo Modolo
+- Riccardo Modolo [@RickSrick](https://github.com/RickSrick)
 
 *Department of Information Engineering, University of Padua*  
 *Academic Year: 2023/2024*
