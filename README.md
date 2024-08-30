@@ -1,127 +1,105 @@
-# 🌍 The Traveling Salesman Problem Solver
+# 🌍 The Traveling Salesman Problem: An Overview of Exact and Heuristic Approaches
+![C](https://img.shields.io/badge/C-A8B9CC?style=for-the-badge&logo=c&logoColor=white)![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
 ## 📚 Overview
 
 This project explores various approaches to solve the Traveling Salesman Problem (TSP), one of the most famous NP-Hard problems in computer science and operations research. We implement and compare exact methods, heuristics, metaheuristics, and matheuristics to find optimal or near-optimal solutions for TSP instances.
 
 ### 🎓 Authors
-- Francesco Biscaccia Carrara
+- Francesco Biscaccia Carrara 
 - Riccardo Modolo
 
-*Department of Information Engineering, University of Padua, Academic Year 2023/2024*
+*Department of Information Engineering, University of Padua*
+*Academic Year: 2023/2024*
 
-## 🚀 Features
+## 🧠 Problem Definition
 
-The project implements several algorithms to solve the TSP:
+The TSP is defined on a graph $G = (V,E)$ with a cost function $c: E \to \Reals^{+}. The goal is to find a Hamiltonian cycle of minimum cost.
 
-- **Exact Methods**: 
-  - Bender's Loop
-  - Branch and Cut (using IBM ILOG CPLEX)
-- **Heuristics**:
-  - Nearest Neighbors
-  - 2-OPT
-- **Metaheuristics**:
-  - Tabu Search
-  - Variable Neighborhood Search (VNS)
-- **Matheuristics**:
-  - Diving
-  - Local Branching
+## 🚀 Implemented Approaches
+
+### Exact Methods
+1. **Bender's Loop**: Iteratively adds subtour elimination constraints.
+2. **Branch and Cut**: Utilizes IBM ILOG CPLEX with custom callbacks.
+
+### Heuristics
+1. **Nearest Neighbors**: A greedy approach for quick solutions.
+2. **2-OPT**: Improves existing tours by swapping edges.
+
+### Metaheuristics
+1. **Tabu Search**: Explores the solution space while avoiding cycles.
+2. **Variable Neighborhood Search (VNS)**: Uses the concept of systematic change of neighborhood.
+
+### Matheuristics
+1. **Diving**: Fixes some variables to guide the MIP solver.
+2. **Local Branching**: Provides flexibility in the number of variables to change.
 
 ## 🛠️ Implementation
 
-The project is primarily implemented in C, with Python scripts for analysis and visualization.
+The project is primarily implemented in C for performance, with Python scripts for analysis and visualization.
 
-### Project Structure
+## 📊 Key Findings
 
-```
-OR2_Project/
-│
-├── src/
-│   ├── heuristic.c
-│   ├── heuristic.h
-│   ├── main.c
-│   ├── metaheuristic.c
-│   ├── metaheuristic.h
-│   ├── opt_tsp.c
-│   ├── opt_tsp.h
-│   ├── patching.c
-│   ├── patching.h
-│   ├── utils.c
-│   └── utils.h
-│
-├── scripts/
-│   ├── performance_profile.py
-│   └── plot_solution.py
-│
-├── instances/
-│   └── (various .tsp files)
-│
-├── output/
-│   └── (output files)
-│
-├── Makefile
-└── README.md
-```
+1. **Exact Methods**: Optimal for instances with ≤300 nodes
+2. **Matheuristics**: Best trade-off for 1000-4000 nodes
+3. **Heuristics**: Recommended for large instances (10K-50K nodes)
 
-## 📊 Results
-
-The project includes scripts for visualizing results:
-
-- `plot_solution.py`: Plots the TSP solution
-- `performance_profile.py`: Generates performance profiles for algorithm comparison
+Our performance profiles and comparisons show:
+- VNS often outperforms Tabu Search
+- Local Branching is competitive with Branch and Cut for shorter time limits
+- Weighted Diving generally performs better than Random Diving
 
 ## 🔧 Usage
 
 ### Compilation
 
-Use the provided Makefile to compile the project:
+Use the provided Makefile:
 
 ```bash
 make
 ```
 
-This will generate the executable `tsp`.
+This generates the `main` executable.
 
 ### Running the Solver
 
-To run the TSP solver:
-
 ```bash
-./tsp -f <instance_file> -t <time_limit> -a <algorithm>
+./main -n <nodes> -s <seed> -t <time_limit> -a <algorithm>
 ```
 
 Where:
-- `<instance_file>` is the path to a .tsp file in the instances directory
+- `<nodes>` is the number of nodes of the graph
+- `<seed>` is the random seed used to generate a random TSP instance
 - `<time_limit>` is the maximum execution time in seconds
-- `<algorithm>` is one of the implemented algorithms (e.g., nn, 2opt, tabu, vns, etc.)
+- `<algorithm>` is one of the implemented algorithms (e.g., nn, 2opt, tabu, vns, diving, localbranching)
 
-### Analyzing Results
+### Analysis
 
-Use the Python scripts in the `scripts/` directory to analyze and visualize results:
+Use the Python scripts for visualization and analysis:
 
 ```bash
-python scripts/plot_solution.py <output_file>
-python scripts/performance_profile.py <results_directory>
+python3 plot/plot_solution.py inpyut/<input_file>
+python3 launch_test/perfprof.py <input_path> <output_path>.<extension>
 ```
 
 ## 📦 Dependencies
 
-- C compiler (gcc recommended)
+- C compiler
 - Python 3.x
 - IBM ILOG CPLEX Optimization Studio (for exact methods)
-- Python libraries: matplotlib, numpy (for visualization and analysis)
+- Python libraries: matplotlib, numpy
 
-## 🏗️ Future Work
+## 🔮 Future Work
 
-- Enhance VNS performance
-- Optimize Local Branching implementation
-- Implement additional TSP variants
+1. Enhance VNS performance by utilizing the history of applied kicks
+2. Introduce "memory" to the Local Branching algorithm
+3. Apply Machine Learning to optimize the application of the g2opt routine
+4. Explore the effectiveness of these algorithms on various TSP variants
 
-## 📜 License
+## 📜 Project Status
 
-This project is part of an academic course and is not licensed for commercial use.
+This project is part of an academic course at the University of Padua. It is not licensed for commercial use but serves as a comprehensive study of TSP solving techniques.
 
 ---
 
-💡 For more details, please refer to the source code documentation or contact the authors.
-
+💡 For more details, please refer to the full report or contact the authors.
